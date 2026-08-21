@@ -2349,122 +2349,611 @@ export class BattlefieldEngine {
       const isFrozen = enemy.frozenTimer > 0;
       const isShocked = enemy.shockTimer > 0;
 
-      // Engine Thruster Flame (fast vector)
-      ctx.fillStyle = isFrozen ? '#00d2ff' : '#ff5500';
+      // Engine Thruster Flame (dual nacelle exhausts)
       const flameHeight = Math.sin(enemy.enginePulse) * 4 + 7;
+      const flameColor1 = isFrozen ? '#00d2ff' : '#ff5500';
+      const flameColor2 = isFrozen ? '#80eeff' : '#ffaa00';
+      const eW = enemy.width;
+      const eH = enemy.height;
+
+      // Left exhaust
+      ctx.fillStyle = flameColor1;
+      ctx.globalAlpha = 0.85;
       ctx.beginPath();
-      ctx.moveTo(-enemy.width * 0.22, -enemy.height * 0.4);
-      ctx.lineTo(0, -enemy.height * 0.4 - flameHeight);
-      ctx.lineTo(enemy.width * 0.22, -enemy.height * 0.4);
+      ctx.moveTo(-eW * 0.18, -eH * 0.38);
+      ctx.lineTo(-eW * 0.06, -eH * 0.38 - flameHeight * 0.8);
+      ctx.lineTo(eW * 0.02, -eH * 0.38);
       ctx.fill();
+      // Right exhaust
+      ctx.beginPath();
+      ctx.moveTo(eW * 0.18, -eH * 0.38);
+      ctx.lineTo(eW * 0.06, -eH * 0.38 - flameHeight * 0.8);
+      ctx.lineTo(-eW * 0.02, -eH * 0.38);
+      ctx.fill();
+      // Core exhaust (bright center)
+      ctx.fillStyle = flameColor2;
+      ctx.beginPath();
+      ctx.moveTo(-eW * 0.08, -eH * 0.4);
+      ctx.lineTo(0, -eH * 0.4 - flameHeight * 1.1);
+      ctx.lineTo(eW * 0.08, -eH * 0.4);
+      ctx.fill();
+      ctx.globalAlpha = 1;
 
       // Enemy Ship Body
-      if (isWhiteFlash) {
-        ctx.fillStyle = '#ffffff';
-        ctx.strokeStyle = '#ffffff';
-      } else if (isFrozen) {
-        ctx.fillStyle = '#0072aa';
-        ctx.strokeStyle = '#6be5ff';
-      } else {
-        ctx.fillStyle = '#11192e';
-        ctx.strokeStyle = enemy.color;
-      }
+      const baseHull = isWhiteFlash ? '#ffffff' : (isFrozen ? '#0072aa' : '#11192e');
+      const accentColor = isWhiteFlash ? '#ffffff' : (isFrozen ? '#6be5ff' : enemy.color);
+      const panelDark = isWhiteFlash ? '#dddddd' : (isFrozen ? '#005577' : '#0a0f1e');
+      const panelMid = isWhiteFlash ? '#eeeeee' : (isFrozen ? '#006688' : '#151d33');
+
       ctx.lineWidth = 2;
 
       // Draw Sci-Fi Hull Shape
       if (enemy.isBoss) {
-        // Massive Dreadnought Hull
+        // ═══════════════════════════════════════
+        // TITAN DREADNOUGHT — Massive capital ship
+        // ═══════════════════════════════════════
+
+        // Main hull body
+        ctx.fillStyle = baseHull;
+        ctx.strokeStyle = accentColor;
         ctx.beginPath();
-        ctx.moveTo(0, enemy.height * 0.6);
-        ctx.lineTo(enemy.width * 0.45, enemy.height * 0.1);
-        ctx.lineTo(enemy.width * 0.5, -enemy.height * 0.4);
-        ctx.lineTo(enemy.width * 0.25, -enemy.height * 0.6);
-        ctx.lineTo(-enemy.width * 0.25, -enemy.height * 0.6);
-        ctx.lineTo(-enemy.width * 0.5, -enemy.height * 0.4);
-        ctx.lineTo(-enemy.width * 0.45, enemy.height * 0.1);
+        ctx.moveTo(0, eH * 0.6);
+        ctx.lineTo(eW * 0.25, eH * 0.45);
+        ctx.lineTo(eW * 0.45, eH * 0.1);
+        ctx.lineTo(eW * 0.5, -eH * 0.25);
+        ctx.lineTo(eW * 0.4, -eH * 0.5);
+        ctx.lineTo(eW * 0.15, -eH * 0.6);
+        ctx.lineTo(-eW * 0.15, -eH * 0.6);
+        ctx.lineTo(-eW * 0.4, -eH * 0.5);
+        ctx.lineTo(-eW * 0.5, -eH * 0.25);
+        ctx.lineTo(-eW * 0.45, eH * 0.1);
+        ctx.lineTo(-eW * 0.25, eH * 0.45);
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
 
-        // Boss Red Core Eye (dual circle)
+        // Layered armor plating (dorsal ridge)
+        ctx.fillStyle = panelMid;
+        ctx.beginPath();
+        ctx.moveTo(0, eH * 0.55);
+        ctx.lineTo(eW * 0.18, eH * 0.35);
+        ctx.lineTo(eW * 0.3, -eH * 0.1);
+        ctx.lineTo(eW * 0.2, -eH * 0.45);
+        ctx.lineTo(-eW * 0.2, -eH * 0.45);
+        ctx.lineTo(-eW * 0.3, -eH * 0.1);
+        ctx.lineTo(-eW * 0.18, eH * 0.35);
+        ctx.closePath();
+        ctx.fill();
+
+        // Side weapon nacelles
+        ctx.fillStyle = panelDark;
+        ctx.strokeStyle = accentColor;
+        ctx.lineWidth = 1.5;
+        // Left nacelle
+        ctx.beginPath();
+        ctx.moveTo(-eW * 0.48, -eH * 0.15);
+        ctx.lineTo(-eW * 0.55, -eH * 0.1);
+        ctx.lineTo(-eW * 0.55, eH * 0.15);
+        ctx.lineTo(-eW * 0.43, eH * 0.2);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        // Right nacelle
+        ctx.beginPath();
+        ctx.moveTo(eW * 0.48, -eH * 0.15);
+        ctx.lineTo(eW * 0.55, -eH * 0.1);
+        ctx.lineTo(eW * 0.55, eH * 0.15);
+        ctx.lineTo(eW * 0.43, eH * 0.2);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // Central command bridge (raised)
+        ctx.fillStyle = panelDark;
+        ctx.strokeStyle = accentColor;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(-eW * 0.1, -eH * 0.15);
+        ctx.lineTo(eW * 0.1, -eH * 0.15);
+        ctx.lineTo(eW * 0.08, eH * 0.05);
+        ctx.lineTo(-eW * 0.08, eH * 0.05);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // Prow spine
+        ctx.strokeStyle = accentColor;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, eH * 0.6);
+        ctx.lineTo(0, -eH * 0.45);
+        ctx.stroke();
+
+        // Panel lines
+        ctx.strokeStyle = accentColor;
+        ctx.lineWidth = 0.8;
+        ctx.globalAlpha = 0.4;
+        ctx.beginPath();
+        ctx.moveTo(-eW * 0.35, eH * 0.05);
+        ctx.lineTo(eW * 0.35, eH * 0.05);
+        ctx.moveTo(-eW * 0.3, -eH * 0.2);
+        ctx.lineTo(eW * 0.3, -eH * 0.2);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+
+        // Boss Red Core Eye (triple layered)
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = '#ff0055';
         ctx.fillStyle = '#ff0055';
         ctx.beginPath();
-        ctx.arc(0, 0, 9, 0, Math.PI * 2);
+        ctx.arc(0, -eH * 0.05, 10, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ff5588';
+        ctx.beginPath();
+        ctx.arc(0, -eH * 0.05, 6, 0, Math.PI * 2);
         ctx.fill();
         ctx.fillStyle = '#ffffff';
         ctx.beginPath();
-        ctx.arc(0, 0, 3.5, 0, Math.PI * 2);
+        ctx.arc(0, -eH * 0.05, 3, 0, Math.PI * 2);
         ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // Nacelle weapon glow tips
+        ctx.fillStyle = accentColor;
+        ctx.globalAlpha = 0.7 + Math.sin(enemy.enginePulse * 1.5) * 0.3;
+        ctx.beginPath();
+        ctx.arc(-eW * 0.52, eH * 0.18, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(eW * 0.52, eH * 0.18, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+
       } else if (enemy.type === 'scout') {
-        // Agile Arrowhead
+        // ═══════════════════════════════════════
+        // SCOUT INTERCEPTOR — Agile delta-wing fighter
+        // ═══════════════════════════════════════
+
+        // Main delta-wing hull
+        ctx.fillStyle = baseHull;
+        ctx.strokeStyle = accentColor;
         ctx.beginPath();
-        ctx.moveTo(0, enemy.height * 0.5);
-        ctx.lineTo(enemy.width * 0.45, -enemy.height * 0.5);
-        ctx.lineTo(0, -enemy.height * 0.25);
-        ctx.lineTo(-enemy.width * 0.45, -enemy.height * 0.5);
+        ctx.moveTo(0, eH * 0.55);
+        ctx.lineTo(eW * 0.15, eH * 0.2);
+        ctx.lineTo(eW * 0.48, -eH * 0.35);
+        ctx.lineTo(eW * 0.42, -eH * 0.5);
+        ctx.lineTo(eW * 0.08, -eH * 0.15);
+        ctx.lineTo(0, -eH * 0.25);
+        ctx.lineTo(-eW * 0.08, -eH * 0.15);
+        ctx.lineTo(-eW * 0.42, -eH * 0.5);
+        ctx.lineTo(-eW * 0.48, -eH * 0.35);
+        ctx.lineTo(-eW * 0.15, eH * 0.2);
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
+
+        // Inner wing plating
+        ctx.fillStyle = panelMid;
+        ctx.beginPath();
+        ctx.moveTo(0, eH * 0.45);
+        ctx.lineTo(eW * 0.12, eH * 0.15);
+        ctx.lineTo(eW * 0.32, -eH * 0.3);
+        ctx.lineTo(eW * 0.08, -eH * 0.1);
+        ctx.lineTo(0, -eH * 0.18);
+        ctx.lineTo(-eW * 0.08, -eH * 0.1);
+        ctx.lineTo(-eW * 0.32, -eH * 0.3);
+        ctx.lineTo(-eW * 0.12, eH * 0.15);
+        ctx.closePath();
+        ctx.fill();
+
+        // Central fuselage spine
+        ctx.strokeStyle = accentColor;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(0, eH * 0.5);
+        ctx.lineTo(0, -eH * 0.2);
+        ctx.stroke();
+
+        // Cockpit canopy
+        ctx.fillStyle = accentColor;
+        ctx.globalAlpha = 0.7;
+        ctx.beginPath();
+        ctx.ellipse(0, eH * 0.18, 3.5, 6, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+
+        // Wingtip lights (pulsing)
+        ctx.fillStyle = accentColor;
+        ctx.globalAlpha = 0.6 + Math.sin(enemy.enginePulse * 2) * 0.4;
+        ctx.beginPath();
+        ctx.arc(-eW * 0.44, -eH * 0.42, 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(eW * 0.44, -eH * 0.42, 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+
       } else if (enemy.type === 'siege') {
-        // Kuşatma Topçusu (Heavy Artillery Gunship with dual forward cannons & charging muzzle)
+        // ═══════════════════════════════════════
+        // SIEGE ARTILLERY — Heavy armored gunship
+        // ═══════════════════════════════════════
+
+        // Main armored hull (wide, flat, heavy)
+        ctx.fillStyle = baseHull;
+        ctx.strokeStyle = accentColor;
         ctx.beginPath();
-        ctx.moveTo(0, enemy.height * 0.45);
-        ctx.lineTo(enemy.width * 0.48, enemy.height * 0.15);
-        ctx.lineTo(enemy.width * 0.45, -enemy.height * 0.45);
-        ctx.lineTo(enemy.width * 0.15, -enemy.height * 0.55);
-        ctx.lineTo(-enemy.width * 0.15, -enemy.height * 0.55);
-        ctx.lineTo(-enemy.width * 0.45, -enemy.height * 0.45);
-        ctx.lineTo(-enemy.width * 0.48, enemy.height * 0.15);
+        ctx.moveTo(0, eH * 0.48);
+        ctx.lineTo(eW * 0.2, eH * 0.45);
+        ctx.lineTo(eW * 0.48, eH * 0.15);
+        ctx.lineTo(eW * 0.5, -eH * 0.2);
+        ctx.lineTo(eW * 0.42, -eH * 0.45);
+        ctx.lineTo(eW * 0.15, -eH * 0.55);
+        ctx.lineTo(-eW * 0.15, -eH * 0.55);
+        ctx.lineTo(-eW * 0.42, -eH * 0.45);
+        ctx.lineTo(-eW * 0.5, -eH * 0.2);
+        ctx.lineTo(-eW * 0.48, eH * 0.15);
+        ctx.lineTo(-eW * 0.2, eH * 0.45);
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
 
-        // Forward Dual Heavy Cannons
-        ctx.fillStyle = '#0f172a';
-        ctx.strokeStyle = '#f97316';
-        ctx.lineWidth = 1.2;
-        ctx.fillRect(-enemy.width * 0.28, enemy.height * 0.08, 4.5, 12);
-        ctx.strokeRect(-enemy.width * 0.28, enemy.height * 0.08, 4.5, 12);
-        ctx.fillRect(enemy.width * 0.28 - 4.5, enemy.height * 0.08, 4.5, 12);
-        ctx.strokeRect(enemy.width * 0.28 - 4.5, enemy.height * 0.08, 4.5, 12);
+        // Heavy armor plating overlay
+        ctx.fillStyle = panelMid;
+        ctx.beginPath();
+        ctx.moveTo(-eW * 0.35, -eH * 0.42);
+        ctx.lineTo(eW * 0.35, -eH * 0.42);
+        ctx.lineTo(eW * 0.4, -eH * 0.15);
+        ctx.lineTo(eW * 0.35, eH * 0.1);
+        ctx.lineTo(-eW * 0.35, eH * 0.1);
+        ctx.lineTo(-eW * 0.4, -eH * 0.15);
+        ctx.closePath();
+        ctx.fill();
 
-        // Center Siege Glowing Fusion Core
+        // Panel lines on armor
+        ctx.strokeStyle = accentColor;
+        ctx.lineWidth = 0.7;
+        ctx.globalAlpha = 0.35;
+        ctx.beginPath();
+        ctx.moveTo(-eW * 0.38, -eH * 0.15);
+        ctx.lineTo(eW * 0.38, -eH * 0.15);
+        ctx.moveTo(-eW * 0.34, eH * 0.08);
+        ctx.lineTo(eW * 0.34, eH * 0.08);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+
+        // Forward Dual Heavy Cannons (detailed barrel + housing)
+        ctx.lineWidth = 1.5;
+        // Left cannon housing
+        ctx.fillStyle = panelDark;
+        ctx.strokeStyle = accentColor;
+        ctx.beginPath();
+        ctx.rect(-eW * 0.32, eH * 0.05, 6, 16);
+        ctx.fill();
+        ctx.stroke();
+        // Left barrel
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(-eW * 0.31, eH * 0.16, 4, 10);
+        // Left muzzle glow
+        ctx.fillStyle = '#f97316';
+        ctx.globalAlpha = 0.5 + Math.sin(enemy.enginePulse * 1.2) * 0.3;
+        ctx.beginPath();
+        ctx.arc(-eW * 0.29, eH * 0.28, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+
+        // Right cannon housing
+        ctx.fillStyle = panelDark;
+        ctx.strokeStyle = accentColor;
+        ctx.beginPath();
+        ctx.rect(eW * 0.32 - 6, eH * 0.05, 6, 16);
+        ctx.fill();
+        ctx.stroke();
+        // Right barrel
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(eW * 0.31 - 4, eH * 0.16, 4, 10);
+        // Right muzzle glow
+        ctx.fillStyle = '#f97316';
+        ctx.globalAlpha = 0.5 + Math.sin(enemy.enginePulse * 1.2) * 0.3;
+        ctx.beginPath();
+        ctx.arc(eW * 0.29, eH * 0.28, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+
+        // Center Siege Reactor Core (glowing)
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = '#f97316';
         ctx.fillStyle = '#f97316';
         ctx.beginPath();
-        ctx.arc(0, -2, 5, 0, Math.PI * 2);
+        ctx.arc(0, -eH * 0.05, 5.5, 0, Math.PI * 2);
         ctx.fill();
+        ctx.fillStyle = '#ffedd5';
+        ctx.beginPath();
+        ctx.arc(0, -eH * 0.05, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
 
         // Charging Plasma Flare before firing (last 1.2s of 5.0s cycle)
         if (enemy.shootTimer && enemy.shootTimer >= 3.8) {
           const chargeRatio = (enemy.shootTimer - 3.8) / 1.2;
+          ctx.shadowBlur = 12 * chargeRatio;
+          ctx.shadowColor = '#f97316';
           ctx.fillStyle = '#ffedd5';
           ctx.beginPath();
-          ctx.arc(0, enemy.height * 0.45, 2.5 + chargeRatio * 4.5, 0, Math.PI * 2);
+          ctx.arc(0, eH * 0.48, 2.5 + chargeRatio * 5, 0, Math.PI * 2);
           ctx.fill();
+          ctx.shadowBlur = 0;
         }
+
       } else if (enemy.type === 'bomber') {
-        // Heavy Hexagon Bomber
+        // ═══════════════════════════════════════
+        // HEAVY BOMBER — Wide armored payload carrier
+        // ═══════════════════════════════════════
+
+        // Main hexagonal hull (widened)
+        ctx.fillStyle = baseHull;
+        ctx.strokeStyle = accentColor;
         ctx.beginPath();
-        ctx.moveTo(0, enemy.height * 0.5);
-        ctx.lineTo(enemy.width * 0.45, enemy.height * 0.2);
-        ctx.lineTo(enemy.width * 0.45, -enemy.height * 0.3);
-        ctx.lineTo(0, -enemy.height * 0.5);
-        ctx.lineTo(-enemy.width * 0.45, -enemy.height * 0.3);
-        ctx.lineTo(-enemy.width * 0.45, enemy.height * 0.2);
+        ctx.moveTo(0, eH * 0.52);
+        ctx.lineTo(eW * 0.48, eH * 0.2);
+        ctx.lineTo(eW * 0.48, -eH * 0.25);
+        ctx.lineTo(eW * 0.2, -eH * 0.5);
+        ctx.lineTo(-eW * 0.2, -eH * 0.5);
+        ctx.lineTo(-eW * 0.48, -eH * 0.25);
+        ctx.lineTo(-eW * 0.48, eH * 0.2);
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
+
+        // Internal bomb bay armor plates
+        ctx.fillStyle = panelMid;
+        ctx.beginPath();
+        ctx.moveTo(-eW * 0.15, eH * 0.4);
+        ctx.lineTo(eW * 0.15, eH * 0.4);
+        ctx.lineTo(eW * 0.3, -eH * 0.1);
+        ctx.lineTo(eW * 0.15, -eH * 0.38);
+        ctx.lineTo(-eW * 0.15, -eH * 0.38);
+        ctx.lineTo(-eW * 0.3, -eH * 0.1);
+        ctx.closePath();
+        ctx.fill();
+
+        // Side engine pods
+        ctx.fillStyle = panelDark;
+        ctx.strokeStyle = accentColor;
+        ctx.lineWidth = 1;
+        // Left pod
+        ctx.beginPath();
+        ctx.rect(-eW * 0.52, -eH * 0.15, 6, 18);
+        ctx.fill();
+        ctx.stroke();
+        // Right pod
+        ctx.beginPath();
+        ctx.rect(eW * 0.52 - 6, -eH * 0.15, 6, 18);
+        ctx.fill();
+        ctx.stroke();
+
+        // Panel lines (horizontal)
+        ctx.strokeStyle = accentColor;
+        ctx.lineWidth = 0.6;
+        ctx.globalAlpha = 0.3;
+        ctx.beginPath();
+        ctx.moveTo(-eW * 0.4, 0);
+        ctx.lineTo(eW * 0.4, 0);
+        ctx.moveTo(-eW * 0.35, -eH * 0.25);
+        ctx.lineTo(eW * 0.35, -eH * 0.25);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+
+        // Belly payload indicator
+        ctx.fillStyle = accentColor;
+        ctx.globalAlpha = 0.55 + Math.sin(enemy.enginePulse * 0.8) * 0.3;
+        ctx.beginPath();
+        ctx.arc(0, eH * 0.15, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(0, eH * 0.15, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+
+      } else if (enemy.type === 'speeder') {
+        // ═══════════════════════════════════════
+        // SPEEDER — Narrow fast attack craft
+        // ═══════════════════════════════════════
+
+        // Streamlined narrow hull
+        ctx.fillStyle = baseHull;
+        ctx.strokeStyle = accentColor;
+        ctx.beginPath();
+        ctx.moveTo(0, eH * 0.55);
+        ctx.lineTo(eW * 0.15, eH * 0.3);
+        ctx.lineTo(eW * 0.35, -eH * 0.1);
+        ctx.lineTo(eW * 0.3, -eH * 0.45);
+        ctx.lineTo(eW * 0.1, -eH * 0.55);
+        ctx.lineTo(-eW * 0.1, -eH * 0.55);
+        ctx.lineTo(-eW * 0.3, -eH * 0.45);
+        ctx.lineTo(-eW * 0.35, -eH * 0.1);
+        ctx.lineTo(-eW * 0.15, eH * 0.3);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // Speed stripes (side panels)
+        ctx.fillStyle = panelMid;
+        ctx.beginPath();
+        ctx.moveTo(eW * 0.12, eH * 0.25);
+        ctx.lineTo(eW * 0.3, -eH * 0.12);
+        ctx.lineTo(eW * 0.25, -eH * 0.38);
+        ctx.lineTo(eW * 0.08, -eH * 0.08);
+        ctx.closePath();
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(-eW * 0.12, eH * 0.25);
+        ctx.lineTo(-eW * 0.3, -eH * 0.12);
+        ctx.lineTo(-eW * 0.25, -eH * 0.38);
+        ctx.lineTo(-eW * 0.08, -eH * 0.08);
+        ctx.closePath();
+        ctx.fill();
+
+        // Central spine
+        ctx.strokeStyle = accentColor;
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(0, eH * 0.5);
+        ctx.lineTo(0, -eH * 0.45);
+        ctx.stroke();
+
+        // Cockpit
+        ctx.fillStyle = accentColor;
+        ctx.globalAlpha = 0.65;
+        ctx.beginPath();
+        ctx.ellipse(0, eH * 0.15, 3, 5, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+
+        // Rear speed boost vents (pulsing)
+        ctx.fillStyle = accentColor;
+        ctx.globalAlpha = 0.5 + Math.sin(enemy.enginePulse * 3) * 0.4;
+        ctx.fillRect(-eW * 0.12, -eH * 0.5, 3, 5);
+        ctx.fillRect(eW * 0.12 - 3, -eH * 0.5, 3, 5);
+        ctx.globalAlpha = 1;
+
+      } else if (enemy.type === 'shielded') {
+        // ═══════════════════════════════════════
+        // SHIELDED CRUISER — Armored with visible plating
+        // ═══════════════════════════════════════
+
+        // Main hull (bulky, angular)
+        ctx.fillStyle = baseHull;
+        ctx.strokeStyle = accentColor;
+        ctx.beginPath();
+        ctx.moveTo(0, eH * 0.52);
+        ctx.lineTo(eW * 0.2, eH * 0.42);
+        ctx.lineTo(eW * 0.42, eH * 0.05);
+        ctx.lineTo(eW * 0.4, -eH * 0.3);
+        ctx.lineTo(eW * 0.25, -eH * 0.52);
+        ctx.lineTo(-eW * 0.25, -eH * 0.52);
+        ctx.lineTo(-eW * 0.4, -eH * 0.3);
+        ctx.lineTo(-eW * 0.42, eH * 0.05);
+        ctx.lineTo(-eW * 0.2, eH * 0.42);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // Triple armor layer panels
+        ctx.fillStyle = panelMid;
+        // Top plate
+        ctx.beginPath();
+        ctx.moveTo(-eW * 0.2, -eH * 0.48);
+        ctx.lineTo(eW * 0.2, -eH * 0.48);
+        ctx.lineTo(eW * 0.32, -eH * 0.28);
+        ctx.lineTo(-eW * 0.32, -eH * 0.28);
+        ctx.closePath();
+        ctx.fill();
+        // Middle plate
+        ctx.fillStyle = panelDark;
+        ctx.beginPath();
+        ctx.moveTo(-eW * 0.36, -eH * 0.08);
+        ctx.lineTo(eW * 0.36, -eH * 0.08);
+        ctx.lineTo(eW * 0.34, eH * 0.12);
+        ctx.lineTo(-eW * 0.34, eH * 0.12);
+        ctx.closePath();
+        ctx.fill();
+
+        // Shield generator node (top center)
+        ctx.fillStyle = '#c084fc';
+        ctx.globalAlpha = 0.6 + Math.sin(enemy.enginePulse * 1.8) * 0.35;
+        ctx.beginPath();
+        ctx.arc(0, -eH * 0.35, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(0, -eH * 0.35, 1.8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+
+        // Hull panel lines
+        ctx.strokeStyle = accentColor;
+        ctx.lineWidth = 0.6;
+        ctx.globalAlpha = 0.3;
+        ctx.beginPath();
+        ctx.moveTo(-eW * 0.1, eH * 0.45);
+        ctx.lineTo(-eW * 0.1, -eH * 0.45);
+        ctx.moveTo(eW * 0.1, eH * 0.45);
+        ctx.lineTo(eW * 0.1, -eH * 0.45);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+
+        // Cockpit visor
+        ctx.fillStyle = accentColor;
+        ctx.globalAlpha = 0.5;
+        ctx.beginPath();
+        ctx.ellipse(0, eH * 0.2, 5, 3, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+
       } else {
-        // Standard Drone / Shielded Ship
+        // ═══════════════════════════════════════
+        // STANDARD DRONE — Basic attack craft
+        // ═══════════════════════════════════════
+
+        // Main hull (sleek wedge)
+        ctx.fillStyle = baseHull;
+        ctx.strokeStyle = accentColor;
         ctx.beginPath();
-        ctx.moveTo(0, enemy.height * 0.5);
-        ctx.lineTo(enemy.width * 0.4, -enemy.height * 0.2);
-        ctx.lineTo(enemy.width * 0.3, -enemy.height * 0.5);
-        ctx.lineTo(-enemy.width * 0.3, -enemy.height * 0.5);
-        ctx.lineTo(-enemy.width * 0.4, -enemy.height * 0.2);
+        ctx.moveTo(0, eH * 0.52);
+        ctx.lineTo(eW * 0.18, eH * 0.3);
+        ctx.lineTo(eW * 0.4, -eH * 0.15);
+        ctx.lineTo(eW * 0.32, -eH * 0.48);
+        ctx.lineTo(eW * 0.08, -eH * 0.52);
+        ctx.lineTo(-eW * 0.08, -eH * 0.52);
+        ctx.lineTo(-eW * 0.32, -eH * 0.48);
+        ctx.lineTo(-eW * 0.4, -eH * 0.15);
+        ctx.lineTo(-eW * 0.18, eH * 0.3);
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
+
+        // Inner dorsal plate
+        ctx.fillStyle = panelMid;
+        ctx.beginPath();
+        ctx.moveTo(0, eH * 0.42);
+        ctx.lineTo(eW * 0.12, eH * 0.22);
+        ctx.lineTo(eW * 0.24, -eH * 0.2);
+        ctx.lineTo(eW * 0.15, -eH * 0.42);
+        ctx.lineTo(-eW * 0.15, -eH * 0.42);
+        ctx.lineTo(-eW * 0.24, -eH * 0.2);
+        ctx.lineTo(-eW * 0.12, eH * 0.22);
+        ctx.closePath();
+        ctx.fill();
+
+        // Spine line
+        ctx.strokeStyle = accentColor;
+        ctx.lineWidth = 1;
+        ctx.globalAlpha = 0.5;
+        ctx.beginPath();
+        ctx.moveTo(0, eH * 0.45);
+        ctx.lineTo(0, -eH * 0.4);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+
+        // Cockpit
+        ctx.fillStyle = accentColor;
+        ctx.globalAlpha = 0.55;
+        ctx.beginPath();
+        ctx.ellipse(0, eH * 0.12, 3, 4.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+
+        // Lateral sensor nodes
+        ctx.fillStyle = accentColor;
+        ctx.globalAlpha = 0.4 + Math.sin(enemy.enginePulse * 1.5) * 0.3;
+        ctx.beginPath();
+        ctx.arc(-eW * 0.3, -eH * 0.2, 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(eW * 0.3, -eH * 0.2, 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
       }
 
       // Energy Shield Bubble if enemy has shield
