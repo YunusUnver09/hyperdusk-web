@@ -228,7 +228,8 @@ export class BattlefieldEngine {
     this.canvas.height = Math.round(this.height * this.dpr);
     this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
 
-    this.shieldBarrierY = this.height - 38;
+    // Energy barrier is positioned higher above the turret barrels
+    this.shieldBarrierY = this.height - 66;
     this.initStars(35);
 
     // Pre-cache background gradient once on resize
@@ -462,9 +463,13 @@ export class BattlefieldEngine {
     }
 
     const laneX = this.getLaneX(lane);
-    const turretY = this.shieldBarrierY + 12;
+    const laneWidth = this.getLaneWidth();
+    const socketY = this.height - 20;
+    const barrelLen = laneWidth * 0.44;
+    const muzzleTipY = socketY - barrelLen;
+    const turretY = socketY;
     const elemColor = GEM_ELEMENTS[type]?.color || '#00f3ff';
-    this.particles.addMuzzleBlast(laneX, this.shieldBarrierY - 6, elemColor);
+    this.particles.addMuzzleBlast(laneX, muzzleTipY, elemColor);
     const baseDmg = 85 * count * (1 + (combo - 1) * 0.35);
 
     const isCrit = Math.random() < this.upgrades.critChance;
@@ -1919,79 +1924,155 @@ export class BattlefieldEngine {
   private renderDefenseBarrier(ctx: CanvasRenderingContext2D) {
     const y = this.shieldBarrierY;
     const hpRatio = this.shieldHp / this.maxShieldHp;
-    const barrierColor = this.shieldHitFlash > 0 ? '#ff0055' : (hpRatio < 0.3 ? '#ffaa00' : '#00f3ff');
+    const isFlashing = this.shieldHitFlash > 0;
+    const barrierColor = isFlashing ? '#ff0055' : (hpRatio < 0.3 ? '#ffaa00' : '#00f3ff');
+    const laneWidth = this.getLaneWidth();
 
     if (this.kineticDeflectorTimer > 0) {
-      // ⚡ REAKTİF KİNETİK KALKAN (EMERALD-TURQUOISE DEFLECTOR BARRIER)
-      const pulse = 1 + Math.sin(Date.now() * 0.012) * 0.15;
+      // =========================================================
+      // ⚡ REAKTİF KİNETİK KALKAN (ULTRA-THICK EMERALD DEFLECTOR)
+      // =========================================================
+      const pulse = 1 + Math.sin(Date.now() * 0.012) * 0.12;
 
-      // Geniş parlak zümrüt dış aura
-      const auraGrad = ctx.createLinearGradient(0, y - 16, 0, y + 10);
+      // 1. Geniş Parlak Dış Zümrüt Plazma Aurası (32px)
+      const auraGrad = ctx.createLinearGradient(0, y - 20, 0, y + 16);
       auraGrad.addColorStop(0, 'rgba(20, 184, 166, 0)');
-      auraGrad.addColorStop(0.5, 'rgba(20, 184, 166, 0.45)');
-      auraGrad.addColorStop(1, 'rgba(15, 118, 110, 0.1)');
+      auraGrad.addColorStop(0.3, 'rgba(45, 212, 191, 0.35)');
+      auraGrad.addColorStop(0.5, 'rgba(20, 184, 166, 0.65)');
+      auraGrad.addColorStop(0.7, 'rgba(15, 118, 110, 0.35)');
+      auraGrad.addColorStop(1, 'rgba(15, 118, 110, 0)');
       ctx.fillStyle = auraGrad;
-      ctx.fillRect(0, y - 16, this.width, 26);
+      ctx.fillRect(0, y - 20, this.width, 36);
 
-      // Kinetik piezoelektrik titreşim çizgisi
+      // 2. Üst ve Alt Kinetik Kılavuz İletken Hatları (Dual Heavy Rails)
       ctx.strokeStyle = '#2dd4bf';
-      ctx.lineWidth = 6 * pulse;
-      ctx.globalAlpha = 0.85;
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(this.width, y);
-      ctx.stroke();
-
-      // Kesikli yüksek enerji akım halkası
-      ctx.save();
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 2;
-      ctx.setLineDash([12, 10]);
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(this.width, y);
-      ctx.stroke();
-      ctx.restore();
-
-      // Kalkan Bilgi Göstergesi (Counter-Attack Aktif Rozeti)
-      ctx.save();
-      ctx.fillStyle = '#0f766e';
-      ctx.strokeStyle = '#2dd4bf';
-      ctx.lineWidth = 1.5;
-      const badgeW = 230;
-      const badgeX = (this.width - badgeW) / 2;
-      ctx.fillRect(badgeX, y - 26, badgeW, 18);
-      ctx.strokeRect(badgeX, y - 26, badgeW, 18);
-
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 10px Rajdhani, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(`⚡ KİNETİK TERS VURUŞ [2X]: ${this.kineticDeflectorTimer.toFixed(1)}s ⚡`, this.width / 2, y - 13);
-      ctx.restore();
-    } else {
-      // Normal Barrier
-      // Outer glow line
-      ctx.strokeStyle = barrierColor;
-      ctx.lineWidth = 4;
-      ctx.globalAlpha = 0.35;
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(this.width, y);
-      ctx.stroke();
-
-      // Core bright barrier line
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 1.5;
+      ctx.lineWidth = 3.5;
       ctx.globalAlpha = 0.9;
+      // Üst Hat
+      ctx.beginPath();
+      ctx.moveTo(0, y - 7);
+      ctx.lineTo(this.width, y - 7);
+      ctx.stroke();
+      // Alt Hat
+      ctx.beginPath();
+      ctx.moveTo(0, y + 7);
+      ctx.lineTo(this.width, y + 7);
+      ctx.stroke();
+
+      // 3. Kalın Yüksek Yoğunluklu Piezoelektrik Merkez Lazer Çekirdeği (Thick Solid Core)
+      ctx.strokeStyle = '#14b8a6';
+      ctx.lineWidth = 10 * pulse;
+      ctx.globalAlpha = 0.55;
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(this.width, y);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 4.5;
+      ctx.globalAlpha = 0.95;
       ctx.beginPath();
       ctx.moveTo(0, y);
       ctx.lineTo(this.width, y);
       ctx.stroke();
       ctx.globalAlpha = 1;
 
-      // Energetic pulse overlay on barrier
-      ctx.fillStyle = this.shieldHitFlash > 0 ? 'rgba(255, 0, 85, 0.25)' : 'rgba(0, 243, 255, 0.08)';
-      ctx.fillRect(0, y, this.width, 5);
+      // 4. Şeritlerdeki Kristal Kinetik Reaktör Düğümleri (Hex Emitter Nodes)
+      for (let i = 0; i <= NUM_LANES; i++) {
+        const nx = i * laneWidth;
+        ctx.fillStyle = '#0f766e';
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(nx, y, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#2dd4bf';
+        ctx.beginPath();
+        ctx.arc(nx, y, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // 5. Kalkan Bilgi Göstergesi (Counter-Attack Aktif Rozeti)
+      ctx.save();
+      ctx.fillStyle = '#042f2e';
+      ctx.strokeStyle = '#2dd4bf';
+      ctx.lineWidth = 1.8;
+      const badgeW = 240;
+      const badgeX = (this.width - badgeW) / 2;
+      ctx.fillRect(badgeX, y - 28, badgeW, 20);
+      ctx.strokeRect(badgeX, y - 28, badgeW, 20);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 11px Rajdhani, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(`⚡ KİNETİK TERS VURUŞ [2X]: ${this.kineticDeflectorTimer.toFixed(1)}s ⚡`, this.width / 2, y - 14);
+      ctx.restore();
+    } else {
+      // =========================================================
+      // 🛡️ NORMAL SAVUNMA BARİYERİ (THICK HIGH-TECH FORCEFIELD)
+      // =========================================================
+      const auraHeight = isFlashing ? 30 : 24;
+
+      // 1. Geniş Dış Plazma Işıma Aurası (Outer Plasma Aura Glow)
+      const auraGrad = ctx.createLinearGradient(0, y - auraHeight * 0.5, 0, y + auraHeight * 0.5);
+      auraGrad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+      auraGrad.addColorStop(0.5, isFlashing ? 'rgba(255, 0, 85, 0.45)' : 'rgba(0, 243, 255, 0.28)');
+      auraGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = auraGrad;
+      ctx.fillRect(0, y - auraHeight * 0.5, this.width, auraHeight);
+
+      // 2. Üst ve Alt Manyetik Muhafaza Rayları (Dual Containment Rails)
+      ctx.strokeStyle = barrierColor;
+      ctx.lineWidth = 2.5;
+      ctx.globalAlpha = 0.8;
+      // Üst Ray
+      ctx.beginPath();
+      ctx.moveTo(0, y - 5);
+      ctx.lineTo(this.width, y - 5);
+      ctx.stroke();
+      // Alt Ray
+      ctx.beginPath();
+      ctx.moveTo(0, y + 5);
+      ctx.lineTo(this.width, y + 5);
+      ctx.stroke();
+
+      // 3. Kalın Parlak Manyetik Plazma Çizgisi (Thick Glowing Barrier Core)
+      ctx.strokeStyle = barrierColor;
+      ctx.lineWidth = 8;
+      ctx.globalAlpha = isFlashing ? 0.8 : 0.45;
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(this.width, y);
+      ctx.stroke();
+
+      // Beyaz Sıcak Çekirdek Lazer Çizgisi
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 3.5;
+      ctx.globalAlpha = 0.95;
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(this.width, y);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+
+      // 4. Şerit Ayrım Reaktör Düğümleri (Diamond Node Crystals)
+      for (let i = 0; i <= NUM_LANES; i++) {
+        const nx = i * laneWidth;
+        ctx.fillStyle = isFlashing ? '#ff0055' : '#082f49';
+        ctx.strokeStyle = barrierColor;
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.arc(nx, y, 4.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(nx, y, 1.8, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
   }
 
@@ -2024,7 +2105,7 @@ export class BattlefieldEngine {
 
   private renderTurrets(ctx: CanvasRenderingContext2D) {
     const laneWidth = this.getLaneWidth();
-    const socketY = this.shieldBarrierY + 12;
+    const socketY = this.height - 20;
 
     for (let i = 0; i < NUM_LANES; i++) {
       const cx = this.getLaneX(i);
