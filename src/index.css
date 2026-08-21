@@ -604,15 +604,16 @@ body {
   position: absolute;
   inset: 0;
   display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  grid-template-rows: repeat(8, 1fr);
-  gap: 3.5px;
-  padding: 4.5px;
+  grid-template-columns: repeat(8, 12.5%);
+  grid-template-rows: repeat(8, 12.5%);
+  gap: 0;
+  padding: 0;
   pointer-events: none;
 }
 
 .grid-slot-cell {
   position: relative;
+  margin: 2.5px;
   background: radial-gradient(circle at 50% 38%, #060914 15%, #0b1022 65%, #12182e 100%);
   border-radius: 9px;
   border: 1.2px solid rgba(0, 243, 255, 0.16);
@@ -624,13 +625,17 @@ body {
     inset 0 -1px 2px rgba(0, 243, 255, 0.1),
     0 1px 3px rgba(0, 0, 0, 0.7);
   overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Inner Concave Spherical Core Docking Nest */
 .grid-slot-cell::after {
   content: '';
   position: absolute;
-  inset: 2.5px;
+  width: 76%;
+  height: 76%;
   border-radius: 50%;
   border: 1px solid rgba(0, 243, 255, 0.1);
   box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.9);
@@ -656,7 +661,7 @@ body {
 .match3-gems-layer {
   position: absolute;
   inset: 0;
-  padding: 4px;
+  padding: 0;
   width: 100%;
   height: 100%;
   z-index: 5;
@@ -669,7 +674,10 @@ body {
   left: 0;
   width: 12.5%;
   height: 12.5%;
-  padding: 4.5px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   will-change: transform, opacity;
   box-sizing: border-box;
 }
@@ -680,8 +688,8 @@ body {
 /* ========================================================= */
 .gem-tile {
   position: relative;
-  width: 100%;
-  height: 100%;
+  width: 78%;
+  height: 78%;
   display: flex;
   justify-content: center;
   align-items: center;
