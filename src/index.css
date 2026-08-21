@@ -678,12 +678,12 @@ body {
   align-items: center;
   border-radius: 50%;
   cursor: pointer;
-  border: 1.6px solid rgba(255, 255, 255, 0.24);
+  border: 1.5px solid rgba(15, 23, 42, 0.9);
   box-shadow:
-    inset 0 3px 5px rgba(255, 255, 255, 0.42),
-    inset 0 -4px 7px rgba(0, 0, 0, 0.85),
-    0 4px 10px rgba(0, 0, 0, 0.55),
-    0 0 12px color-mix(in srgb, var(--core-color, #00f3ff) 26%, transparent);
+    inset 0 2px 4px rgba(255, 255, 255, 0.28),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.65),
+    0 4px 10px rgba(0, 0, 0, 0.5),
+    0 0 10px color-mix(in srgb, var(--core-color, #00f3ff) 22%, transparent);
   transition: transform 0.18s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.18s ease, opacity 0.2s ease;
   will-change: transform;
   user-select: none;
@@ -694,16 +694,15 @@ body {
   transform: scale(0.88);
 }
 
-/* Polished Satin-Chrome Specular Highlight */
+/* Subtle Satin Surface Highlight */
 .sphere-specular-gloss {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   border-radius: 50%;
-  background:
-    radial-gradient(ellipse at 32% 22%, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.12) 35%, transparent 60%),
-    radial-gradient(ellipse at 68% 76%, rgba(255, 255, 255, 0.18) 0%, transparent 40%),
-    linear-gradient(135deg, rgba(255, 255, 255, 0.22) 0%, transparent 45%, rgba(0, 0, 0, 0.6) 80%, rgba(255, 255, 255, 0.15) 100%);
-  box-shadow: inset 0 1.5px 2px rgba(255, 255, 255, 0.55), inset 0 -2px 3px rgba(0, 0, 0, 0.7);
+  background: radial-gradient(circle at 30% 25%, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.04) 45%, rgba(0, 0, 0, 0.35) 100%);
   pointer-events: none;
   z-index: 2;
 }
@@ -740,15 +739,21 @@ body {
   }
 }
 
-/* Engraved / Recessed Metallic Icon Core */
+/* Engraved / Recessed Metallic Icon Core (Bold High-Contrast Readability) */
 .sphere-icon-wrap {
   position: relative;
   z-index: 4;
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0.92;
-  filter: drop-shadow(0 -1px 0 rgba(0, 0, 0, 0.95)) drop-shadow(0 0 3.5px color-mix(in srgb, var(--core-color, #00f3ff) 50%, transparent));
+  opacity: 1;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 4px rgba(255, 255, 255, 0.65));
+}
+
+.sphere-icon-wrap svg {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.9));
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 /* Selected State */
@@ -864,186 +869,207 @@ body {
 }
 
 /* ========================================================= */
-/* 🎨 21 DISTINCT ANODIZED SATIN METALLIC TEXTURES           */
+/* 🎨 21 DISTINCT SATIN/BRUSHED METALLIC TEXTURES            */
 /* ========================================================= */
 
-/* 1. Plasma: Anodize Yakut Metali */
+/* 1. Plasma: Koyu Yakut Kırmızısı (#DC2626 -> #991B1B) */
 .gem-tile.plasma {
   --core-color: #dc2626;
   --core-bright: #fca5a5;
-  background: radial-gradient(circle at 35% 30%, #ff6b6b 0%, #dc2626 32%, #991b1b 62%, #450a0a 88%, #7f1d1d 100%);
-  border-color: rgba(254, 202, 202, 0.4);
+  background: linear-gradient(135deg, #dc2626 0%, #991b1b 60%, #450a0a 100%);
+  border-color: #450a0a;
+  box-shadow: inset 0 2px 4px rgba(254, 202, 202, 0.3), inset 0 -3px 6px rgba(0, 0, 0, 0.65), 0 4px 8px rgba(0, 0, 0, 0.4);
 }
 
-/* 2. Cryo: Anodize Arktik Titanyum */
+/* 2. Cryo: Buzul / Arktik Camgöbeği (#06B6D4 -> #0891B2) */
 .gem-tile.cryo {
   --core-color: #06b6d4;
   --core-bright: #a5f3fc;
-  background: radial-gradient(circle at 35% 30%, #67e8f9 0%, #06b6d4 32%, #0891b2 62%, #164e63 88%, #155e75 100%);
-  border-color: rgba(165, 243, 252, 0.4);
+  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 60%, #164e63 100%);
+  border-color: #164e63;
+  box-shadow: inset 0 2px 4px rgba(207, 250, 254, 0.3), inset 0 -3px 6px rgba(0, 0, 0, 0.65), 0 4px 8px rgba(0, 0, 0, 0.4);
 }
 
-/* 3. Electric: Fırçalanmış Elektrik Pirinci */
+/* 3. Electric: Mat Elektrik Sarısı (#FACC15 -> #CA8A04) */
 .gem-tile.electric {
   --core-color: #facc15;
   --core-bright: #fef08a;
-  background: radial-gradient(circle at 35% 30%, #fef08a 0%, #facc15 32%, #ca8a04 62%, #713f12 88%, #a16207 100%);
-  border-color: rgba(254, 240, 138, 0.4);
+  background: linear-gradient(135deg, #facc15 0%, #ca8a04 60%, #713f12 100%);
+  border-color: #713f12;
+  box-shadow: inset 0 2px 4px rgba(254, 240, 138, 0.35), inset 0 -3px 6px rgba(0, 0, 0, 0.65), 0 4px 8px rgba(0, 0, 0, 0.4);
 }
 
-/* 4. Void: Koyu Ametist Çeliği */
+/* 4. Void: Tok Koyu Mor / Ametist (#9333EA -> #581C87) */
 .gem-tile.void {
   --core-color: #9333ea;
   --core-bright: #e9d5ff;
-  background: radial-gradient(circle at 35% 30%, #c084fc 0%, #9333ea 32%, #581c87 62%, #2e1065 88%, #6b21a8 100%);
-  border-color: rgba(233, 213, 255, 0.4);
+  background: linear-gradient(135deg, #9333ea 0%, #581c87 60%, #2e1065 100%);
+  border-color: #2e1065;
+  box-shadow: inset 0 2px 4px rgba(233, 213, 255, 0.3), inset 0 -3px 6px rgba(0, 0, 0, 0.65), 0 4px 8px rgba(0, 0, 0, 0.4);
 }
 
-/* 5. Explosive: Dövme Lav Bakırı */
+/* 5. Explosive: Mat Lav Turuncusu (#EA580C -> #9A3412) */
 .gem-tile.explosive {
   --core-color: #ea580c;
   --core-bright: #fed7aa;
-  background: radial-gradient(circle at 35% 30%, #fb923c 0%, #ea580c 32%, #9a3412 62%, #431407 88%, #c2410c 100%);
-  border-color: rgba(254, 215, 170, 0.4);
+  background: linear-gradient(135deg, #ea580c 0%, #9a3412 60%, #431407 100%);
+  border-color: #431407;
+  box-shadow: inset 0 2px 4px rgba(254, 215, 170, 0.3), inset 0 -3px 6px rgba(0, 0, 0, 0.65), 0 4px 8px rgba(0, 0, 0, 0.4);
 }
 
-/* 6. Nano: Zümrüt Alaşımı */
+/* 6. Nano: Zümrüt Yeşili (#10B981 -> #047857) */
 .gem-tile.nano {
   --core-color: #10b981;
   --core-bright: #a7f3d0;
-  background: radial-gradient(circle at 35% 30%, #34d399 0%, #10b981 32%, #047857 62%, #064e3b 88%, #065f46 100%);
-  border-color: rgba(167, 243, 208, 0.4);
+  background: linear-gradient(135deg, #10b981 0%, #047857 60%, #064e3b 100%);
+  border-color: #064e3b;
+  box-shadow: inset 0 2px 4px rgba(167, 243, 208, 0.3), inset 0 -3px 6px rgba(0, 0, 0, 0.65), 0 4px 8px rgba(0, 0, 0, 0.4);
 }
 
-/* 7. Solaris: Parlak Kehribar Pirinci */
+/* 7. Solaris: Parlak Pirinç / Kehribar (#D97706 -> #78350F) */
 .gem-tile.solaris {
   --core-color: #d97706;
   --core-bright: #fde68a;
-  background: radial-gradient(circle at 35% 30%, #fbbf24 0%, #d97706 32%, #78350f 62%, #451a03 88%, #92400e 100%);
-  border-color: rgba(253, 230, 138, 0.4);
+  background: linear-gradient(135deg, #d97706 0%, #78350f 60%, #451a03 100%);
+  border-color: #451a03;
+  box-shadow: inset 0 2px 4px rgba(253, 230, 138, 0.3), inset 0 -3px 6px rgba(0, 0, 0, 0.65), 0 4px 8px rgba(0, 0, 0, 0.4);
 }
 
-/* 8. Antimatter: Macenta Plazma Alaşımı */
+/* 8. Antimatter: Tok Macenta / Fuşya (#DB2777 -> #831843) */
 .gem-tile.antimatter {
   --core-color: #db2777;
   --core-bright: #fbcfe8;
-  background: radial-gradient(circle at 35% 30%, #f472b6 0%, #db2777 32%, #831843 62%, #4c0519 88%, #9d174d 100%);
-  border-color: rgba(251, 207, 232, 0.4);
+  background: linear-gradient(135deg, #db2777 0%, #831843 60%, #4c0519 100%);
+  border-color: #4c0519;
+  box-shadow: inset 0 2px 4px rgba(251, 207, 232, 0.3), inset 0 -3px 6px rgba(0, 0, 0, 0.65), 0 4px 8px rgba(0, 0, 0, 0.4);
 }
 
-/* 9. Chronos: Kobalt Çeliği */
+/* 9. Chronos: Çelik Mavisi / Kobalt (#2563EB -> #1E3A8A) */
 .gem-tile.chronos {
   --core-color: #2563eb;
   --core-bright: #bfdbfe;
-  background: radial-gradient(circle at 35% 30%, #60a5fa 0%, #2563eb 32%, #1e3a8a 62%, #172554 88%, #1e40af 100%);
-  border-color: rgba(191, 219, 254, 0.4);
+  background: linear-gradient(135deg, #2563eb 0%, #1e3a8a 60%, #172554 100%);
+  border-color: #172554;
+  box-shadow: inset 0 2px 4px rgba(191, 219, 254, 0.3), inset 0 -3px 6px rgba(0, 0, 0, 0.65), 0 4px 8px rgba(0, 0, 0, 0.4);
 }
 
-/* 10. Toxic: Asidik Krom Yeşili */
+/* 10. Toxic: Asit / Zehir Yeşili (#84CC16 -> #4D7C0F) */
 .gem-tile.toxic {
   --core-color: #84cc16;
   --core-bright: #d9f99d;
-  background: radial-gradient(circle at 35% 30%, #a3e635 0%, #84cc16 32%, #4d7c0f 62%, #1a2e05 88%, #3f6212 100%);
-  border-color: rgba(217, 249, 157, 0.4);
+  background: linear-gradient(135deg, #84cc16 0%, #4d7c0f 60%, #1a2e05 100%);
+  border-color: #1a2e05;
+  box-shadow: inset 0 2px 4px rgba(217, 249, 157, 0.3), inset 0 -3px 6px rgba(0, 0, 0, 0.65), 0 4px 8px rgba(0, 0, 0, 0.4);
 }
 
-/* 11. Gravity: Gece Mavisi Titanyum */
+/* 11. Gravity: İndigo / Gece Mavisi (#4F46E5 -> #312E81) */
 .gem-tile.gravity {
   --core-color: #4f46e5;
   --core-bright: #c7d2fe;
-  background: radial-gradient(circle at 35% 30%, #818cf8 0%, #4f46e5 32%, #312e81 62%, #1e1b4b 88%, #3730a3 100%);
-  border-color: rgba(199, 210, 254, 0.4);
+  background: linear-gradient(135deg, #4f46e5 0%, #312e81 60%, #1e1b4b 100%);
+  border-color: #1e1b4b;
+  box-shadow: inset 0 2px 4px rgba(199, 210, 254, 0.3), inset 0 -3px 6px rgba(0, 0, 0, 0.65), 0 4px 8px rgba(0, 0, 0, 0.4);
 }
 
-/* 12. Vampiric: Derin Bordo Gül Çeliği */
+/* 12. Vampiric: Koyu Bordo / Gül Ağacı (#BE123C -> #4C0519) */
 .gem-tile.vampiric {
   --core-color: #be123c;
   --core-bright: #fecdd3;
-  background: radial-gradient(circle at 35% 30%, #fb7185 0%, #be123c 32%, #4c0519 62%, #240007 88%, #881337 100%);
-  border-color: rgba(254, 205, 211, 0.4);
+  background: linear-gradient(135deg, #be123c 0%, #4c0519 60%, #240007 100%);
+  border-color: #240007;
+  box-shadow: inset 0 2px 4px rgba(254, 205, 211, 0.3), inset 0 -3px 6px rgba(0, 0, 0, 0.65), 0 4px 8px rgba(0, 0, 0, 0.4);
 }
 
-/* 13. Prism: Platin İnci Metali */
+/* 13. Prism: Opak Platin / İnci Beyazı (#F1F5F9 -> #94A3B8) */
 .gem-tile.prism {
   --core-color: #94a3b8;
   --core-bright: #ffffff;
-  background: radial-gradient(circle at 35% 30%, #ffffff 0%, #e2e8f0 32%, #94a3b8 62%, #334155 88%, #64748b 100%);
-  border-color: rgba(255, 255, 255, 0.6);
+  background: linear-gradient(135deg, #f1f5f9 0%, #94a3b8 60%, #475569 100%);
+  border-color: #475569;
+  box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.45), inset 0 -3px 6px rgba(0, 0, 0, 0.65), 0 4px 8px rgba(0, 0, 0, 0.4);
 }
 
-/* 14. Anchor: Dövme Antik Bronz */
+/* 14. Anchor: Oksitlenmiş Bronz / Kahve (#854D0E -> #451A03) */
 .gem-tile.anchor {
   --core-color: #b45309;
   --core-bright: #fef08a;
-  background: radial-gradient(circle at 35% 30%, #d97706 0%, #b45309 32%, #78350f 62%, #240c02 88%, #92400e 100%);
-  border-color: rgba(254, 240, 138, 0.4);
+  background: linear-gradient(135deg, #854d0e 0%, #451a03 60%, #240c02 100%);
+  border-color: #240c02;
+  box-shadow: inset 0 2px 4px rgba(254, 240, 138, 0.3), inset 0 -3px 6px rgba(0, 0, 0, 0.65), 0 4px 8px rgba(0, 0, 0, 0.4);
 }
 
-/* 15. Echo: Fırçalanmış Parlak Krom */
+/* 15. Echo: Fırçalanmış Krom / Gümüş (#CBD5E1 -> #64748B) */
 .gem-tile.echo {
   --core-color: #94a3b8;
   --core-bright: #f8fafc;
-  background: radial-gradient(circle at 35% 30%, #ffffff 0%, #cbd5e1 32%, #64748b 62%, #1e293b 88%, #475569 100%);
-  border-color: rgba(248, 250, 252, 0.55);
+  background: linear-gradient(135deg, #cbd5e1 0%, #64748b 60%, #334155 100%);
+  border-color: #334155;
+  box-shadow: inset 0 2px 4px rgba(248, 250, 252, 0.4), inset 0 -3px 6px rgba(0, 0, 0, 0.65), 0 4px 8px rgba(0, 0, 0, 0.4);
 }
 
-/* 16. Wormhole: Petrol Turkuazı Titanyum */
+/* 16. Wormhole: Koyu Turkuaz / Petrol Mavisi (#0F766E -> #134E4A) */
 .gem-tile.wormhole {
   --core-color: #0f766e;
   --core-bright: #99f6e4;
-  background: radial-gradient(circle at 35% 30%, #2dd4bf 0%, #0f766e 32%, #134e4a 62%, #042f2e 88%, #115e59 100%);
-  border-color: rgba(153, 246, 228, 0.4);
+  background: linear-gradient(135deg, #0f766e 0%, #134e4a 60%, #042f2e 100%);
+  border-color: #042f2e;
+  box-shadow: inset 0 2px 4px rgba(153, 246, 228, 0.3), inset 0 -3px 6px rgba(0, 0, 0, 0.65), 0 4px 8px rgba(0, 0, 0, 0.4);
 }
 
-/* 17. Parasite: Koyu Patlıcan Çeliği */
+/* 17. Parasite: Tok Patlıcan Moru (#701A75 -> #4A044E) */
 .gem-tile.parasite {
   --core-color: #701a75;
   --core-bright: #f5d0fe;
-  background: radial-gradient(circle at 35% 30%, #e879f9 0%, #701a75 32%, #4a044e 62%, #240028 88%, #581c87 100%);
-  border-color: rgba(245, 208, 254, 0.4);
+  background: linear-gradient(135deg, #701a75 0%, #4a044e 60%, #240028 100%);
+  border-color: #240028;
+  box-shadow: inset 0 2px 4px rgba(245, 208, 254, 0.3), inset 0 -3px 6px rgba(0, 0, 0, 0.65), 0 4px 8px rgba(0, 0, 0, 0.4);
 }
 
-/* 18. Deflector: Nane Akuamarin Metali */
+/* 18. Deflector: Nane Yeşili / Akuamarin (#14B8A6 -> #0F766E) */
 .gem-tile.deflector {
   --core-color: #14b8a6;
   --core-bright: #a7f3d0;
-  background: radial-gradient(circle at 35% 30%, #2dd4bf 0%, #14b8a6 32%, #0f766e 62%, #042f2e 88%, #134e4a 100%);
-  border-color: rgba(167, 243, 208, 0.4);
+  background: linear-gradient(135deg, #14b8a6 0%, #0f766e 60%, #042f2e 100%);
+  border-color: #042f2e;
+  box-shadow: inset 0 2px 4px rgba(167, 243, 208, 0.3), inset 0 -3px 6px rgba(0, 0, 0, 0.65), 0 4px 8px rgba(0, 0, 0, 0.4);
 }
 
-/* 19. Static Web: Lapis Safir Çeliği */
+/* 19. Static Web: Lapis / Safir Mavisi (#0284C7 -> #0369A1) */
 .gem-tile.static_web {
   --core-color: #0284c7;
   --core-bright: #bae6fd;
-  background: radial-gradient(circle at 35% 30%, #38bdf8 0%, #0284c7 32%, #0369a1 62%, #082f49 88%, #075985 100%);
-  border-color: rgba(186, 230, 253, 0.4);
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 60%, #082f49 100%);
+  border-color: #082f49;
+  box-shadow: inset 0 2px 4px rgba(186, 230, 253, 0.3), inset 0 -3px 6px rgba(0, 0, 0, 0.65), 0 4px 8px rgba(0, 0, 0, 0.4);
 }
 
-/* 20. Orbital Drone: Askeri Karbon Çeliği */
+/* 20. Orbital Drone: Askeri Tunç / Koyu Çelik (#475569 -> #1E293B) */
 .gem-tile.orbital_drone {
   --core-color: #64748b;
   --core-bright: #e2e8f0;
-  background: radial-gradient(circle at 35% 30%, #94a3b8 0%, #64748b 32%, #334155 62%, #0f172a 88%, #1e293b 100%);
-  border-color: rgba(226, 232, 240, 0.4);
+  background: linear-gradient(135deg, #475569 0%, #1e293b 60%, #0f172a 100%);
+  border-color: #0f172a;
+  box-shadow: inset 0 2px 4px rgba(226, 232, 240, 0.3), inset 0 -3px 6px rgba(0, 0, 0, 0.65), 0 4px 8px rgba(0, 0, 0, 0.4);
 }
 
-/* 21. Supernova: Akkor Altın Alaşımı */
+/* 21. Supernova: Sıcak Altın / Şampanya (#FDE047 -> #B45309) */
 .gem-tile.supernova {
   --core-color: #eab308;
   --core-bright: #fef08a;
-  background: radial-gradient(circle at 35% 30%, #fef08a 0%, #fde047 32%, #b45309 62%, #451a03 88%, #d97706 100%);
-  border-color: rgba(254, 249, 195, 0.45);
+  background: linear-gradient(135deg, #fde047 0%, #b45309 60%, #713f12 100%);
+  border-color: #713f12;
+  box-shadow: inset 0 2px 4px rgba(254, 249, 195, 0.35), inset 0 -3px 6px rgba(0, 0, 0, 0.65), 0 4px 8px rgba(0, 0, 0, 0.4);
 }
 
 /* Hyper-Cube / Prismatic Cosmic Sphere */
 .gem-tile.hyper-cube {
   --core-color: #00f3ff;
   --core-bright: #ffffff;
-  background: radial-gradient(circle at 35% 30%, #ffffff 0%, #00f3ff 25%, #ec4899 50%, #8b5cf6 75%, #0f172a 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #00f3ff 25%, #ec4899 50%, #8b5cf6 75%, #0f172a 100%);
   background-size: 200% 200%;
   animation: rainbow-shine 2s linear infinite;
-  box-shadow: inset 0 3px 6px rgba(255, 255, 255, 0.65), inset 0 -4px 7px rgba(0, 0, 0, 0.8), 0 0 16px #ffffff;
-  border-color: rgba(255, 255, 255, 0.8);
+  box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.5), inset 0 -3px 6px rgba(0, 0, 0, 0.65), 0 0 12px #ffffff;
+  border-color: #ffffff;
 }
 
 /* ========================================================= */
