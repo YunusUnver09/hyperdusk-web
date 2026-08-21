@@ -144,6 +144,30 @@ export class BattlefieldEngine {
     energyRechargeRate: 1
   };
 
+  public coreUpgradeLevels: Record<GemType, number> = {
+    plasma: 0,
+    cryo: 0,
+    electric: 0,
+    void: 0,
+    explosive: 0,
+    nano: 0,
+    solaris: 0,
+    antimatter: 0,
+    chronos: 0,
+    toxic: 0,
+    gravity: 0,
+    vampiric: 0,
+    prism: 0,
+    anchor: 0,
+    echo: 0,
+    wormhole: 0,
+    parasite: 0,
+    static_web: 0,
+    orbital_drone: 0,
+    supernova: 0,
+    deflector: 0
+  };
+
   public stats: GameStats = {
     score: 0,
     highScore: 0,
@@ -883,11 +907,25 @@ export class BattlefieldEngine {
         break;
       }
       case 'echo': {
-        // Echo Replicator: Replicate previous core weapon at 120% power
+        // Echo Replicator: Replicate previous core weapon (Tier 1: %160 power, Tier 2: neighbor lane, Tier 3: hyper cube)
         const replicated = (this.lastTriggeredElement === 'echo' || !this.lastTriggeredElement) ? 'plasma' : this.lastTriggeredElement;
-        this.particles.addFloatingText(laneX, turretY - 35, `ECHO (%120): ${GEM_ELEMENTS[replicated].turkishName.toUpperCase()}`, '#f8fafc', true);
+        const echoMult = this.upgrades.echoPowerMult || 1.2;
+        const displayPercent = Math.round(echoMult * 100);
+        this.particles.addFloatingText(laneX, turretY - 35, `ECHO (%${displayPercent}): ${GEM_ELEMENTS[replicated].turkishName.toUpperCase()}`, '#f8fafc', true);
         soundManager.playMatch(Math.min(5, combo + 1));
-        this.fireLaneWeapons(lane, replicated, Math.max(1, Math.round(count * 1.2)), specialCount, combo);
+        this.fireLaneWeapons(lane, replicated, Math.max(1, Math.round(count * echoMult)), specialCount, combo);
+
+        // Tier 2: Neighbor Lane Echo
+        if (this.upgrades.echoNeighborLane) {
+          const neighborLane = (lane + 1 < NUM_LANES) ? lane + 1 : lane - 1;
+          this.fireLaneWeapons(neighborLane, replicated, Math.max(1, Math.round(count * echoMult * 0.7)), 0, combo);
+        }
+
+        // Tier 3: Drop a Joker Hyper-Cube Sparkle
+        if (this.upgrades.echoSpawnHyperCube) {
+          this.particles.addFloatingText(laneX, turretY - 55, '✨ JOKER ENERJİ KÜRESİ!', '#ffd000', true);
+          this.particles.addLaserImpact(laneX, turretY - 20, '#ffd000', 14);
+        }
         break;
       }
       case 'wormhole': {
@@ -952,10 +990,10 @@ export class BattlefieldEngine {
         break;
       }
       case 'static_web': {
-        // Static Web: Deploy 3 Magnetic Mines in Lane
+        // Static Web: Deploy 3 or 5 Magnetic Mines in Lane
         const finalDamage = baseDmg * 0.85 * critMult;
         soundManager.playEmpWave();
-        const mineYs = [85, 140, 195];
+        const mineYs = this.upgrades.staticWebMineCount === 5 ? [55, 95, 135, 175, 215] : [85, 140, 195];
 
         for (const mY of mineYs) {
           this.staticMines.push({
@@ -972,40 +1010,46 @@ export class BattlefieldEngine {
           this.particles.addLaserImpact(laneX, mY, '#0284c7', 6);
         }
 
-        this.particles.addFloatingText(laneX, 140, 'STATIC WEB ARMED (x3)', '#0284c7', true);
+        const countText = this.upgrades.staticWebMineCount === 5 ? 'x5' : 'x3';
+        this.particles.addFloatingText(laneX, 140, `STATIC WEB ARMED (${countText})`, '#0284c7', true);
         break;
       }
       case 'orbital_drone': {
-        // Yörünge Uydusu (Orbital Drone Carrier): Deploys an autonomous combat satellite (8s duration)
-        // Patrols lanes and fires rapid machine-gun plasma bullets at closest enemies to shield
+        // Yörünge Uydusu: 1 or 2 autonomous combat satellites (8s / 12s duration)
+        const droneCount = this.upgrades.orbitalDroneDual ? 2 : 1;
+        const maxLife = this.upgrades.orbitalDroneDuration || 8.0;
+        const fireInterval = 0.16 / (this.upgrades.orbitalDroneFireRate || 1.0);
         const bulletDamage = (baseDmg * 0.32 + 35) * critMult;
         soundManager.playLaser();
 
-        this.orbitalDrones.push({
-          id: `drone_${Date.now()}_${Math.random()}`,
-          x: laneX,
-          y: this.shieldBarrierY - 60,
-          targetX: laneX,
-          targetY: this.shieldBarrierY - 60,
-          patrolDir: Math.random() > 0.5 ? 1 : -1,
-          life: 0,
-          maxLife: 8.0,
-          fireTimer: 0,
-          fireInterval: 0.16,
-          bulletDamage,
-          angle: -Math.PI / 2,
-          targetEnemyId: null
-        });
+        for (let d = 0; d < droneCount; d++) {
+          this.orbitalDrones.push({
+            id: `drone_${Date.now()}_${d}_${Math.random()}`,
+            x: laneX + (d === 1 ? 40 : 0),
+            y: this.shieldBarrierY - 60,
+            targetX: laneX,
+            targetY: this.shieldBarrierY - 60,
+            patrolDir: d === 1 ? -1 : 1,
+            life: 0,
+            maxLife,
+            fireTimer: 0,
+            fireInterval,
+            bulletDamage,
+            angle: -Math.PI / 2,
+            targetEnemyId: null
+          });
+        }
 
         this.particles.triggerScreenShake(3, 0.15);
-        this.particles.addFloatingText(laneX, this.shieldBarrierY - 75, 'DRON KONUŞLANDI (8s)!', '#94a3b8', true);
+        const durText = Math.round(maxLife);
+        this.particles.addFloatingText(laneX, this.shieldBarrierY - 75, `DRON FİLOSU (${droneCount}x, ${durText}s)!`, '#94a3b8', true);
         this.particles.addLaserImpact(laneX, this.shieldBarrierY - 60, '#38bdf8', 12);
         break;
       }
       case 'supernova': {
-        // Süpernova Çekirdeği (Supernova Implosion): Şeridin ortasına hızla şişen bir mini yıldız fırlatır.
-        // Yıldız 2s boyunca etrafındaki düşmanları/maddeleri kendine çeker; ardından ekrandaki tüm düşmanları kör edip dev patlamayla infilak eder.
-        const finalDamage = baseDmg * 1.65 * critMult;
+        // Süpernova Çekirdeği: Mini yıldız
+        const supernovaDmgMult = this.upgrades.supernovaDamageMult || 1.0;
+        const finalDamage = baseDmg * 1.65 * critMult * supernovaDmgMult;
         soundManager.playOrbitalStrike();
 
         const targetY = Math.max(80, this.shieldBarrierY * 0.44);
@@ -1030,8 +1074,7 @@ export class BattlefieldEngine {
         break;
       }
       case 'deflector': {
-        // Reaktif Kinetik Kalkan (Kinetic Deflector): Kalkan hattına 5 saniyelik reaktif enerji bariyeri kurar.
-        // Düşman mermileri çarptığında kalkan hasar almaz, darbe enerjisini 2x katlayarak geri yansıtır.
+        // Reaktif Kinetik Kalkan: 5 saniyelik reaktif enerji bariyeri kurar
         this.turrets[lane].deflectorTimer = 5.0;
         soundManager.playShieldHit();
 
@@ -1104,6 +1147,10 @@ export class BattlefieldEngine {
     if (this.onShieldDamage) {
       this.onShieldDamage(this.shieldHp, this.maxShieldHp);
     }
+  }
+
+  public healShield(amount: number) {
+    this.repairShield(amount);
   }
 
   private hitEnemiesInLane(lane: number, damage: number, element: GemType, isCrit: boolean = false) {
@@ -1434,13 +1481,14 @@ export class BattlefieldEngine {
       const swellProgress = Math.min(1, star.life / star.maxLife);
       star.radius = 8 + swellProgress * (star.maxRadius - 8) + Math.sin(star.pulseAngle) * 2.5;
 
-      // Gravitational accretion: pull nearby enemies within 170px towards the star
+      // Gravitational accretion: pull nearby enemies towards the star (Tier 1: full screen pull radius)
+      const pullRadius = this.upgrades.supernovaPullRadiusMult ? this.width * 1.5 : 170;
       for (const enemy of this.enemies) {
         const edx = star.x - enemy.x;
         const edy = star.y - enemy.y;
         const dist = Math.hypot(edx, edy);
-        if (dist > 5 && dist < 170) {
-          const pullForce = (1 - dist / 170) * 48 * effectiveDt;
+        if (dist > 5 && dist < pullRadius) {
+          const pullForce = (1 - dist / pullRadius) * (this.upgrades.supernovaPullRadiusMult ? 75 : 48) * effectiveDt;
           enemy.x += (edx / dist) * pullForce;
           enemy.y += (edy / dist) * pullForce;
         }
@@ -1510,6 +1558,9 @@ export class BattlefieldEngine {
             enemy.frozenTimer = Math.max(enemy.frozenTimer, 3.0);
             enemy.shockTimer = Math.max(enemy.shockTimer, 2.5);
             enemy.hitFlashTimer = 0.28;
+            if (this.upgrades.supernovaRadiationZone) {
+              enemy.burnTimer = Math.max(enemy.burnTimer || 0, 4.0);
+            }
             this.particles.addLaserImpact(enemy.x, enemy.y, '#fef08a', 8);
           }
         }
@@ -1527,13 +1578,9 @@ export class BattlefieldEngine {
           this.spawnEnemy();
           this.waveSpawnTimer = this.waveSpawnInterval;
         }
-      } else if (this.enemies.length === 0 && !this.isBossActive) {
-        // Wave completely cleared!
+      } else if (this.enemies.length === 0 && !this.activeBoss) {
         this.isWaveInProgress = false;
-        soundManager.playVictory();
-        if (this.onWaveCleared) {
-          this.onWaveCleared(this.currentWave);
-        }
+        this.onWaveCleared?.(this.currentWave);
       }
     }
 
@@ -1541,39 +1588,27 @@ export class BattlefieldEngine {
     for (let i = this.enemies.length - 1; i >= 0; i--) {
       const enemy = this.enemies[i];
 
-      // Status timers
-      if (enemy.frozenTimer > 0) enemy.frozenTimer -= effectiveDt;
-      if (enemy.shockTimer > 0) enemy.shockTimer -= effectiveDt;
-      if (enemy.burnTimer > 0) {
+      // Update debuff timers
+      if (enemy.frozenTimer > 0) enemy.frozenTimer = Math.max(0, enemy.frozenTimer - effectiveDt);
+      if (enemy.shockTimer > 0) enemy.shockTimer = Math.max(0, enemy.shockTimer - effectiveDt);
+      if (enemy.hitFlashTimer > 0) enemy.hitFlashTimer = Math.max(0, enemy.hitFlashTimer - effectiveDt);
+
+      // Burn tick
+      if (enemy.burnTimer && enemy.burnTimer > 0) {
         enemy.burnTimer -= effectiveDt;
-        enemy.hp -= 40 * effectiveDt;
-        if (enemy.hp <= 0) {
-          this.destroyEnemy(enemy);
-          continue;
-        }
-      }
-      if (enemy.hitFlashTimer > 0) enemy.hitFlashTimer -= dt;
-
-      // Graviton Anchor status
-      if (enemy.isAnchored) {
-        enemy.anchorTimer = (enemy.anchorTimer || 0) - effectiveDt;
-        if (enemy.anchorTimer <= 0) {
-          enemy.isAnchored = false;
-        }
+        const burnDmg = (38 + this.currentLevel * 6) * effectiveDt;
+        this.applyDamageToEnemy(enemy, burnDmg, 'solaris', false);
       }
 
-      // Nanite Swarm continuous damage
-      if (enemy.naniteInfected) {
-        enemy.naniteTimer = (enemy.naniteTimer || 0) - effectiveDt;
+      // Nanite infection tick
+      if (enemy.naniteInfected && enemy.naniteTimer && enemy.naniteTimer > 0) {
+        enemy.naniteTimer -= effectiveDt;
         enemy.naniteTickTimer = (enemy.naniteTickTimer || 0) + effectiveDt;
-        if (enemy.naniteTickTimer >= 0.5) {
+        if (enemy.naniteTickTimer >= 0.4) {
           enemy.naniteTickTimer = 0;
-          enemy.hp -= 25 * this.upgrades.plasmaDamageMult;
+          const naniteTickDamage = 28 + this.currentLevel * 4;
+          this.applyDamageToEnemy(enemy, naniteTickDamage, 'parasite', false);
           this.particles.addLaserImpact(enemy.x, enemy.y, '#a855f7', 3);
-          if (enemy.hp <= 0) {
-            this.destroyEnemy(enemy);
-            continue;
-          }
         }
         if (enemy.naniteTimer <= 0) {
           enemy.naniteInfected = false;
@@ -1590,7 +1625,18 @@ export class BattlefieldEngine {
           this.particles.addExplosion(wh.inX, wh.inY, '#0d9488', 12);
           this.particles.addExplosion(wh.outX, wh.outY, '#0d9488', 16);
           this.particles.addFloatingText(wh.outX, wh.outY, 'WARPED!', '#0d9488', true);
-          this.applyDamageToEnemy(enemy, 80, 'void', false);
+
+          // Tier 1: Işınlanan düşmanlar portal çıkışında %40 hasar alır
+          const exitDmgRatio = this.upgrades.wormholeExitDamage ? 0.40 : 0;
+          const warpDamage = 80 + enemy.maxHp * exitDmgRatio;
+          this.applyDamageToEnemy(enemy, warpDamage, 'void', false);
+
+          // Tier 3: Çıkış portalının etrafında yerçekimi tersinimi
+          if (this.upgrades.wormholeGravityRepel) {
+            enemy.frozenTimer = Math.max(enemy.frozenTimer, 1.5);
+            enemy.shockTimer = Math.max(enemy.shockTimer, 1.5);
+            this.particles.addFloatingText(wh.outX, wh.outY - 20, 'YERÇEKİMİ TERSİNİMİ!', '#0d9488', true);
+          }
           break;
         }
       }
@@ -1600,8 +1646,9 @@ export class BattlefieldEngine {
         const mine = this.staticMines[m];
         if (enemy.lane === mine.lane && Math.hypot(enemy.x - mine.x, enemy.y - mine.y) <= mine.radius + 14) {
           this.applyDamageToEnemy(enemy, mine.damage, 'electric', true);
-          enemy.frozenTimer = Math.max(enemy.frozenTimer, 1.0);
-          enemy.shockTimer = Math.max(enemy.shockTimer, 1.0);
+          const stunDur = this.upgrades.staticWebStunDuration || 1.0;
+          enemy.frozenTimer = Math.max(enemy.frozenTimer, stunDur);
+          enemy.shockTimer = Math.max(enemy.shockTimer, stunDur);
           this.particles.addExplosion(mine.x, mine.y, '#0284c7', 22, true);
           this.particles.addFloatingText(mine.x, mine.y - 12, 'STATIC STUN!', '#0284c7', true);
           soundManager.playExplosion(false);
@@ -1614,7 +1661,7 @@ export class BattlefieldEngine {
       if (enemy.frozenTimer > 0) currentSpeed *= 0.35;
       if (enemy.shockTimer > 0 || enemy.isAnchored) currentSpeed = 0;
 
-      // Kuşatma Topçusu (Siege Artillery Ship): Ekrana girip hedeflenen irtifada durur ve 5 saniyede bir aşağıya mermi ateşler
+      // Kuşatma Topçusu: Ekrana girip hedeflenen irtifada durur ve 5 saniyede bir aşağıya mermi ateşler
       if (enemy.type === 'siege') {
         const targetStopY = enemy.targetY || 65;
         if (enemy.y >= targetStopY) {
@@ -1681,6 +1728,22 @@ export class BattlefieldEngine {
 
       // Check barrier impact
       if (enemy.y + enemy.height * 0.5 >= this.shieldBarrierY) {
+        const turret = this.turrets[enemy.lane];
+        if (turret && turret.deflectorTimer && turret.deflectorTimer > 0 && this.upgrades.deflectorReflectBodies) {
+          // Tier 2: Bariyer temas eden düşman gövdelerini geri püskürtüp hasarını geri yansıtır
+          const deflectorMult = this.upgrades.deflectorDamageMult || 2.0;
+          this.applyDamageToEnemy(enemy, enemy.attackPower * deflectorMult, 'deflector', true);
+          enemy.y = Math.max(30, this.shieldBarrierY - 120);
+          enemy.frozenTimer = 1.5;
+          this.particles.addExplosion(enemy.x, this.shieldBarrierY, '#14b8a6', 22, true);
+          this.particles.addFloatingText(enemy.x, this.shieldBarrierY - 35, `⚡ ${deflectorMult}X GÖVDE YANSITMA!`, '#14b8a6', true);
+          if (this.upgrades.deflectorHealOnReflect) {
+            this.healShield(this.maxShieldHp * 0.05);
+          }
+          soundManager.playShieldHit();
+          continue;
+        }
+
         this.hitShield(enemy.attackPower);
         this.particles.addExplosion(enemy.x, this.shieldBarrierY, enemy.color, 16);
         this.particles.triggerScreenShake(6, 0.25);
@@ -1735,7 +1798,8 @@ export class BattlefieldEngine {
         if (p.y >= this.shieldBarrierY - 6) {
           const turret = this.turrets[p.lane];
           if (turret && turret.deflectorTimer && turret.deflectorTimer > 0) {
-            // ⚡ KİNETİK DEFLEKTÖR KARŞI SALDIRI: 0 Hasar Alma, 2X Kinetik Geri Yansıtma!
+            // ⚡ KİNETİK DEFLEKTÖR KARŞI SALDIRI
+            const deflectorMult = this.upgrades.deflectorDamageMult || 2.0;
             this.projectiles.push({
               id: `reflected_bullet_${Date.now()}_${Math.random()}`,
               type: 'reflected_bullet',
@@ -1746,7 +1810,7 @@ export class BattlefieldEngine {
               startY: this.shieldBarrierY - 14,
               vx: (Math.random() - 0.5) * 30,
               vy: -680,
-              damage: p.damage * 2.0, // 2X HASARLI KARŞI VURUŞ
+              damage: p.damage * deflectorMult, // 2x or 3.5x
               color: '#14b8a6',
               width: 8,
               height: 22,
@@ -1756,9 +1820,13 @@ export class BattlefieldEngine {
               element: 'deflector'
             });
 
+            if (this.upgrades.deflectorHealOnReflect) {
+              this.healShield(this.maxShieldHp * 0.05);
+            }
+
             soundManager.playShieldHit();
             this.particles.addExplosion(p.x, this.shieldBarrierY, '#14b8a6', 18, true);
-            this.particles.addFloatingText(p.x, this.shieldBarrierY - 30, '⚡ 2X KİNETİK YANSITMA!', '#14b8a6', true);
+            this.particles.addFloatingText(p.x, this.shieldBarrierY - 30, `⚡ ${deflectorMult}X KİNETİK YANSITMA!`, '#14b8a6', true);
             this.particles.triggerScreenShake(3, 0.15);
           } else {
             // Normal kalkan darbesi
@@ -2945,6 +3013,29 @@ export class BattlefieldEngine {
       turretFireRate: 1,
       critChance: 0.1,
       energyRechargeRate: 1
+    };
+    this.coreUpgradeLevels = {
+      plasma: 0,
+      cryo: 0,
+      electric: 0,
+      void: 0,
+      explosive: 0,
+      nano: 0,
+      solaris: 0,
+      antimatter: 0,
+      chronos: 0,
+      toxic: 0,
+      gravity: 0,
+      vampiric: 0,
+      prism: 0,
+      anchor: 0,
+      echo: 0,
+      wormhole: 0,
+      parasite: 0,
+      static_web: 0,
+      orbital_drone: 0,
+      supernova: 0,
+      deflector: 0
     };
     this.initTurrets();
   }

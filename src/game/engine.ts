@@ -1,7 +1,7 @@
 import { BattlefieldEngine } from './battlefieldEngine';
 import { Match3Engine } from './match3Engine';
-import type { UIState, MatchResult, UpgradeOption, GameState } from './types';
-import { BASE_ENERGY_MAX, COMBO_TIMEOUT_MS } from './constants';
+import type { UIState, MatchResult, UpgradeOption, GameState, RolledUpgradeOption } from './types';
+import { BASE_ENERGY_MAX, COMBO_TIMEOUT_MS, rollActiveCoreUpgrades } from './constants';
 import { getLevelConfig, TOTAL_LEVELS } from './levelData';
 import { soundManager } from './soundManager';
 import { coreManager } from './coreManager';
@@ -149,6 +149,20 @@ export class GameEngine {
     }
   }
 
+  public rollUpgrades(): RolledUpgradeOption[] {
+    const activeCores = coreManager.getActiveCores();
+    return rollActiveCoreUpgrades(
+      activeCores,
+      this.battlefield.coreUpgradeLevels,
+      this.battlefield.stats,
+      this.battlefield.upgrades,
+      this.battlefield,
+      (core, newLevel) => {
+        this.battlefield.coreUpgradeLevels[core] = newLevel;
+      }
+    );
+  }
+
   public continueToNextWave() {
     this.gameState = 'playing';
     this.isPaused = false;
@@ -157,8 +171,14 @@ export class GameEngine {
     this.syncUIState();
   }
 
-  public applyUpgrade(upgrade: UpgradeOption) {
-    upgrade.apply(this.battlefield.stats, this.battlefield.upgrades);
+  public applyUpgrade(upgrade: RolledUpgradeOption | UpgradeOption) {
+    if ('apply' in upgrade && typeof upgrade.apply === 'function') {
+      if (upgrade.apply.length === 0) {
+        (upgrade as RolledUpgradeOption).apply();
+      } else {
+        (upgrade as UpgradeOption).apply(this.battlefield.stats, this.battlefield.upgrades, this.battlefield);
+      }
+    }
     this.continueToNextWave();
   }
 

@@ -1,4 +1,4 @@
-import type { GemElementConfig, GemType, UpgradeOption } from './types';
+import type { GemElementConfig, GemType, UpgradeOption, CoreUpgradeCard, RolledUpgradeOption, GameStats, PlayerUpgrades } from './types';
 
 export const GRID_COLS = 8;
 export const GRID_ROWS = 8;
@@ -321,101 +321,602 @@ export const BASE_ENERGY_MAX = 100;
 
 export const COMBO_TIMEOUT_MS = 2800; // Time before combo counter resets
 
-export const UPGRADE_POOL: UpgradeOption[] = [
-  {
-    id: 'up_plasma_overload',
+export const CORE_UPGRADES: Record<GemType, CoreUpgradeCard> = {
+  plasma: {
+    coreType: 'plasma',
     title: 'Plazma Aşırı Yükleme',
-    description: 'Kırmızı plazma lazer hasarını +%35 artırır.',
     icon: 'Flame',
     rarity: 'rare',
-    category: 'laser',
-    apply: (_, u) => { u.plasmaDamageMult += 0.35; }
+    tiers: [
+      {
+        level: 1,
+        description: 'Plazma lazer hasarı +%40 artar.',
+        apply: (_, u) => { u.plasmaDamageMult = (u.plasmaDamageMult || 1) + 0.40; }
+      },
+      {
+        level: 2,
+        description: 'Lazer şeritteki tüm düşmanları delip geçer ve arkasında 2sn yanan plazma izi bırakır.',
+        apply: (_, u) => { u.plasmaPiercing = true; }
+      },
+      {
+        level: 3,
+        description: 'Plazma vuruşları %100 kritik hasar verir ve düşman zırhını anında eritir.',
+        apply: (_, u) => { u.plasmaCritOvercharge = true; }
+      }
+    ]
   },
-  {
-    id: 'up_cryo_deep_frost',
+  cryo: {
+    coreType: 'cryo',
     title: 'Derin Donma Protokolü',
-    description: 'Kriyo dondurma süresini +%50 uzatır.',
     icon: 'Snowflake',
-    rarity: 'common',
-    category: 'cryo',
-    apply: (_, u) => { u.cryoDurationMult += 0.50; }
+    rarity: 'rare',
+    tiers: [
+      {
+        level: 1,
+        description: 'Kriyo dondurma stasis süresi +%50 uzar.',
+        apply: (_, u) => { u.cryoDurationMult = (u.cryoDurationMult || 1) + 0.50; }
+      },
+      {
+        level: 2,
+        description: 'Donmuş düşmanlar aldıkları tüm diğer hasarlardan %50 daha fazla hasar alır (Kırılganlık).',
+        apply: (_, u) => { u.cryoVulnerability = true; }
+      },
+      {
+        level: 3,
+        description: 'Donmuş düşman öldüğünde patlayarak komşu şeritlerdeki düşmanları da dondurur.',
+        apply: (_, u) => { u.cryoFrostNova = true; }
+      }
+    ]
   },
-  {
-    id: 'up_tesla_arc',
+  electric: {
+    coreType: 'electric',
     title: 'Hiper İletken Tesla',
-    description: 'Yıldırım sıçrama hasarını +%40 artırır ve 1 ekstra şeride atlar.',
     icon: 'Zap',
     rarity: 'rare',
-    category: 'electric',
-    apply: (_, u) => { u.electricChainBonus += 0.40; }
+    tiers: [
+      {
+        level: 1,
+        description: 'Yıldırım sıçrama hasarı +%40 artar ve 1 ekstra komşu şeride sıçrar.',
+        apply: (_, u) => { u.electricChainBonus = (u.electricChainBonus || 1) + 0.40; }
+      },
+      {
+        level: 2,
+        description: 'Yıldırım çarpan tüm düşmanlar 1.5 saniye elektriksel felç (stasis stun) geçirir.',
+        apply: (_, u) => { u.electricStunDuration = 1.5; }
+      },
+      {
+        level: 3,
+        description: 'Yıldırım arkları düşmanlar arasında sürekli döngüye girerek kalıcı küresel plazma arkı kurar.',
+        apply: (_, u) => { u.electricStormLoop = true; }
+      }
+    ]
   },
-  {
-    id: 'up_nano_matrix',
-    title: 'Nano Güçlendirilmiş Zırh',
-    description: 'Maksimum kalkanı +250 artırır ve anında %50 onarır.',
-    icon: 'Shield',
+  void: {
+    coreType: 'void',
+    title: 'Karanlık Madde Çekirdeği',
+    icon: 'Orbit',
     rarity: 'epic',
-    category: 'shield',
-    apply: (_, u) => { u.baseMaxShield += 250; u.nanoShieldBoost += 0.25; }
+    tiers: [
+      {
+        level: 1,
+        description: 'Hiçlik girdabının süresi +%50 uzar ve çekim gücü %40 artar.',
+        apply: (_, u) => {
+          u.voidVortexDuration = (u.voidVortexDuration || 1) + 0.50;
+          u.voidVortexPullForce = (u.voidVortexPullForce || 1) + 0.40;
+        }
+      },
+      {
+        level: 2,
+        description: 'Girdap içine çekilen tüm düşmanlar saniye başı ezilme hasarı alır.',
+        apply: (_, u) => { u.voidVortexDamageMult = (u.voidVortexDamageMult || 0) + 1.0; }
+      },
+      {
+        level: 3,
+        description: 'Girdap sona erdiğinde çöken bir mikro kara delik patlaması yaratarak şeridi temizler.',
+        apply: (_, u) => { u.voidImplosionBomb = true; }
+      }
+    ]
   },
-  {
-    id: 'up_cluster_warhead',
-    title: 'Termal Harp Başlıkları',
-    description: 'Patlama alanını ve roket hasarını +%35 artırır.',
+  explosive: {
+    coreType: 'explosive',
+    title: 'Termobarik Harp Başlığı',
     icon: 'Bomb',
     rarity: 'rare',
-    category: 'special',
-    apply: (_, u) => { u.explosiveAoeMult += 0.35; }
+    tiers: [
+      {
+        level: 1,
+        description: 'Roket patlama alanı 3 şeritten 5 şeride genişler ve hasar +%35 artar.',
+        apply: (_, u) => {
+          u.explosiveAoeMult = (u.explosiveAoeMult || 1) + 0.35;
+          u.explosive5Lanes = true;
+        }
+      },
+      {
+        level: 2,
+        description: 'Ana patlamadan sonra hedef alana 3 adet mikro ikincil bomba saçılır.',
+        apply: (_, u) => { u.explosiveClusterBomblets = true; }
+      },
+      {
+        level: 3,
+        description: 'Patlama alanı 3 saniye boyunca alev fırtınası yayarak içinden geçen hedefleri yok eder.',
+        apply: (_, u) => { u.explosiveFirestorm = true; }
+      }
+    ]
   },
-  {
-    id: 'up_hyper_reactor',
-    title: 'Kuantum Reaktör',
-    description: 'Özel yetenek enerji dolum hızını +%40 hızlandırır.',
-    icon: 'Zap',
+  nano: {
+    coreType: 'nano',
+    title: 'Nano Rejenerasyon Matrisi',
+    icon: 'Shield',
     rarity: 'epic',
-    category: 'energy',
-    apply: (_, u) => { u.energyRechargeRate += 0.40; }
+    tiers: [
+      {
+        level: 1,
+        description: 'Kalkan onarım miktarı +%50 artar ve maksimum kalkan +250 yükselir.',
+        apply: (_, u) => {
+          u.baseMaxShield = (u.baseMaxShield || 1000) + 250;
+          u.nanoShieldBoost = (u.nanoShieldBoost || 1) + 0.50;
+        }
+      },
+      {
+        level: 2,
+        description: 'Kalkan tam doluyken yapılan onarımlar geçici bir aşırı kalkan (Overshield) oluşturur.',
+        apply: (_, u) => { u.nanoOvershield = true; }
+      },
+      {
+        level: 3,
+        description: 'Kalkan darbe aldığında çevreye düşmanları geri püskürten nano şok dalgası salar.',
+        apply: (_, u) => { u.nanoRepulsePulse = true; }
+      }
+    ]
   },
-  {
-    id: 'up_critical_focus',
-    title: 'Hassas Hedefleme Çipi',
-    description: 'Tüm silahlarda kritik vuruş (%200 hasar) şansını +%15 artırır.',
-    icon: 'Crosshair',
+  solaris: {
+    coreType: 'solaris',
+    title: 'Kromosferik Alev',
+    icon: 'Sun',
+    rarity: 'rare',
+    tiers: [
+      {
+        level: 1,
+        description: 'Yakma süresi 6 saniyeye çıkar ve yanma hasarı +%50 artar.',
+        apply: (_, u) => {
+          u.solarisBurnDuration = 6.0;
+          u.solarisDamageMult = 1.5;
+        }
+      },
+      {
+        level: 2,
+        description: 'Yanan düşmanların hareket hızı %35 yavaşlar ve komşularını da tutuşturur.',
+        apply: (_, u) => { u.solarisSpread = true; }
+      },
+      {
+        level: 3,
+        description: 'Şeritte güneş patlaması kalıcı hale gelerek şerit boyunca koridor ateşi açar.',
+        apply: (_, u) => { u.solarisSolarCorridor = true; }
+      }
+    ]
+  },
+  antimatter: {
+    coreType: 'antimatter',
+    title: 'Pozitron İnfilakı',
+    icon: 'Atom',
+    rarity: 'epic',
+    tiers: [
+      {
+        level: 1,
+        description: 'Doğrudan gerçek hasar çarpanı %140\'tan %190\'a çıkar.',
+        apply: (_, u) => { u.antimatterDamageMult = 1.9; }
+      },
+      {
+        level: 2,
+        description: 'Antimadde darbesi vurduğu hedefin tüm kalkanını anında siler.',
+        apply: (_, u) => { u.antimatterShieldStrip = true; }
+      },
+      {
+        level: 3,
+        description: 'Temas edilen kütle negatif enerjiye dönüşüp arkadaki hedeflere sıçrar.',
+        apply: (_, u) => { u.antimatterChainReaction = true; }
+      }
+    ]
+  },
+  chronos: {
+    coreType: 'chronos',
+    title: 'Takyon Akışı',
+    icon: 'Clock',
+    rarity: 'epic',
+    tiers: [
+      {
+        level: 1,
+        description: 'Zamansal yavaşlatma etkisi %60\'tan %80\'e çıkar.',
+        apply: (_, u) => { u.chronosSlowPercent = 0.80; }
+      },
+      {
+        level: 2,
+        description: 'Zaman yavaşladığında oyuncunun taretleri 2 kat daha hızlı ateşlenir.',
+        apply: (_, u) => { u.chronosTurretHaste = true; }
+      },
+      {
+        level: 3,
+        description: 'Krono nabız tetiklendiğinde ekrandaki tüm düşman mermileri havada donup yok olur.',
+        apply: (_, u) => { u.chronosBulletFreeze = true; }
+      }
+    ]
+  },
+  toxic: {
+    coreType: 'toxic',
+    title: 'Asidik Çürüme',
+    icon: 'Biohazard',
+    rarity: 'rare',
+    tiers: [
+      {
+        level: 1,
+        description: 'Asit aşındırma hasarı saniye başı +%50 daha hızlı eritir.',
+        apply: (_, u) => { u.toxicDamageMult = 1.5; }
+      },
+      {
+        level: 2,
+        description: 'Aşınan düşmanların saldırı gücü %50 düşer (Körletici Asit).',
+        apply: (_, u) => { u.toxicAttackDebuff = 0.5; }
+      },
+      {
+        level: 3,
+        description: 'Asit gövdeyi deldiğinde düşman patlar ve yere kalıcı toksik asit gölü bırakır.',
+        apply: (_, u) => { u.toxicAcidPools = true; }
+      }
+    ]
+  },
+  gravity: {
+    coreType: 'gravity',
+    title: 'Manyetik İtici Çekiç',
+    icon: 'Radio',
+    rarity: 'rare',
+    tiers: [
+      {
+        level: 1,
+        description: 'İtme gücü artar; düşmanlar tepeye çarpınca %40 çarpma hasarı alır.',
+        apply: (_, u) => { u.gravityImpactDamage = 0.40; }
+      },
+      {
+        level: 2,
+        description: 'Şok dalgası hedef şeridin yanı sıra sol ve sağ komşu şeritleri de tepeye fırlatır.',
+        apply: (_, u) => { u.gravityTriLane = true; }
+      },
+      {
+        level: 3,
+        description: 'Tepeye fırlatılan düşmanlar 2.5 saniye boyunca sersemler ve aşağı inemez.',
+        apply: (_, u) => { u.gravityCeilingStun = 2.5; }
+      }
+    ]
+  },
+  vampiric: {
+    coreType: 'vampiric',
+    title: 'Hiper Sifon',
+    icon: 'Activity',
+    rarity: 'epic',
+    tiers: [
+      {
+        level: 1,
+        description: 'Can ve enerji emme oranı %30\'dan %55\'e çıkar (+25 Enerji).',
+        apply: (_, u) => {
+          u.vampiricSiphonRatio = 0.55;
+          u.vampiricBonusEnergy = 25;
+        }
+      },
+      {
+        level: 2,
+        description: 'Sömürülen her 100 kalkan enerjisi taretlere 3 saniyelik aşırı hız buff\'ı verir.',
+        apply: (_, u) => { u.vampiricOverdrive = true; }
+      },
+      {
+        level: 3,
+        description: 'Çekilen yaşam enerjisi bir kuantum nova dalgası olarak yakındaki diğer düşmanlara vurur.',
+        apply: (_, u) => { u.vampiricLifeNova = true; }
+      }
+    ]
+  },
+  prism: {
+    coreType: 'prism',
+    title: 'Işık Bölünmesi',
+    icon: 'Sparkles',
+    rarity: 'epic',
+    tiers: [
+      {
+        level: 1,
+        description: 'Spektrum Duvarı süresi 3 saniyeden 5 saniyeye çıkar.',
+        apply: (_, u) => { u.prismWallDuration = 5.0; }
+      },
+      {
+        level: 2,
+        description: 'Duvardan geçen düşmanların zırhları tamamen kırılır ve %40 yavaşlar.',
+        apply: (_, u) => { u.prismSlowAndStrip = true; }
+      },
+      {
+        level: 3,
+        description: 'Duvara çarpan her düşman lazeri yansıtarak duvardan lazer okları fırlatır.',
+        apply: (_, u) => { u.prismReflectiveSpikes = true; }
+      }
+    ]
+  },
+  anchor: {
+    coreType: 'anchor',
+    title: 'Ağır Madde Prangası',
+    icon: 'Anchor',
+    rarity: 'rare',
+    tiers: [
+      {
+        level: 1,
+        description: 'Çapa kilitlenme süresi 5sn\'den 8sn\'ye çıkar.',
+        apply: (_, u) => { u.anchorDuration = 8.0; }
+      },
+      {
+        level: 2,
+        description: 'Kilitli düşmanın arkasında biriken tüm düşmanlar ezilme hasarı alır.',
+        apply: (_, u) => { u.anchorCrushTension = true; }
+      },
+      {
+        level: 3,
+        description: 'Çapa süresi bittiğinde kilitli düşman patlayarak arkasındaki tüm trafiği havaya uçurur.',
+        apply: (_, u) => { u.anchorDetonation = true; }
+      }
+    ]
+  },
+  echo: {
+    coreType: 'echo',
+    title: 'Saf Yankı',
+    icon: 'Copy',
+    rarity: 'rare',
+    tiers: [
+      {
+        level: 1,
+        description: 'Klonlanan çekirdeğin güç çarpanı %120\'den %160\'a çıkar.',
+        apply: (_, u) => { u.echoPowerMult = 1.6; }
+      },
+      {
+        level: 2,
+        description: 'Klonlanan etki yanındaki 1 komşu şeritte daha yankılanır.',
+        apply: (_, u) => { u.echoNeighborLane = true; }
+      },
+      {
+        level: 3,
+        description: 'Klonlama gerçekleştiğinde tahtaya 1 adet Joker Enerji Küresi düşürür.',
+        apply: (_, u) => { u.echoSpawnHyperCube = true; }
+      }
+    ]
+  },
+  wormhole: {
+    coreType: 'wormhole',
+    title: 'Boyut Kapanı',
+    icon: 'Compass',
+    rarity: 'epic',
+    tiers: [
+      {
+        level: 1,
+        description: 'Işınlanan düşmanlar portal çıkışında %40 hasar alır.',
+        apply: (_, u) => { u.wormholeExitDamage = 0.40; }
+      },
+      {
+        level: 2,
+        description: 'Portal aynı anda 3 düşmanı birden tepeye geri gönderebilir.',
+        apply: (_, u) => { u.wormholeMultiTeleport = 3; }
+      },
+      {
+        level: 3,
+        description: 'Çıkış portalının etrafında 3sn boyunca giren her şeyi geri püskürten yerçekimi tersinimi oluşur.',
+        apply: (_, u) => { u.wormholeGravityRepel = true; }
+      }
+    ]
+  },
+  parasite: {
+    coreType: 'parasite',
+    title: 'Salgın Protokolü',
+    icon: 'Bug',
     rarity: 'legendary',
-    category: 'laser',
-    apply: (_, u) => { u.critChance += 0.15; }
+    tiers: [
+      {
+        level: 1,
+        description: 'Düşman öldüğünde nanitler 2 yerine 4 komşu düşmana yayılır.',
+        apply: (_, u) => { u.parasiteSpreadCount = 4; }
+      },
+      {
+        level: 2,
+        description: 'Nanit taşıyan düşmanların savunması saniye başı %10 erir.',
+        apply: (_, u) => { u.parasiteArmorMelt = true; }
+      },
+      {
+        level: 3,
+        description: 'Nanitli hedefler kalkan hattına ulaşamadan patlayan canlı bombalara dönüşür.',
+        apply: (_, u) => { u.parasiteLivingBombs = true; }
+      }
+    ]
   },
-  {
-    id: 'up_void_collapse',
-    title: 'Karanlık Madde Çekirdeği',
-    description: 'Hiçlik girdabının süresini +%60 uzatır ve girdap hasarını artırır.',
-    icon: 'Orbit',
+  deflector: {
+    coreType: 'deflector',
+    title: 'Kinetik Depolama',
+    icon: 'ShieldCheck',
     rarity: 'rare',
-    category: 'special',
-    apply: (_, u) => { u.voidVortexDuration += 0.60; }
+    tiers: [
+      {
+        level: 1,
+        description: 'Yansıtılan hasar çarpanı 2x\'ten 3.5x\'e çıkar.',
+        apply: (_, u) => { u.deflectorDamageMult = 3.5; }
+      },
+      {
+        level: 2,
+        description: 'Bariyer mermilerin yanı sıra düşman gövdelerinin temas hasarını da geri yansıtır.',
+        apply: (_, u) => { u.deflectorReflectBodies = true; }
+      },
+      {
+        level: 3,
+        description: 'Yansıtılan her darbe kalkana %5 enerji/tamir olarak geri döner.',
+        apply: (_, u) => { u.deflectorHealOnReflect = true; }
+      }
+    ]
   },
-  {
-    id: 'up_void_singularity_pull',
-    title: 'Tekillik Çekim Gücü',
-    description: 'Hiçlik girdabının yerçekimi çekim gücünü +%50 artırır; düşmanları tepeye hızla geri çeker.',
-    icon: 'Orbit',
+  static_web: {
+    coreType: 'static_web',
+    title: 'Yüksek Voltaj Ağı',
+    icon: 'Disc',
+    rarity: 'rare',
+    tiers: [
+      {
+        level: 1,
+        description: 'Şeride 3 yerine 5 adet manyetik mayın döşenir.',
+        apply: (_, u) => { u.staticWebMineCount = 5; }
+      },
+      {
+        level: 2,
+        description: 'Mayınların askıya alma (felç) süresi 2 saniyeye çıkar.',
+        apply: (_, u) => { u.staticWebStunDuration = 2.0; }
+      },
+      {
+        level: 3,
+        description: 'Mayınlar birbirine elektrik hatlarıyla bağlanarak şerit boyunca lazer bariyeri kurar.',
+        apply: (_, u) => { u.staticWebLaserFence = true; }
+      }
+    ]
+  },
+  orbital_drone: {
+    coreType: 'orbital_drone',
+    title: 'Otonom Filo',
+    icon: 'Satellite',
     rarity: 'epic',
-    category: 'special',
-    apply: (_, u) => { u.voidVortexPullForce += 0.50; }
+    tiers: [
+      {
+        level: 1,
+        description: 'Uydu süresi 8 saniyeden 12 saniyeye çıkar; atış hızı %30 artar.',
+        apply: (_, u) => {
+          u.orbitalDroneDuration = 12.0;
+          u.orbitalDroneFireRate = 1.3;
+        }
+      },
+      {
+        level: 2,
+        description: 'Sahaya aynı anda 2 adet devriye uydusu konuşlandırılır.',
+        apply: (_, u) => { u.orbitalDroneDual = true; }
+      },
+      {
+        level: 3,
+        description: 'Uydular sadece makineli tüfek değil, periyodik olarak Güdümlü Mikro Füzeler ateşler.',
+        apply: (_, u) => { u.orbitalDroneMicroMissiles = true; }
+      }
+    ]
   },
-  {
-    id: 'up_void_damage',
-    title: 'Kozmik Ezilme (Hiçlik Hasarı)',
-    description: 'Hiçlik girdabına hasar verme özelliği kazandırır (veya mevcut girdap hasarını +%50 artırır).',
-    icon: 'Orbit',
-    rarity: 'rare',
-    category: 'special',
-    apply: (_, u) => {
-      if (u.voidVortexDamageMult <= 0) {
-        u.voidVortexDamageMult = 1.0;
-      } else {
-        u.voidVortexDamageMult += 0.50;
+  supernova: {
+    coreType: 'supernova',
+    title: 'Hiper Yoğunluk',
+    icon: 'Star',
+    rarity: 'legendary',
+    tiers: [
+      {
+        level: 1,
+        description: 'Mini yıldızın düşmanları çekme yarıçapı tüm ekranı kapsar.',
+        apply: (_, u) => { u.supernovaPullRadiusMult = 2.5; }
+      },
+      {
+        level: 2,
+        description: 'Final patlamasının hasarı 2 Katına çıkar.',
+        apply: (_, u) => { u.supernovaDamageMult = 2.0; }
+      },
+      {
+        level: 3,
+        description: 'Patlama sonrası ekranda 4 saniye boyunca kalan Kozmik Radyasyon Alanı düşmanları yakar.',
+        apply: (_, u) => { u.supernovaRadiationZone = true; }
+      }
+    ]
+  }
+};
+
+export function rollActiveCoreUpgrades(
+  activeCores: GemType[],
+  coreLevels: Record<GemType, number>,
+  stats: GameStats,
+  upgrades: PlayerUpgrades,
+  battlefield?: any,
+  onApplyLevelCallback?: (core: GemType, newLevel: number) => void
+): RolledUpgradeOption[] {
+  const candidateCores = activeCores.filter(c => (coreLevels[c] || 0) < 3);
+
+  // Shuffle candidate cores
+  const shuffled = [...candidateCores].sort(() => 0.5 - Math.random());
+  const selectedCores = shuffled.slice(0, 3);
+
+  const results: RolledUpgradeOption[] = [];
+
+  for (const coreType of selectedCores) {
+    const card = CORE_UPGRADES[coreType];
+    if (!card) continue;
+    const currentLvl = coreLevels[coreType] || 0;
+    const targetLvl = (currentLvl + 1) as 1 | 2 | 3;
+    const tierData = card.tiers[targetLvl - 1];
+
+    const rarity: 'rare' | 'epic' | 'legendary' = targetLvl === 1 ? 'rare' : targetLvl === 2 ? 'epic' : 'legendary';
+
+    results.push({
+      id: `up_${coreType}_lvl${targetLvl}`,
+      coreType,
+      title: card.title,
+      description: tierData.description,
+      icon: card.icon,
+      rarity,
+      level: targetLvl,
+      maxLevel: 3,
+      apply: () => {
+        tierData.apply(stats, upgrades, battlefield);
+        if (onApplyLevelCallback) {
+          onApplyLevelCallback(coreType, targetLvl);
+        }
+      }
+    });
+  }
+
+  // If fewer than 3 options (e.g. all cores maxed out), fill with backup overcharges
+  const genericOvercharges = [
+    {
+      id: 'gen_up_shield_matrix',
+      title: 'Aşırı Yükleme: Kalkan Takviyesi',
+      description: 'Maksimum kalkanı +300 artırır ve kalkanı tamamen yeniler.',
+      icon: 'Shield',
+      rarity: 'epic' as const,
+      level: 1,
+      maxLevel: 1,
+      apply: () => {
+        upgrades.baseMaxShield = (upgrades.baseMaxShield || 1000) + 300;
+        if (battlefield) battlefield.healShield(300);
+      }
+    },
+    {
+      id: 'gen_up_crit_matrix',
+      title: 'Aşırı Yükleme: Kritik Matris',
+      description: 'Tüm silahlarda kritik vuruş şansını +%20 artırır.',
+      icon: 'Crosshair',
+      rarity: 'legendary' as const,
+      level: 1,
+      maxLevel: 1,
+      apply: () => {
+        upgrades.critChance = (upgrades.critChance || 0.1) + 0.20;
+      }
+    },
+    {
+      id: 'gen_up_plasma_core',
+      title: 'Aşırı Yükleme: Genel Hasar Çarpanı',
+      description: 'Tüm taretlerin temel silah hasarını +%25 artırır.',
+      icon: 'Flame',
+      rarity: 'rare' as const,
+      level: 1,
+      maxLevel: 1,
+      apply: () => {
+        upgrades.plasmaDamageMult = (upgrades.plasmaDamageMult || 1) + 0.25;
       }
     }
+  ];
+
+  let genIdx = 0;
+  while (results.length < 3 && genIdx < genericOvercharges.length) {
+    results.push(genericOvercharges[genIdx++]);
   }
-];
+
+  return results;
+}
+
+// Fallback legacy array for backwards compatibility
+export const UPGRADE_POOL: UpgradeOption[] = [];
+

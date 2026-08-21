@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import type { UIState, UpgradeOption } from '../game/types';
+import type { UIState, RolledUpgradeOption, GemType } from '../game/types';
 import { gameEngine } from '../game/engine';
-import { UPGRADE_POOL, GEM_ELEMENTS } from '../game/constants';
+import { GEM_ELEMENTS } from '../game/constants';
 import { getLevelConfig } from '../game/levelData';
 import confetti from 'canvas-confetti';
 import {
@@ -13,10 +13,23 @@ import {
   Orbit,
   Bomb,
   Shield,
+  Sun,
+  Atom,
+  Clock,
+  Biohazard,
+  Radio,
+  Activity,
+  Anchor,
+  Copy,
+  Compass,
+  Bug,
+  Disc,
+  Satellite,
+  Star,
+  ShieldCheck,
   HelpCircle,
   X,
   Crosshair,
-  Award,
   Settings,
   MapPin,
   ChevronRight,
@@ -36,13 +49,13 @@ interface ModalsProps {
 export const Modals: React.FC<ModalsProps> = ({ uiState, onStartGame, onResumeGame }) => {
   const [showTutorial, setShowTutorial] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [randomUpgrades, setRandomUpgrades] = useState<UpgradeOption[]>([]);
+  const [randomUpgrades, setRandomUpgrades] = useState<RolledUpgradeOption[]>([]);
 
   // When wave is cleared or level won, roll upgrades or burst confetti
   useEffect(() => {
     if (uiState.gameState === 'wave_cleared') {
-      const shuffled = [...UPGRADE_POOL].sort(() => 0.5 - Math.random());
-      setRandomUpgrades(shuffled.slice(0, 3));
+      const rolled = gameEngine.rollUpgrades();
+      setRandomUpgrades(rolled);
     } else if (uiState.gameState === 'level_victory' || uiState.gameState === 'victory') {
       try {
         confetti({
@@ -64,16 +77,31 @@ export const Modals: React.FC<ModalsProps> = ({ uiState, onStartGame, onResumeGa
     return { rank: 'C', color: '#94a3b8' };
   };
 
-  const renderIcon = (name: string) => {
+  const renderIcon = (name: string, coreType?: GemType) => {
+    const color = coreType && GEM_ELEMENTS[coreType] ? GEM_ELEMENTS[coreType].color : '#ffffff';
     switch (name) {
-      case 'Flame': return <Flame size={20} color="#ff2a5f" />;
-      case 'Snowflake': return <Snowflake size={20} color="#00d2ff" />;
-      case 'Zap': return <Zap size={20} color="#ffd000" />;
-      case 'Orbit': return <Orbit size={20} color="#a855f7" />;
-      case 'Bomb': return <Bomb size={20} color="#ff8800" />;
-      case 'Shield': return <Shield size={20} color="#00ff88" />;
-      case 'Crosshair': return <Crosshair size={20} color="#00f3ff" />;
-      default: return <Award size={20} color="#ffd000" />;
+      case 'Flame': return <Flame size={22} color={color} />;
+      case 'Snowflake': return <Snowflake size={22} color={color} />;
+      case 'Zap': return <Zap size={22} color={color} />;
+      case 'Orbit': return <Orbit size={22} color={color} />;
+      case 'Bomb': return <Bomb size={22} color={color} />;
+      case 'Shield': return <Shield size={22} color={color} />;
+      case 'Sun': return <Sun size={22} color={color} />;
+      case 'Atom': return <Atom size={22} color={color} />;
+      case 'Clock': return <Clock size={22} color={color} />;
+      case 'Biohazard': return <Biohazard size={22} color={color} />;
+      case 'Radio': return <Radio size={22} color={color} />;
+      case 'Activity': return <Activity size={22} color={color} />;
+      case 'Anchor': return <Anchor size={22} color={color} />;
+      case 'Copy': return <Copy size={22} color={color} />;
+      case 'Compass': return <Compass size={22} color={color} />;
+      case 'Bug': return <Bug size={22} color={color} />;
+      case 'Disc': return <Disc size={22} color={color} />;
+      case 'Satellite': return <Satellite size={22} color={color} />;
+      case 'Star': return <Star size={22} color={color} />;
+      case 'ShieldCheck': return <ShieldCheck size={22} color={color} />;
+      case 'Crosshair': return <Crosshair size={22} color="#00f3ff" />;
+      default: return <Sparkles size={22} color="#ffd000" />;
     }
   };
 
@@ -105,40 +133,72 @@ export const Modals: React.FC<ModalsProps> = ({ uiState, onStartGame, onResumeGa
   if (uiState.gameState === 'wave_cleared') {
     return (
       <div className="modal-overlay">
-        <div className="modal-card" style={{ maxWidth: '420px' }}>
+        <div className="modal-card" style={{ maxWidth: '460px', width: '92%' }}>
           <div>
             <h2 className="modal-title" style={{ color: '#00ff88' }}>
               FAZ {uiState.wave} TEMİZLENDİ!
             </h2>
-            <p className="modal-subtitle">Bir Savunma Geliştirmesi Seçin</p>
+            <p className="modal-subtitle">Aktif Çekirdeklerinden Bir Savunma Yükseltmesi Seç</p>
           </div>
 
           <div className="upgrade-cards-list">
-            {randomUpgrades.map((up) => (
-              <button
-                key={up.id}
-                className={`upgrade-card-btn ${up.rarity}`}
-                onClick={() => gameEngine.applyUpgrade(up)}
-              >
-                <div style={{
-                  padding: '8px',
-                  borderRadius: '8px',
-                  background: 'rgba(0, 0, 0, 0.4)',
-                  display: 'flex'
-                }}>
-                  {renderIcon(up.icon)}
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', textAlign: 'left' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontWeight: 700, fontSize: '13px', color: '#ffffff' }}>{up.title}</span>
-                    <span style={{ fontSize: '9px', textTransform: 'uppercase', color: up.rarity === 'legendary' ? '#ffd000' : up.rarity === 'epic' ? '#a855f7' : '#00f3ff' }}>
-                      {up.rarity}
-                    </span>
+            {randomUpgrades.map((up) => {
+              const coreConfig = up.coreType ? GEM_ELEMENTS[up.coreType] : null;
+              const coreColor = coreConfig ? coreConfig.color : '#00f3ff';
+              const tierBadgeText = up.level === 1
+                ? '⭐ Seviye 1 (İlk Seçim)'
+                : up.level === 2
+                  ? '⭐⭐ Seviye 2 (+1 Tekrar)'
+                  : '⭐⭐⭐ Seviye 3 (Maksimum)';
+
+              return (
+                <button
+                  key={up.id}
+                  className={`upgrade-card-btn ${up.rarity}`}
+                  style={{
+                    borderColor: `${coreColor}55`,
+                    boxShadow: `0 0 14px ${coreColor}15`
+                  }}
+                  onClick={() => gameEngine.applyUpgrade(up)}
+                >
+                  <div style={{
+                    padding: '10px',
+                    borderRadius: '10px',
+                    background: 'rgba(0, 0, 0, 0.55)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: `1px solid ${coreColor}44`
+                  }}>
+                    {renderIcon(up.icon, up.coreType)}
                   </div>
-                  <span style={{ fontSize: '11px', color: '#94a3b8' }}>{up.description}</span>
-                </div>
-              </button>
-            ))}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', textAlign: 'left', flex: 1 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '4px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ fontWeight: 700, fontSize: '13px', color: '#ffffff' }}>{up.title}</span>
+                        {coreConfig && (
+                          <span style={{ fontSize: '10px', color: coreColor, background: 'rgba(0, 0, 0, 0.4)', padding: '2px 5px', borderRadius: '4px' }}>
+                            {coreConfig.turkishName}
+                          </span>
+                        )}
+                      </div>
+                      <span style={{
+                        fontSize: '9px',
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        color: up.level === 3 ? '#ffd000' : up.level === 2 ? '#a855f7' : '#00f3ff',
+                        background: 'rgba(0, 0, 0, 0.5)',
+                        padding: '2px 6px',
+                        borderRadius: '10px'
+                      }}>
+                        {tierBadgeText}
+                      </span>
+                    </div>
+                    <span style={{ fontSize: '11px', color: '#cbd5e1', lineHeight: '1.4' }}>{up.description}</span>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>

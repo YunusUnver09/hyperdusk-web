@@ -214,29 +214,161 @@ export interface ScreenShake {
   timer: number;
 }
 
-export interface UpgradeOption {
+export interface CoreUpgradeTier {
+  level: 1 | 2 | 3;
+  description: string;
+  apply: (stats: GameStats, upgrades: PlayerUpgrades, battlefield?: any) => void;
+}
+
+export interface CoreUpgradeCard {
+  coreType: GemType;
+  title: string;
+  icon: string;
+  rarity: 'rare' | 'epic' | 'legendary';
+  tiers: [CoreUpgradeTier, CoreUpgradeTier, CoreUpgradeTier];
+}
+
+export interface RolledUpgradeOption {
   id: string;
+  coreType?: GemType;
   title: string;
   description: string;
   icon: string;
   rarity: 'common' | 'rare' | 'epic' | 'legendary';
-  category: 'laser' | 'cryo' | 'electric' | 'shield' | 'energy' | 'special';
-  apply: (stats: GameStats, upgrades: PlayerUpgrades) => void;
+  level: number;
+  maxLevel: number;
+  apply: () => void;
+}
+
+export interface UpgradeOption {
+  id: string;
+  coreType?: GemType;
+  title: string;
+  description: string;
+  icon: string;
+  rarity: 'common' | 'rare' | 'epic' | 'legendary';
+  category?: 'laser' | 'cryo' | 'electric' | 'shield' | 'energy' | 'special';
+  level?: number;
+  maxLevel?: number;
+  apply: (stats: GameStats, upgrades: PlayerUpgrades, battlefield?: any) => void;
 }
 
 export interface PlayerUpgrades {
-  plasmaDamageMult: number;
-  cryoDurationMult: number;
-  electricChainBonus: number;
-  explosiveAoeMult: number;
-  nanoShieldBoost: number;
-  voidVortexDuration: number;
-  voidVortexPullForce: number;
-  voidVortexDamageMult: number;
+  // Base Stats
   baseMaxShield: number;
   turretFireRate: number;
   critChance: number;
   energyRechargeRate: number;
+
+  // 1. Plasma
+  plasmaDamageMult: number;
+  plasmaPiercing?: boolean;
+  plasmaCritOvercharge?: boolean;
+
+  // 2. Cryo
+  cryoDurationMult: number;
+  cryoVulnerability?: boolean;
+  cryoFrostNova?: boolean;
+
+  // 3. Electric
+  electricChainBonus: number;
+  electricStunDuration?: number;
+  electricStormLoop?: boolean;
+
+  // 4. Void
+  voidVortexDuration: number;
+  voidVortexPullForce: number;
+  voidVortexDamageMult: number;
+  voidImplosionBomb?: boolean;
+
+  // 5. Explosive
+  explosiveAoeMult: number;
+  explosive5Lanes?: boolean;
+  explosiveClusterBomblets?: boolean;
+  explosiveFirestorm?: boolean;
+
+  // 6. Nano
+  nanoShieldBoost: number;
+  nanoOvershield?: boolean;
+  nanoRepulsePulse?: boolean;
+
+  // 7. Solaris
+  solarisBurnDuration?: number;
+  solarisDamageMult?: number;
+  solarisSpread?: boolean;
+  solarisSolarCorridor?: boolean;
+
+  // 8. Antimatter
+  antimatterDamageMult?: number;
+  antimatterShieldStrip?: boolean;
+  antimatterChainReaction?: boolean;
+
+  // 9. Chronos
+  chronosSlowPercent?: number;
+  chronosTurretHaste?: boolean;
+  chronosBulletFreeze?: boolean;
+
+  // 10. Toxic
+  toxicDamageMult?: number;
+  toxicAttackDebuff?: number;
+  toxicAcidPools?: boolean;
+
+  // 11. Gravity
+  gravityImpactDamage?: number;
+  gravityTriLane?: boolean;
+  gravityCeilingStun?: number;
+
+  // 12. Vampiric
+  vampiricSiphonRatio?: number;
+  vampiricBonusEnergy?: number;
+  vampiricOverdrive?: boolean;
+  vampiricLifeNova?: boolean;
+
+  // 13. Prism
+  prismWallDuration?: number;
+  prismSlowAndStrip?: boolean;
+  prismReflectiveSpikes?: boolean;
+
+  // 14. Anchor
+  anchorDuration?: number;
+  anchorCrushTension?: boolean;
+  anchorDetonation?: boolean;
+
+  // 15. Echo
+  echoPowerMult?: number;
+  echoNeighborLane?: boolean;
+  echoSpawnHyperCube?: boolean;
+
+  // 16. Wormhole
+  wormholeExitDamage?: number;
+  wormholeMultiTeleport?: number;
+  wormholeGravityRepel?: boolean;
+
+  // 17. Parasite
+  parasiteSpreadCount?: number;
+  parasiteArmorMelt?: boolean;
+  parasiteLivingBombs?: boolean;
+
+  // 18. Deflector
+  deflectorDamageMult?: number;
+  deflectorReflectBodies?: boolean;
+  deflectorHealOnReflect?: boolean;
+
+  // 19. Static Web
+  staticWebMineCount?: number;
+  staticWebStunDuration?: number;
+  staticWebLaserFence?: boolean;
+
+  // 20. Orbital Drone
+  orbitalDroneDuration?: number;
+  orbitalDroneFireRate?: number;
+  orbitalDroneDual?: boolean;
+  orbitalDroneMicroMissiles?: boolean;
+
+  // 21. Supernova
+  supernovaPullRadiusMult?: number;
+  supernovaDamageMult?: number;
+  supernovaRadiationZone?: boolean;
 }
 
 export interface GameStats {
