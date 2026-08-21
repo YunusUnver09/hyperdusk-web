@@ -73,33 +73,35 @@ export const App: React.FC = () => {
           onToggleFullscreen={toggleFullscreen}
         />
       ) : (
-        <div className="game-wrapper-view">
-          {/* Top Return to Studio Navigation Bar */}
-          <div className="game-top-studio-bar">
-            <button className="back-to-studio-btn" onClick={handleBackToStudio}>
-              <ArrowLeft size={16} />
-              <span>HYPERDUSK STÜDYO</span>
-            </button>
+        <div className="game-desktop-wrapper">
+          <div className="game-wrapper-view">
+            {/* Top Return to Studio Navigation Bar */}
+            <div className="game-top-studio-bar">
+              <button className="back-to-studio-btn" onClick={handleBackToStudio}>
+                <ArrowLeft size={16} />
+                <span>HYPERDUSK STÜDYO</span>
+              </button>
 
-            <div className="game-studio-badge">
-              <Sparkles size={14} color="#00f3ff" />
-              <span>CRUSH SPACE // CANLI ARCADE</span>
+              <div className="game-studio-badge">
+                <Sparkles size={14} color="#00f3ff" />
+                <span>CRUSH SPACE // CANLI ARCADE</span>
+              </div>
+
+              {/* Fullscreen Toggle Button */}
+              <button
+                className="fullscreen-toggle-btn"
+                onClick={toggleFullscreen}
+                aria-label="Tam Ekran"
+                title="Tam Ekran Modu (Arama çubuğunu gizle)"
+              >
+                {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
+                <span className="fs-btn-text">{isFullscreen ? 'KÜÇÜLT' : 'TAM EKRAN'}</span>
+              </button>
             </div>
 
-            {/* Fullscreen Toggle Button */}
-            <button
-              className="fullscreen-toggle-btn"
-              onClick={toggleFullscreen}
-              aria-label="Tam Ekran"
-              title="Tam Ekran Modu (Arama çubuğunu gizle)"
-            >
-              {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
-              <span className="fs-btn-text">{isFullscreen ? 'KÜÇÜLT' : 'TAM EKRAN'}</span>
-            </button>
+            {/* Core Game Component */}
+            <GameContainer />
           </div>
-
-          {/* Core Game Component */}
-          <GameContainer />
         </div>
       )}
     </div>
