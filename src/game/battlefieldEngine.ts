@@ -228,8 +228,8 @@ export class BattlefieldEngine {
     this.canvas.height = Math.round(this.height * this.dpr);
     this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
 
-    // Energy barrier is positioned higher above the turret barrels
-    this.shieldBarrierY = this.height - 66;
+    // Main Station Barrier (Original Position)
+    this.shieldBarrierY = this.height - 38;
     this.initStars(35);
 
     // Pre-cache background gradient once on resize
@@ -463,13 +463,9 @@ export class BattlefieldEngine {
     }
 
     const laneX = this.getLaneX(lane);
-    const laneWidth = this.getLaneWidth();
-    const socketY = this.height - 20;
-    const barrelLen = laneWidth * 0.44;
-    const muzzleTipY = socketY - barrelLen;
-    const turretY = socketY;
+    const turretY = this.shieldBarrierY + 12;
     const elemColor = GEM_ELEMENTS[type]?.color || '#00f3ff';
-    this.particles.addMuzzleBlast(laneX, muzzleTipY, elemColor);
+    this.particles.addMuzzleBlast(laneX, this.shieldBarrierY - 6, elemColor);
     const baseDmg = 85 * count * (1 + (combo - 1) * 0.35);
 
     const isCrit = Math.random() < this.upgrades.critChance;
@@ -1022,23 +1018,26 @@ export class BattlefieldEngine {
         break;
       }
       case 'deflector': {
-        // Reaktif Kinetik Kalkan (Kinetic Deflector): 5 saniyelik reaktif Ters Vuruş bariyeri ekler.
+        // Reaktif Kinetik Kalkan (Kinetic Deflector): Namluların üstünde 5 saniyelik kalın mavi-mor plazma kalkanı ekler
         this.kineticDeflectorTimer = Math.min(12, this.kineticDeflectorTimer + 5.0);
         soundManager.playShieldBoost();
+        soundManager.playEmpWave();
         soundManager.triggerVibrate([40, 60]);
 
-        this.particles.triggerScreenShake(3, 0.2);
-        this.particles.addExplosion(laneX, this.shieldBarrierY, '#14b8a6', 22, true);
-        this.particles.addFloatingText(laneX, turretY - 35, 'KİNETİK KALKAN (5s): 2X TERS VURUŞ!', '#14b8a6', true);
+        this.particles.triggerScreenShake(4, 0.25);
+        const deflectorY = this.shieldBarrierY - 32;
+        this.particles.addExplosion(laneX, deflectorY, '#a855f7', 26, true);
+        this.particles.addLaserImpact(laneX, deflectorY, '#00f3ff', 16);
+        this.particles.addFloatingText(laneX, deflectorY - 24, 'KİNETİK PLAZMA KALKAN (5s): 2X TERS VURUŞ!', '#00f3ff', true);
 
-        // Immediate localized shock pulse pushing close enemies back
+        // Immediate localized shock pulse pushing close enemies back from deflector zone
         const repelDamage = baseDmg * 0.85 * critMult;
         for (const e of this.enemies) {
           if (e.lane === lane || (e.isBoss && e.lanesCovered?.includes(lane))) {
-            if (e.y > this.shieldBarrierY - 160 && e.y < this.shieldBarrierY) {
-              e.y = Math.max(30, e.y - 75);
+            if (e.y > deflectorY - 140 && e.y < deflectorY) {
+              e.y = Math.max(30, e.y - 80);
               this.applyDamageToEnemy(e, repelDamage, 'deflector', isCrit);
-              this.particles.addLaserImpact(e.x, e.y, '#14b8a6', 8);
+              this.particles.addLaserImpact(e.x, e.y, '#a855f7', 12);
             }
           }
         }
@@ -1639,57 +1638,58 @@ export class BattlefieldEngine {
       }
 
       // Check barrier impact
-      if (enemy.y + enemy.height * 0.5 >= this.shieldBarrierY) {
-        if (this.kineticDeflectorTimer > 0) {
-          // KINETIC DEFLECTOR COUNTER-ATTACK: Kalkan hasar almaz; 2x hasar ile düşmana geri yansıtır!
-          const counterDamage = Math.max(350, (enemy.attackPower || 90) * 2.5 * this.upgrades.plasmaDamageMult);
-          this.applyDamageToEnemy(enemy, counterDamage, 'deflector', true);
+      const deflectorY = this.shieldBarrierY - 32;
+      if (this.kineticDeflectorTimer > 0 && enemy.y + enemy.height * 0.5 >= deflectorY) {
+        // KINETIC DEFLECTOR COUNTER-ATTACK: Namluların üzerindeki reaktif plazma kalkanında yakalanır!
+        const counterDamage = Math.max(350, (enemy.attackPower || 90) * 2.5 * this.upgrades.plasmaDamageMult);
+        this.applyDamageToEnemy(enemy, counterDamage, 'deflector', true);
 
-          // Görsel zümrüt şok dalgası, 2X COUNTER yazısı ve geri tepme
-          this.particles.addExplosion(enemy.x, this.shieldBarrierY, '#14b8a6', 26, true);
-          this.particles.triggerScreenShake(7, 0.35);
-          this.particles.addFloatingText(enemy.x, this.shieldBarrierY - 20, `COUNTER: 2X HASAR (-${Math.round(counterDamage)})`, '#14b8a6', true);
-          soundManager.playEmpWave();
-          soundManager.playShieldBoost();
-          soundManager.triggerVibrate([50, 70, 50]);
+        // Mavi-mor plazma patlaması, 2X COUNTER yazısı ve geri püskürtme
+        this.particles.addExplosion(enemy.x, deflectorY, '#a855f7', 28, true);
+        this.particles.addLaserImpact(enemy.x, deflectorY, '#00f3ff', 18);
+        this.particles.triggerScreenShake(7, 0.35);
+        this.particles.addFloatingText(enemy.x, deflectorY - 22, `COUNTER: 2X HASAR (-${Math.round(counterDamage)})`, '#00f3ff', true);
+        soundManager.playEmpWave();
+        soundManager.playShieldBoost();
+        soundManager.triggerVibrate([50, 70, 50]);
 
-          // Yukarı doğru 2 kat güçlü kinetik şok mermisi fırlat
-          this.projectiles.push({
-            id: `counter_${Date.now()}_${Math.random()}`,
-            type: 'kinetic_counter',
-            lane: enemy.lane,
-            x: enemy.x,
-            y: this.shieldBarrierY - 10,
-            startX: enemy.x,
-            startY: this.shieldBarrierY - 10,
-            vx: (Math.random() - 0.5) * 50,
-            vy: -820,
-            damage: counterDamage * 0.9,
-            color: '#14b8a6',
-            width: 6,
-            height: 24,
-            radius: 8,
-            life: 0,
-            maxLife: 1.1,
-            element: 'deflector'
-          });
+        // Yukarı doğru 2 kat güçlü mavi-mor kinetik şok plazma oku fırlat
+        this.projectiles.push({
+          id: `counter_${Date.now()}_${Math.random()}`,
+          type: 'kinetic_counter',
+          lane: enemy.lane,
+          x: enemy.x,
+          y: deflectorY - 10,
+          startX: enemy.x,
+          startY: deflectorY - 10,
+          vx: (Math.random() - 0.5) * 50,
+          vy: -820,
+          damage: counterDamage * 0.9,
+          color: '#a855f7',
+          width: 6,
+          height: 24,
+          radius: 8,
+          life: 0,
+          maxLife: 1.1,
+          element: 'deflector'
+        });
 
-          if (enemy.hp > 0) {
-            enemy.y = Math.max(30, this.shieldBarrierY - 140); // Massive knockback
-          } else {
-            this.enemies.splice(i, 1);
-            if (enemy.isBoss) this.activeBoss = null;
-          }
+        if (enemy.hp > 0) {
+          enemy.y = Math.max(30, deflectorY - 140); // Massive knockback
         } else {
-          this.hitShield(enemy.attackPower);
-          this.particles.addExplosion(enemy.x, this.shieldBarrierY, enemy.color, 16);
-          this.particles.triggerScreenShake(6, 0.25);
-          soundManager.playShieldHit();
-          soundManager.triggerVibrate([40, 50, 40]);
           this.enemies.splice(i, 1);
-          if (enemy.isBoss) {
-            this.activeBoss = null;
-          }
+          if (enemy.isBoss) this.activeBoss = null;
+        }
+      } else if (enemy.y + enemy.height * 0.5 >= this.shieldBarrierY) {
+        // Ana Kalkan Normal Darbe (Main Barrier Hit)
+        this.hitShield(enemy.attackPower);
+        this.particles.addExplosion(enemy.x, this.shieldBarrierY, enemy.color, 16);
+        this.particles.triggerScreenShake(6, 0.25);
+        soundManager.playShieldHit();
+        soundManager.triggerVibrate([40, 50, 40]);
+        this.enemies.splice(i, 1);
+        if (enemy.isBoss) {
+          this.activeBoss = null;
         }
       }
     }
@@ -1928,151 +1928,143 @@ export class BattlefieldEngine {
     const barrierColor = isFlashing ? '#ff0055' : (hpRatio < 0.3 ? '#ffaa00' : '#00f3ff');
     const laneWidth = this.getLaneWidth();
 
+    // =========================================================
+    // 🛡️ 1. ANA SAVUNMA BARİYERİ (MAIN STATION BARRIER - ORİJİNAL KONUM)
+    // =========================================================
+    // Dış Işıma Hattı
+    ctx.strokeStyle = barrierColor;
+    ctx.lineWidth = 4;
+    ctx.globalAlpha = 0.35;
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(this.width, y);
+    ctx.stroke();
+
+    // Parlak Beyaz Manyetik Çekirdek Çizgisi
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.5;
+    ctx.globalAlpha = 0.9;
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(this.width, y);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    // Kalkan Darbe / Enerji Katmanı
+    ctx.fillStyle = isFlashing ? 'rgba(255, 0, 85, 0.25)' : 'rgba(0, 243, 255, 0.08)';
+    ctx.fillRect(0, y, this.width, 5);
+
+    // =========================================================
+    // ⚡ 2. REAKTİF KİNETİK KALKAN (NAMLULAR ÜSTÜNDE KALIN MAVİ-MOR PLAZMA)
+    // =========================================================
     if (this.kineticDeflectorTimer > 0) {
-      // =========================================================
-      // ⚡ REAKTİF KİNETİK KALKAN (ULTRA-THICK EMERALD DEFLECTOR)
-      // =========================================================
+      const defY = this.shieldBarrierY - 32; // Taret namlularının belirgin üstünde!
       const pulse = 1 + Math.sin(Date.now() * 0.012) * 0.12;
 
-      // 1. Geniş Parlak Dış Zümrüt Plazma Aurası (32px)
-      const auraGrad = ctx.createLinearGradient(0, y - 20, 0, y + 16);
-      auraGrad.addColorStop(0, 'rgba(20, 184, 166, 0)');
-      auraGrad.addColorStop(0.3, 'rgba(45, 212, 191, 0.35)');
-      auraGrad.addColorStop(0.5, 'rgba(20, 184, 166, 0.65)');
-      auraGrad.addColorStop(0.7, 'rgba(15, 118, 110, 0.35)');
-      auraGrad.addColorStop(1, 'rgba(15, 118, 110, 0)');
+      // 1. Geniş 42px Parlak Mavi-Mor Plazma Dış Aurası
+      const auraGrad = ctx.createLinearGradient(0, defY - 22, 0, defY + 20);
+      auraGrad.addColorStop(0, 'rgba(112, 0, 255, 0)');
+      auraGrad.addColorStop(0.25, 'rgba(168, 85, 247, 0.4)');
+      auraGrad.addColorStop(0.5, 'rgba(0, 243, 255, 0.7)');
+      auraGrad.addColorStop(0.75, 'rgba(126, 34, 206, 0.4)');
+      auraGrad.addColorStop(1, 'rgba(112, 0, 255, 0)');
       ctx.fillStyle = auraGrad;
-      ctx.fillRect(0, y - 20, this.width, 36);
+      ctx.fillRect(0, defY - 22, this.width, 42);
 
-      // 2. Üst ve Alt Kinetik Kılavuz İletken Hatları (Dual Heavy Rails)
-      ctx.strokeStyle = '#2dd4bf';
+      // 2. Üst ve Alt Manyetik Plazma İletken Rayları (Dual Containment Rails)
+      // Üst Neon Mor Ray
+      ctx.strokeStyle = '#c084fc';
       ctx.lineWidth = 3.5;
-      ctx.globalAlpha = 0.9;
-      // Üst Hat
+      ctx.globalAlpha = 0.95;
       ctx.beginPath();
-      ctx.moveTo(0, y - 7);
-      ctx.lineTo(this.width, y - 7);
-      ctx.stroke();
-      // Alt Hat
-      ctx.beginPath();
-      ctx.moveTo(0, y + 7);
-      ctx.lineTo(this.width, y + 7);
+      ctx.moveTo(0, defY - 7);
+      ctx.lineTo(this.width, defY - 7);
       ctx.stroke();
 
-      // 3. Kalın Yüksek Yoğunluklu Piezoelektrik Merkez Lazer Çekirdeği (Thick Solid Core)
-      ctx.strokeStyle = '#14b8a6';
+      // Alt Neon Mavi/Camgöbeği Ray
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 3.5;
+      ctx.beginPath();
+      ctx.moveTo(0, defY + 7);
+      ctx.lineTo(this.width, defY + 7);
+      ctx.stroke();
+
+      // 3. Kalın Yüksek Enerjili Mavi-Mor Plazma Çekirdeği (Thick Solid Plasma Beam)
+      const coreGrad = ctx.createLinearGradient(0, defY - 5, 0, defY + 5);
+      coreGrad.addColorStop(0, '#7000ff');
+      coreGrad.addColorStop(0.5, '#00f3ff');
+      coreGrad.addColorStop(1, '#a855f7');
+      ctx.strokeStyle = coreGrad;
       ctx.lineWidth = 10 * pulse;
-      ctx.globalAlpha = 0.55;
+      ctx.globalAlpha = 0.65;
       ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(this.width, y);
+      ctx.moveTo(0, defY);
+      ctx.lineTo(this.width, defY);
       ctx.stroke();
 
+      // Süper-Parlak Sıcak Lazer Çekirdek
       ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = 4.5;
       ctx.globalAlpha = 0.95;
       ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(this.width, y);
+      ctx.moveTo(0, defY);
+      ctx.lineTo(this.width, defY);
       ctx.stroke();
       ctx.globalAlpha = 1;
 
-      // 4. Şeritlerdeki Kristal Kinetik Reaktör Düğümleri (Hex Emitter Nodes)
-      for (let i = 0; i <= NUM_LANES; i++) {
-        const nx = i * laneWidth;
-        ctx.fillStyle = '#0f766e';
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.arc(nx, y, 6, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-
-        ctx.fillStyle = '#2dd4bf';
-        ctx.beginPath();
-        ctx.arc(nx, y, 3, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      // 5. Kalkan Bilgi Göstergesi (Counter-Attack Aktif Rozeti)
+      // 4. Dinamik Titreşen Plazma Dalgaları (Plasma Ripples)
       ctx.save();
-      ctx.fillStyle = '#042f2e';
-      ctx.strokeStyle = '#2dd4bf';
-      ctx.lineWidth = 1.8;
-      const badgeW = 240;
-      const badgeX = (this.width - badgeW) / 2;
-      ctx.fillRect(badgeX, y - 28, badgeW, 20);
-      ctx.strokeRect(badgeX, y - 28, badgeW, 20);
-
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 11px Rajdhani, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(`⚡ KİNETİK TERS VURUŞ [2X]: ${this.kineticDeflectorTimer.toFixed(1)}s ⚡`, this.width / 2, y - 14);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      const waveT = Date.now() * 0.008;
+      for (let x = 0; x <= this.width; x += 6) {
+        const wy = defY + Math.sin(x * 0.06 + waveT) * 3;
+        if (x === 0) ctx.moveTo(x, wy);
+        else ctx.lineTo(x, wy);
+      }
+      ctx.stroke();
       ctx.restore();
-    } else {
-      // =========================================================
-      // 🛡️ NORMAL SAVUNMA BARİYERİ (THICK HIGH-TECH FORCEFIELD)
-      // =========================================================
-      const auraHeight = isFlashing ? 30 : 24;
 
-      // 1. Geniş Dış Plazma Işıma Aurası (Outer Plasma Aura Glow)
-      const auraGrad = ctx.createLinearGradient(0, y - auraHeight * 0.5, 0, y + auraHeight * 0.5);
-      auraGrad.addColorStop(0, 'rgba(0, 0, 0, 0)');
-      auraGrad.addColorStop(0.5, isFlashing ? 'rgba(255, 0, 85, 0.45)' : 'rgba(0, 243, 255, 0.28)');
-      auraGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-      ctx.fillStyle = auraGrad;
-      ctx.fillRect(0, y - auraHeight * 0.5, this.width, auraHeight);
-
-      // 2. Üst ve Alt Manyetik Muhafaza Rayları (Dual Containment Rails)
-      ctx.strokeStyle = barrierColor;
-      ctx.lineWidth = 2.5;
-      ctx.globalAlpha = 0.8;
-      // Üst Ray
-      ctx.beginPath();
-      ctx.moveTo(0, y - 5);
-      ctx.lineTo(this.width, y - 5);
-      ctx.stroke();
-      // Alt Ray
-      ctx.beginPath();
-      ctx.moveTo(0, y + 5);
-      ctx.lineTo(this.width, y + 5);
-      ctx.stroke();
-
-      // 3. Kalın Parlak Manyetik Plazma Çizgisi (Thick Glowing Barrier Core)
-      ctx.strokeStyle = barrierColor;
-      ctx.lineWidth = 8;
-      ctx.globalAlpha = isFlashing ? 0.8 : 0.45;
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(this.width, y);
-      ctx.stroke();
-
-      // Beyaz Sıcak Çekirdek Lazer Çizgisi
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 3.5;
-      ctx.globalAlpha = 0.95;
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(this.width, y);
-      ctx.stroke();
-      ctx.globalAlpha = 1;
-
-      // 4. Şerit Ayrım Reaktör Düğümleri (Diamond Node Crystals)
+      // 5. Şerit Kristal Plazma Reaktör Düğümleri (Hex/Diamond Emitters)
       for (let i = 0; i <= NUM_LANES; i++) {
         const nx = i * laneWidth;
-        ctx.fillStyle = isFlashing ? '#ff0055' : '#082f49';
-        ctx.strokeStyle = barrierColor;
-        ctx.lineWidth = 1.4;
+        // Dış Mor Halka
+        ctx.fillStyle = '#581c87';
+        ctx.strokeStyle = '#00f3ff';
+        ctx.lineWidth = 1.8;
         ctx.beginPath();
-        ctx.arc(nx, y, 4.5, 0, Math.PI * 2);
+        ctx.arc(nx, defY, 6, 0, Math.PI * 2);
         ctx.fill();
         ctx.stroke();
+
+        // İç Camgöbeği/Beyaz Çekirdek
+        ctx.fillStyle = '#38bdf8';
+        ctx.beginPath();
+        ctx.arc(nx, defY, 3, 0, Math.PI * 2);
+        ctx.fill();
 
         ctx.fillStyle = '#ffffff';
         ctx.beginPath();
-        ctx.arc(nx, y, 1.8, 0, Math.PI * 2);
+        ctx.arc(nx, defY, 1.2, 0, Math.PI * 2);
         ctx.fill();
       }
+
+      // 6. Plazma Kalkanı Aktif Rozeti (Counter-Attack Active Badge)
+      ctx.save();
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+      ctx.strokeStyle = '#a855f7';
+      ctx.lineWidth = 1.8;
+      const badgeW = 240;
+      const badgeX = (this.width - badgeW) / 2;
+      ctx.fillRect(badgeX, defY - 26, badgeW, 18);
+      ctx.strokeRect(badgeX, defY - 26, badgeW, 18);
+
+      ctx.fillStyle = '#00f3ff';
+      ctx.font = 'bold 10px Rajdhani, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(`⚡ KİNETİK TERS VURUŞ [2X]: ${this.kineticDeflectorTimer.toFixed(1)}s ⚡`, this.width / 2, defY - 13);
+      ctx.restore();
     }
   }
 
@@ -2105,7 +2097,7 @@ export class BattlefieldEngine {
 
   private renderTurrets(ctx: CanvasRenderingContext2D) {
     const laneWidth = this.getLaneWidth();
-    const socketY = this.height - 20;
+    const socketY = this.shieldBarrierY + 12;
 
     for (let i = 0; i < NUM_LANES; i++) {
       const cx = this.getLaneX(i);
@@ -2558,20 +2550,25 @@ export class BattlefieldEngine {
         ctx.translate(p.x, p.y);
         ctx.rotate(Math.atan2(p.vy, p.vx));
 
-        // High-velocity Kinetic Counter Shock Lance (Emerald-Turquoise)
-        ctx.fillStyle = 'rgba(45, 212, 191, 0.4)';
+        // High-velocity Kinetic Counter Shock Lance (Blue-Purple Plasma)
+        ctx.fillStyle = 'rgba(168, 85, 247, 0.45)';
         ctx.beginPath();
         ctx.ellipse(0, 0, 18, 7, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        ctx.fillStyle = '#14b8a6';
+        ctx.fillStyle = '#8b5cf6';
         ctx.beginPath();
-        ctx.ellipse(0, 0, 12, 4, 0, 0, Math.PI * 2);
+        ctx.ellipse(0, 0, 13, 4.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#00f3ff';
+        ctx.beginPath();
+        ctx.ellipse(2, 0, 9, 2.5, 0, 0, Math.PI * 2);
         ctx.fill();
 
         ctx.fillStyle = '#ffffff';
         ctx.beginPath();
-        ctx.ellipse(2, 0, 8, 2, 0, 0, Math.PI * 2);
+        ctx.ellipse(3, 0, 5, 1.2, 0, 0, Math.PI * 2);
         ctx.fill();
       }
 

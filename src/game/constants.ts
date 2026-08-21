@@ -289,13 +289,13 @@ export const GEM_ELEMENTS: Record<GemType, GemElementConfig> = {
     type: 'deflector',
     name: 'Kinetic Deflector',
     turkishName: 'Reaktif Kinetik Kalkan',
-    color: '#14b8a6',
-    gradient: ['#2dd4bf', '#0f766e'],
-    glowColor: 'rgba(20, 184, 166, 0.9)',
+    color: '#8b5cf6',
+    gradient: ['#38bdf8', '#8b5cf6'],
+    glowColor: 'rgba(139, 92, 246, 0.95)',
     iconName: 'ShieldAlert',
     turretType: 'Kinetik Reflektör Bataryası',
-    description: 'Kalkan hattına 5 saniyelik reaktif bir enerji bariyeri ekler. Düşmanlar kalkana çarptığında kalkan hasar almaz; alınan darbenin kinetik enerjisini 2x katlayarak düşmana geri yansıtır (Counter-Attack).',
-    lore: 'Doğrudan saldırı yerine oyuncunun savunmasını ölümcül bir silaha dönüştüren Ters Vuruş piezoelektrik reaktif matriksi.',
+    description: 'Taret namlularının üstünde 5 saniyelik kalın mavi-mor plazma kalkanı oluşturur. Düşmanlar çarptığında ana kalkan hasar almaz; kinetik darbeyi 2x katlayarak geri yansıtır (Counter-Attack).',
+    lore: 'Doğrudan saldırı yerine savunmayı ölümcül bir silaha dönüştüren Ters Vuruş mavi-mor plazma reaktif matriksi.',
     isUnlockedByDefault: false,
     unlockCost: 500
   }
