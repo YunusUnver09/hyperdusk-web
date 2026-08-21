@@ -3152,6 +3152,37 @@ body {
   color: #94a3b8;
 }
 
+.fullscreen-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: rgba(0, 243, 255, 0.1);
+  border: 1px solid rgba(0, 243, 255, 0.35);
+  color: #00f3ff;
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.fullscreen-toggle-btn:hover {
+  background: rgba(0, 243, 255, 0.25);
+  box-shadow: 0 0 12px rgba(0, 243, 255, 0.4);
+}
+
+@media (max-width: 600px) {
+  .game-studio-badge {
+    display: none;
+  }
+  .fs-btn-text {
+    font-size: 9px;
+  }
+}
+
 /* Master Portal Layout */
 .hyperdusk-portal-layout {
   min-height: 100vh;

@@ -1,0 +1,18 @@
+{
+  "name": "Hyperdusk Games - Crush Space",
+  "short_name": "Hyperdusk",
+  "description": "Next-Gen Arcade & Space Defense Experiences",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#060813",
+  "theme_color": "#060813",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "./favicon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
