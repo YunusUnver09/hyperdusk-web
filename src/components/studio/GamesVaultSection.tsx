@@ -13,9 +13,9 @@ export const GamesVaultSection: React.FC<GamesVaultSectionProps> = ({ onPlayGame
       genre: 'LANE DEFENSE // MATCH-3',
       status: 'CANLI & OYNANABİLİR',
       statusType: 'live',
-      tagline: '8-Şerit Taktiksel İstasyon Savunması & 19 Crush Core Mekaniği.',
+      tagline: '8-Şerit Taktiksel İstasyon Savunması & 20 Crush Core Mekaniği.',
       desc: 'Her sütun eşleşmesinin taret ateşine dönüştüğü, dinamik boss savaşları ve derin core özelleştirmeleri içeren saf 60 FPS arcade deneyimi.',
-      tags: ['60 FPS Canvas', '19 Cores', 'Web & Expo App', 'Boss Battles'],
+      tags: ['60 FPS Canvas', '20 Cores', 'Web & Expo App', 'Boss Battles'],
       accentColor: '#00f3ff',
       isPlayable: true
     },

@@ -52,7 +52,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
           <button className="hero-secondary-btn" onClick={onExploreLabClick}>
             <Sparkles size={18} className="btn-sec-icon" />
-            <span>19 ÇEKİRDEĞİ İNCELE</span>
+            <span>20 ÇEKİRDEĞİ İNCELE</span>
           </button>
         </div>
 
@@ -73,7 +73,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               <Sparkles size={20} />
             </div>
             <div className="stat-info">
-              <span className="stat-value">19 CORE</span>
+              <span className="stat-value">20 CORE</span>
               <span className="stat-label">Sinerjik Crush Cores</span>
             </div>
           </div>
