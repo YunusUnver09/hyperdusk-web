@@ -22,7 +22,8 @@ import {
   Bug,
   Disc,
   Satellite,
-  Star
+  Star,
+  ShieldAlert
 } from 'lucide-react';
 
 interface Match3GridProps {
@@ -77,6 +78,8 @@ const renderElementIcon = (type: GemType, special: string) => {
       return <Satellite size={15} color="#ffffff" />;
     case 'supernova':
       return <Star size={15} color="#ffffff" />;
+    case 'deflector':
+      return <ShieldAlert size={15} color="#ffffff" />;
     default:
       return null;
   }

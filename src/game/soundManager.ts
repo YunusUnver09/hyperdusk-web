@@ -481,6 +481,38 @@ class SoundManager {
     } catch {}
   }
 
+  public playShieldBoost() {
+    if (this.isMuted || this.sfxVolume <= 0) return;
+    const ctx = this.initContext();
+    if (!ctx) return;
+
+    try {
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(320, now);
+      osc.frequency.exponentialRampToValueAtTime(880, now + 0.22);
+
+      gain.gain.setValueAtTime(0.3 * this.sfxVolume, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.onended = () => {
+        try {
+          osc.disconnect();
+          gain.disconnect();
+        } catch {}
+      };
+
+      osc.start(now);
+      osc.stop(now + 0.25);
+    } catch {}
+  }
+
   public playOrbitalStrike() {
     if (this.isMuted || this.sfxVolume <= 0) return;
     const ctx = this.initContext();

@@ -18,7 +18,8 @@ export type GemType =
   | 'parasite'
   | 'static_web'
   | 'orbital_drone'
-  | 'supernova';
+  | 'supernova'
+  | 'deflector';
 
 export type SpecialGemType = 'none' | 'column_laser' | 'row_laser' | 'bomb_cross' | 'hyper_cube';
 
@@ -38,6 +39,7 @@ export interface Gem {
   isSwapping?: boolean;
   scale?: number;
   alpha?: number;
+  rotation?: number;
   glow?: boolean;
   sparkleTimer?: number;
 }
@@ -129,7 +131,8 @@ export type ProjectileType =
   | 'nanite_pod'
   | 'static_mine'
   | 'drone_bullet'
-  | 'supernova_star';
+  | 'supernova_star'
+  | 'kinetic_counter';
 
 export interface Projectile {
   id: string;

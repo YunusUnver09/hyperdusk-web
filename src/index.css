@@ -836,6 +836,13 @@ body {
   border: 1.2px solid rgba(254, 240, 138, 0.95);
 }
 
+/* 21. Reactive Kinetic Deflector Sphere (Bright Emerald / Turquoise #14b8a6) */
+.gem-tile.deflector {
+  background: radial-gradient(circle at 32% 28%, #ccfbf1 0%, #2dd4bf 32%, #0f766e 68%, #042f2e 100%);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6), 0 0 14px rgba(45, 212, 191, 0.9), 0 0 24px rgba(20, 184, 166, 0.5), inset 0 -4px 7px rgba(4, 47, 46, 0.85), inset 0 3px 7px rgba(255, 255, 255, 0.85);
+  border: 1.2px solid rgba(45, 212, 191, 0.95);
+}
+
 /* Hyper-Cube / Prismatic Cosmic Sphere */
 .gem-tile.hyper-cube {
   background: radial-gradient(circle at 32% 28%, #ffffff 0%, #00f3ff 28%, #ff0055 58%, #7000ff 85%, #070913 100%);

@@ -210,7 +210,7 @@ export const GEM_ELEMENTS: Record<GemType, GemElementConfig> = {
     glowColor: 'rgba(248, 250, 252, 0.9)',
     iconName: 'Copy',
     turretType: 'Holografik Yansıtıcı',
-    description: 'Kendi başına ateş etmez; bir önceki tur patlatılan çekirdeğin etkisini o şeritte %80 güçle kopyalar.',
+    description: 'Kendi başına ateş etmez; bir önceki tur patlatılan çekirdeğin etkisini o şeritte %120 güçle kopyalar.',
     lore: 'Son ateşlenen enerjinin rezonans frekansını taklit eden holografik ayna.',
     isUnlockedByDefault: false,
     unlockCost: 400
@@ -284,6 +284,20 @@ export const GEM_ELEMENTS: Record<GemType, GemElementConfig> = {
     lore: 'Kendi çekim kuvveti altında çökerek evrenin en parlak kozmik infilakını yaratan minyatür yıldız çekirdeği.',
     isUnlockedByDefault: false,
     unlockCost: 650
+  },
+  deflector: {
+    type: 'deflector',
+    name: 'Kinetic Deflector',
+    turkishName: 'Reaktif Kinetik Kalkan',
+    color: '#14b8a6',
+    gradient: ['#2dd4bf', '#0f766e'],
+    glowColor: 'rgba(20, 184, 166, 0.9)',
+    iconName: 'ShieldAlert',
+    turretType: 'Kinetik Reflektör Bataryası',
+    description: 'Kalkan hattına 5 saniyelik reaktif bir enerji bariyeri ekler. Düşmanlar kalkana çarptığında kalkan hasar almaz; alınan darbenin kinetik enerjisini 2x katlayarak düşmana geri yansıtır (Counter-Attack).',
+    lore: 'Doğrudan saldırı yerine oyuncunun savunmasını ölümcül bir silaha dönüştüren Ters Vuruş piezoelektrik reaktif matriksi.',
+    isUnlockedByDefault: false,
+    unlockCost: 500
   }
 };
 
@@ -292,12 +306,12 @@ export const DEFAULT_ACTIVE_CORES: GemType[] = ['plasma', 'cryo', 'electric', 'v
 export const ALL_CRUSH_CORES: GemType[] = [
   'plasma', 'cryo', 'electric', 'void', 'explosive', 'nano',
   'solaris', 'antimatter', 'chronos', 'toxic', 'gravity', 'vampiric',
-  'prism', 'anchor', 'echo', 'wormhole', 'parasite', 'static_web', 'orbital_drone', 'supernova'
+  'prism', 'anchor', 'echo', 'wormhole', 'parasite', 'static_web', 'orbital_drone', 'supernova', 'deflector'
 ];
 
 export const FORGE_UNLOCKABLE_CORES: GemType[] = [
   'solaris', 'antimatter', 'chronos', 'toxic', 'gravity', 'vampiric',
-  'prism', 'anchor', 'echo', 'wormhole', 'parasite', 'static_web', 'orbital_drone', 'supernova'
+  'prism', 'anchor', 'echo', 'wormhole', 'parasite', 'static_web', 'orbital_drone', 'supernova', 'deflector'
 ];
 
 export const GEM_TYPES_ARRAY: GemType[] = DEFAULT_ACTIVE_CORES;

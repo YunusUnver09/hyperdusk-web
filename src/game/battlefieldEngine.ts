@@ -124,6 +124,7 @@ export class BattlefieldEngine {
     damage: number;
     pulseAngle: number;
   }> = [];
+  public kineticDeflectorTimer: number = 0;
 
   // Background stars
   private stars: Star[] = [];
@@ -869,11 +870,11 @@ export class BattlefieldEngine {
         break;
       }
       case 'echo': {
-        // Echo Replicator: Replicate previous core weapon at 80% power
+        // Echo Replicator: Replicate previous core weapon at 120% power
         const replicated = (this.lastTriggeredElement === 'echo' || !this.lastTriggeredElement) ? 'plasma' : this.lastTriggeredElement;
-        this.particles.addFloatingText(laneX, turretY - 35, `ECHO: ${GEM_ELEMENTS[replicated].turkishName.toUpperCase()}`, '#f8fafc', true);
+        this.particles.addFloatingText(laneX, turretY - 35, `ECHO (%120): ${GEM_ELEMENTS[replicated].turkishName.toUpperCase()}`, '#f8fafc', true);
         soundManager.playMatch(Math.min(5, combo + 1));
-        this.fireLaneWeapons(lane, replicated, Math.max(1, Math.round(count * 0.8)), specialCount, combo);
+        this.fireLaneWeapons(lane, replicated, Math.max(1, Math.round(count * 1.2)), specialCount, combo);
         break;
       }
       case 'wormhole': {
@@ -1013,6 +1014,29 @@ export class BattlefieldEngine {
         this.particles.triggerScreenShake(3.5, 0.2);
         this.particles.addFloatingText(laneX, targetY, 'YILDIZ ÇÖKMESİ (2s)!', '#fef08a', true);
         this.particles.addLaserImpact(laneX, targetY, '#fef08a', 12);
+        break;
+      }
+      case 'deflector': {
+        // Reaktif Kinetik Kalkan (Kinetic Deflector): 5 saniyelik reaktif Ters Vuruş bariyeri ekler.
+        this.kineticDeflectorTimer = Math.min(12, this.kineticDeflectorTimer + 5.0);
+        soundManager.playShieldBoost();
+        soundManager.triggerVibrate([40, 60]);
+
+        this.particles.triggerScreenShake(3, 0.2);
+        this.particles.addExplosion(laneX, this.shieldBarrierY, '#14b8a6', 22, true);
+        this.particles.addFloatingText(laneX, turretY - 35, 'KİNETİK KALKAN (5s): 2X TERS VURUŞ!', '#14b8a6', true);
+
+        // Immediate localized shock pulse pushing close enemies back
+        const repelDamage = baseDmg * 0.85 * critMult;
+        for (const e of this.enemies) {
+          if (e.lane === lane || (e.isBoss && e.lanesCovered?.includes(lane))) {
+            if (e.y > this.shieldBarrierY - 160 && e.y < this.shieldBarrierY) {
+              e.y = Math.max(30, e.y - 75);
+              this.applyDamageToEnemy(e, repelDamage, 'deflector', isCrit);
+              this.particles.addLaserImpact(e.x, e.y, '#14b8a6', 8);
+            }
+          }
+        }
         break;
       }
     }
@@ -1233,6 +1257,11 @@ export class BattlefieldEngine {
     // Shield flash decay
     if (this.shieldHitFlash > 0) {
       this.shieldHitFlash = Math.max(0, this.shieldHitFlash - dt * 3);
+    }
+
+    // Kinetic Deflector barrier duration decay
+    if (this.kineticDeflectorTimer > 0) {
+      this.kineticDeflectorTimer = Math.max(0, this.kineticDeflectorTimer - dt);
     }
 
     // Update Spectrum Walls (Prism Core)
@@ -1606,14 +1635,56 @@ export class BattlefieldEngine {
 
       // Check barrier impact
       if (enemy.y + enemy.height * 0.5 >= this.shieldBarrierY) {
-        this.hitShield(enemy.attackPower);
-        this.particles.addExplosion(enemy.x, this.shieldBarrierY, enemy.color, 16);
-        this.particles.triggerScreenShake(6, 0.25);
-        soundManager.playShieldHit();
-        soundManager.triggerVibrate([40, 50, 40]);
-        this.enemies.splice(i, 1);
-        if (enemy.isBoss) {
-          this.activeBoss = null;
+        if (this.kineticDeflectorTimer > 0) {
+          // KINETIC DEFLECTOR COUNTER-ATTACK: Kalkan hasar almaz; 2x hasar ile düşmana geri yansıtır!
+          const counterDamage = Math.max(350, (enemy.attackPower || 90) * 2.5 * this.upgrades.plasmaDamageMult);
+          this.applyDamageToEnemy(enemy, counterDamage, 'deflector', true);
+
+          // Görsel zümrüt şok dalgası, 2X COUNTER yazısı ve geri tepme
+          this.particles.addExplosion(enemy.x, this.shieldBarrierY, '#14b8a6', 26, true);
+          this.particles.triggerScreenShake(7, 0.35);
+          this.particles.addFloatingText(enemy.x, this.shieldBarrierY - 20, `COUNTER: 2X HASAR (-${Math.round(counterDamage)})`, '#14b8a6', true);
+          soundManager.playEmpWave();
+          soundManager.playShieldBoost();
+          soundManager.triggerVibrate([50, 70, 50]);
+
+          // Yukarı doğru 2 kat güçlü kinetik şok mermisi fırlat
+          this.projectiles.push({
+            id: `counter_${Date.now()}_${Math.random()}`,
+            type: 'kinetic_counter',
+            lane: enemy.lane,
+            x: enemy.x,
+            y: this.shieldBarrierY - 10,
+            startX: enemy.x,
+            startY: this.shieldBarrierY - 10,
+            vx: (Math.random() - 0.5) * 50,
+            vy: -820,
+            damage: counterDamage * 0.9,
+            color: '#14b8a6',
+            width: 6,
+            height: 24,
+            radius: 8,
+            life: 0,
+            maxLife: 1.1,
+            element: 'deflector'
+          });
+
+          if (enemy.hp > 0) {
+            enemy.y = Math.max(30, this.shieldBarrierY - 140); // Massive knockback
+          } else {
+            this.enemies.splice(i, 1);
+            if (enemy.isBoss) this.activeBoss = null;
+          }
+        } else {
+          this.hitShield(enemy.attackPower);
+          this.particles.addExplosion(enemy.x, this.shieldBarrierY, enemy.color, 16);
+          this.particles.triggerScreenShake(6, 0.25);
+          soundManager.playShieldHit();
+          soundManager.triggerVibrate([40, 50, 40]);
+          this.enemies.splice(i, 1);
+          if (enemy.isBoss) {
+            this.activeBoss = null;
+          }
         }
       }
     }
@@ -1633,6 +1704,19 @@ export class BattlefieldEngine {
 
       p.x += p.vx * effectiveDt;
       p.y += p.vy * effectiveDt;
+
+      // Kinetic Counter Shot collision
+      if (p.type === 'kinetic_counter') {
+        const hitEnemy = this.enemies.find(e => Math.hypot(e.x - p.x, e.y - p.y) < e.width * 0.65);
+        if (hitEnemy) {
+          this.applyDamageToEnemy(hitEnemy, p.damage, 'deflector', true);
+          this.particles.addExplosion(p.x, p.y, '#14b8a6', 18, true);
+          this.particles.addFloatingText(hitEnemy.x, hitEnemy.y - 14, '2X COUNTER!', '#14b8a6', true);
+          soundManager.playExplosion(false);
+          this.projectiles.splice(i, 1);
+          continue;
+        }
+      }
 
       // Rocket collision
       if (p.type === 'cluster_rocket') {
@@ -1837,28 +1921,78 @@ export class BattlefieldEngine {
     const hpRatio = this.shieldHp / this.maxShieldHp;
     const barrierColor = this.shieldHitFlash > 0 ? '#ff0055' : (hpRatio < 0.3 ? '#ffaa00' : '#00f3ff');
 
-    // Outer glow line
-    ctx.strokeStyle = barrierColor;
-    ctx.lineWidth = 4;
-    ctx.globalAlpha = 0.35;
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(this.width, y);
-    ctx.stroke();
+    if (this.kineticDeflectorTimer > 0) {
+      // ⚡ REAKTİF KİNETİK KALKAN (EMERALD-TURQUOISE DEFLECTOR BARRIER)
+      const pulse = 1 + Math.sin(Date.now() * 0.012) * 0.15;
 
-    // Core bright barrier line
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 1.5;
-    ctx.globalAlpha = 0.9;
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(this.width, y);
-    ctx.stroke();
-    ctx.globalAlpha = 1;
+      // Geniş parlak zümrüt dış aura
+      const auraGrad = ctx.createLinearGradient(0, y - 16, 0, y + 10);
+      auraGrad.addColorStop(0, 'rgba(20, 184, 166, 0)');
+      auraGrad.addColorStop(0.5, 'rgba(20, 184, 166, 0.45)');
+      auraGrad.addColorStop(1, 'rgba(15, 118, 110, 0.1)');
+      ctx.fillStyle = auraGrad;
+      ctx.fillRect(0, y - 16, this.width, 26);
 
-    // Energetic pulse overlay on barrier
-    ctx.fillStyle = this.shieldHitFlash > 0 ? 'rgba(255, 0, 85, 0.25)' : 'rgba(0, 243, 255, 0.08)';
-    ctx.fillRect(0, y, this.width, 5);
+      // Kinetik piezoelektrik titreşim çizgisi
+      ctx.strokeStyle = '#2dd4bf';
+      ctx.lineWidth = 6 * pulse;
+      ctx.globalAlpha = 0.85;
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(this.width, y);
+      ctx.stroke();
+
+      // Kesikli yüksek enerji akım halkası
+      ctx.save();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([12, 10]);
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(this.width, y);
+      ctx.stroke();
+      ctx.restore();
+
+      // Kalkan Bilgi Göstergesi (Counter-Attack Aktif Rozeti)
+      ctx.save();
+      ctx.fillStyle = '#0f766e';
+      ctx.strokeStyle = '#2dd4bf';
+      ctx.lineWidth = 1.5;
+      const badgeW = 230;
+      const badgeX = (this.width - badgeW) / 2;
+      ctx.fillRect(badgeX, y - 26, badgeW, 18);
+      ctx.strokeRect(badgeX, y - 26, badgeW, 18);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 10px Rajdhani, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(`⚡ KİNETİK TERS VURUŞ [2X]: ${this.kineticDeflectorTimer.toFixed(1)}s ⚡`, this.width / 2, y - 13);
+      ctx.restore();
+    } else {
+      // Normal Barrier
+      // Outer glow line
+      ctx.strokeStyle = barrierColor;
+      ctx.lineWidth = 4;
+      ctx.globalAlpha = 0.35;
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(this.width, y);
+      ctx.stroke();
+
+      // Core bright barrier line
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.5;
+      ctx.globalAlpha = 0.9;
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(this.width, y);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+
+      // Energetic pulse overlay on barrier
+      ctx.fillStyle = this.shieldHitFlash > 0 ? 'rgba(255, 0, 85, 0.25)' : 'rgba(0, 243, 255, 0.08)';
+      ctx.fillRect(0, y, this.width, 5);
+    }
   }
 
   private drawMuzzleFlash(ctx: CanvasRenderingContext2D, x: number, y: number, color: string, alpha: number) {
@@ -2339,6 +2473,25 @@ export class BattlefieldEngine {
         ctx.fillRect(-8, -2.5, 16, 5);
         ctx.fillStyle = '#94a3b8';
         ctx.fillRect(-10, -1, 4, 2);
+      } else if (p.type === 'kinetic_counter') {
+        ctx.translate(p.x, p.y);
+        ctx.rotate(Math.atan2(p.vy, p.vx));
+
+        // High-velocity Kinetic Counter Shock Lance (Emerald-Turquoise)
+        ctx.fillStyle = 'rgba(45, 212, 191, 0.4)';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 18, 7, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#14b8a6';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 12, 4, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.ellipse(2, 0, 8, 2, 0, 0, Math.PI * 2);
+        ctx.fill();
       }
 
       ctx.restore();
@@ -2666,6 +2819,7 @@ export class BattlefieldEngine {
     this.spectrumWalls = [];
     this.orbitalDrones = [];
     this.supernovaStars = [];
+    this.kineticDeflectorTimer = 0;
     this.particles.clear();
     this.shieldHp = BASE_SHIELD_MAX;
     this.maxShieldHp = BASE_SHIELD_MAX;

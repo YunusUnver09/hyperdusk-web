@@ -14,8 +14,8 @@ export const FeaturedGameSection: React.FC<FeaturedGameSectionProps> = ({ onPlay
     },
     {
       icon: <Cpu size={22} color="#a855f7" />,
-      title: '20 Eşsiz Crush Core',
-      desc: 'Süpernova Çekirdeği, Plazma, Yörünge Dronu, Spektrum Duvarı, Kriyojenik Stasis ve Nanit Parazit gibi sinerjik çekirdeklerle savaş alanını yönetin.'
+      title: '21 Eşsiz Crush Core',
+      desc: 'Reaktif Kinetik Kalkan, Süpernova Çekirdeği, Plazma, Yörünge Dronu, Spektrum Duvarı ve Nanit Parazit gibi sinerjik çekirdeklerle savaş alanını yönetin.'
     },
     {
       icon: <Orbit size={22} color="#ffd000" />,

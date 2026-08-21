@@ -24,6 +24,7 @@ import {
   Disc,
   Satellite,
   Star,
+  ShieldAlert,
   X,
   Plus,
   Minus,
@@ -80,6 +81,7 @@ export const CoreEngineModal: React.FC<CoreEngineModalProps> = ({ isOpen, onClos
       case 'static_web': return <Disc size={size} color="#ffffff" />;
       case 'orbital_drone': return <Satellite size={size} color="#ffffff" />;
       case 'supernova': return <Star size={size} color="#ffffff" />;
+      case 'deflector': return <ShieldAlert size={size} color="#ffffff" />;
       default: return <Sparkles size={size} color="#ffffff" />;
     }
   };
