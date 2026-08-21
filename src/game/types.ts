@@ -39,7 +39,6 @@ export interface Gem {
   isSwapping?: boolean;
   scale?: number;
   alpha?: number;
-  rotation?: number;
   glow?: boolean;
   sparkleTimer?: number;
 }
@@ -63,7 +62,7 @@ export interface MatchResult {
   energyGained: number;
 }
 
-export type EnemyType = 'scout' | 'drone' | 'shielded' | 'speeder' | 'bomber' | 'titan_boss';
+export type EnemyType = 'scout' | 'drone' | 'shielded' | 'speeder' | 'bomber' | 'siege' | 'titan_boss';
 
 export interface Enemy {
   id: string;
@@ -96,6 +95,11 @@ export interface Enemy {
   naniteInfected?: boolean; // Nanite Swarm parasite infection
   naniteTimer?: number;
   naniteTickTimer?: number;
+
+  // Siege / Artillery enemy props
+  shootTimer?: number;
+  targetY?: number;
+  isSiegeMode?: boolean;
 
   // Boss specific
   isBoss?: boolean;
@@ -132,7 +136,8 @@ export type ProjectileType =
   | 'static_mine'
   | 'drone_bullet'
   | 'supernova_star'
-  | 'kinetic_counter';
+  | 'enemy_bullet'
+  | 'reflected_bullet';
 
 export interface Projectile {
   id: string;
@@ -168,6 +173,7 @@ export interface Turret {
   socketGlow: number; // Pod/socket soft radial aura intensity [0..1]
   muzzleFlash: number; // Barrel tip firing burst flash [0..1]
   conduitPulse: number; // Upward energy conduit pulse intensity [0..1]
+  deflectorTimer?: number; // Reactive Kinetic Deflector barrier duration in sec
   lastFiredElement: GemType | 'idle';
   chargeLevel: number;
 }

@@ -124,7 +124,6 @@ export class BattlefieldEngine {
     damage: number;
     pulseAngle: number;
   }> = [];
-  public kineticDeflectorTimer: number = 0;
 
   // Background stars
   private stars: Star[] = [];
@@ -190,6 +189,7 @@ export class BattlefieldEngine {
         socketGlow: 0,
         muzzleFlash: 0,
         conduitPulse: 0,
+        deflectorTimer: 0,
         lastFiredElement: 'idle',
         chargeLevel: 0
       });
@@ -228,7 +228,6 @@ export class BattlefieldEngine {
     this.canvas.height = Math.round(this.height * this.dpr);
     this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
 
-    // Main Station Barrier (Original Position)
     this.shieldBarrierY = this.height - 38;
     this.initStars(35);
 
@@ -369,6 +368,7 @@ export class BattlefieldEngine {
     // Determine enemy type based on wave progression & sector
     const availableTypes: EnemyType[] = ['drone', 'scout'];
     if (this.currentWave >= 2 || this.currentLevel >= 2) availableTypes.push('speeder');
+    if (this.currentWave >= 2 || this.currentLevel >= 2) availableTypes.push('siege');
     if (this.currentWave >= 3 || this.currentLevel >= 3) availableTypes.push('shielded');
     if (this.currentWave >= 5 || this.currentLevel >= 4) availableTypes.push('bomber');
 
@@ -401,6 +401,15 @@ export class BattlefieldEngine {
       attack = 45 + this.currentLevel * 10;
       width *= 0.75;
       height = 26;
+    } else if (randType === 'siege') {
+      // Kuşatma Topçusu: Ekranda sabitlenir, 5 saniyede bir şeride ağır plazma mermisi sıkar
+      baseHp *= 1.45;
+      speed = 36;
+      color = '#f97316';
+      score = 110 * this.currentLevel;
+      attack = 60 + this.currentLevel * 12;
+      width *= 0.86;
+      height = 32;
     } else if (randType === 'shielded') {
       baseHp *= 1.25;
       speed *= 0.75;
@@ -441,7 +450,10 @@ export class BattlefieldEngine {
       shockTimer: 0,
       burnTimer: 0,
       hitFlashTimer: 0,
-      enginePulse: Math.random() * Math.PI * 2
+      enginePulse: Math.random() * Math.PI * 2,
+      targetY: randType === 'siege' ? (55 + (lane % 4) * 22) : undefined,
+      shootTimer: randType === 'siege' ? 2.5 : undefined,
+      isSiegeMode: false
     };
 
     this.enemies.push(enemy);
@@ -1018,29 +1030,19 @@ export class BattlefieldEngine {
         break;
       }
       case 'deflector': {
-        // Reaktif Kinetik Kalkan (Kinetic Deflector): Namluların üstünde 5 saniyelik kalın mavi-mor plazma kalkanı ekler
-        this.kineticDeflectorTimer = Math.min(12, this.kineticDeflectorTimer + 5.0);
-        soundManager.playShieldBoost();
-        soundManager.playEmpWave();
-        soundManager.triggerVibrate([40, 60]);
+        // Reaktif Kinetik Kalkan (Kinetic Deflector): Kalkan hattına 5 saniyelik reaktif enerji bariyeri kurar.
+        // Düşman mermileri çarptığında kalkan hasar almaz, darbe enerjisini 2x katlayarak geri yansıtır.
+        this.turrets[lane].deflectorTimer = 5.0;
+        soundManager.playShieldHit();
 
-        this.particles.triggerScreenShake(4, 0.25);
-        const deflectorY = this.shieldBarrierY - 32;
-        this.particles.addExplosion(laneX, deflectorY, '#a855f7', 26, true);
-        this.particles.addLaserImpact(laneX, deflectorY, '#00f3ff', 16);
-        this.particles.addFloatingText(laneX, deflectorY - 24, 'KİNETİK PLAZMA KALKAN (5s): 2X TERS VURUŞ!', '#00f3ff', true);
+        this.particles.triggerScreenShake(3, 0.15);
+        this.particles.addFloatingText(laneX, this.shieldBarrierY - 35, 'KİNETİK REFLEKTÖR AKTİF (5s)!', '#14b8a6', true);
+        this.particles.addLaserImpact(laneX, this.shieldBarrierY, '#2dd4bf', 14);
 
-        // Immediate localized shock pulse pushing close enemies back from deflector zone
-        const repelDamage = baseDmg * 0.85 * critMult;
-        for (const e of this.enemies) {
-          if (e.lane === lane || (e.isBoss && e.lanesCovered?.includes(lane))) {
-            if (e.y > deflectorY - 140 && e.y < deflectorY) {
-              e.y = Math.max(30, e.y - 80);
-              this.applyDamageToEnemy(e, repelDamage, 'deflector', isCrit);
-              this.particles.addLaserImpact(e.x, e.y, '#a855f7', 12);
-            }
-          }
-        }
+        // Flash kinetic pulse along the lane
+        turret.socketGlow = 1.0;
+        turret.conduitPulse = 1.0;
+        turret.glowIntensity = 1.0;
         break;
       }
     }
@@ -1256,16 +1258,14 @@ export class BattlefieldEngine {
       if (turret.conduitPulse > 0) {
         turret.conduitPulse = Math.max(0, turret.conduitPulse - dt * 3.0);
       }
+      if (turret.deflectorTimer && turret.deflectorTimer > 0) {
+        turret.deflectorTimer = Math.max(0, turret.deflectorTimer - dt);
+      }
     }
 
     // Shield flash decay
     if (this.shieldHitFlash > 0) {
       this.shieldHitFlash = Math.max(0, this.shieldHitFlash - dt * 3);
-    }
-
-    // Kinetic Deflector barrier duration decay
-    if (this.kineticDeflectorTimer > 0) {
-      this.kineticDeflectorTimer = Math.max(0, this.kineticDeflectorTimer - dt);
     }
 
     // Update Spectrum Walls (Prism Core)
@@ -1614,8 +1614,50 @@ export class BattlefieldEngine {
       if (enemy.frozenTimer > 0) currentSpeed *= 0.35;
       if (enemy.shockTimer > 0 || enemy.isAnchored) currentSpeed = 0;
 
+      // Kuşatma Topçusu (Siege Artillery Ship): Ekrana girip hedeflenen irtifada durur ve 5 saniyede bir aşağıya mermi ateşler
+      if (enemy.type === 'siege') {
+        const targetStopY = enemy.targetY || 65;
+        if (enemy.y >= targetStopY) {
+          currentSpeed = 0;
+          enemy.isSiegeMode = true;
+          enemy.y = targetStopY + Math.sin(enemy.enginePulse * 0.4) * 1.5;
+
+          // 5 saniyede bir ağır plazma mermisi ateşleme
+          if (enemy.frozenTimer <= 0 && enemy.shockTimer <= 0) {
+            enemy.shootTimer = (enemy.shootTimer || 0) + effectiveDt;
+            if (enemy.shootTimer >= 5.0) {
+              enemy.shootTimer = 0;
+              soundManager.playLaser();
+              this.particles.addExplosion(enemy.x, enemy.y + enemy.height * 0.5, '#f97316', 8);
+
+              this.projectiles.push({
+                id: `enemy_bullet_${Date.now()}_${Math.random()}`,
+                type: 'enemy_bullet',
+                lane: enemy.lane,
+                x: enemy.x,
+                y: enemy.y + enemy.height * 0.5,
+                startX: enemy.x,
+                startY: enemy.y + enemy.height * 0.5,
+                targetX: enemy.x,
+                targetY: this.shieldBarrierY,
+                vx: 0,
+                vy: 320,
+                damage: enemy.attackPower * 0.85,
+                color: '#f97316',
+                width: 8,
+                height: 18,
+                radius: 6,
+                life: 0,
+                maxLife: 3.5,
+                element: 'plasma'
+              });
+            }
+          }
+        }
+      }
+
       // Graviton Anchor Traffic Bottleneck
-      if (!enemy.isAnchored) {
+      if (!enemy.isAnchored && !enemy.isSiegeMode) {
         for (const other of this.enemies) {
           if (other !== enemy && other.isAnchored && other.lane === enemy.lane && other.y > enemy.y) {
             const minAllowedY = other.y - other.height - 4;
@@ -1638,50 +1680,7 @@ export class BattlefieldEngine {
       }
 
       // Check barrier impact
-      const deflectorY = this.shieldBarrierY - 32;
-      if (this.kineticDeflectorTimer > 0 && enemy.y + enemy.height * 0.5 >= deflectorY) {
-        // KINETIC DEFLECTOR COUNTER-ATTACK: Namluların üzerindeki reaktif plazma kalkanında yakalanır!
-        const counterDamage = Math.max(350, (enemy.attackPower || 90) * 2.5 * this.upgrades.plasmaDamageMult);
-        this.applyDamageToEnemy(enemy, counterDamage, 'deflector', true);
-
-        // Mavi-mor plazma patlaması, 2X COUNTER yazısı ve geri püskürtme
-        this.particles.addExplosion(enemy.x, deflectorY, '#a855f7', 28, true);
-        this.particles.addLaserImpact(enemy.x, deflectorY, '#00f3ff', 18);
-        this.particles.triggerScreenShake(7, 0.35);
-        this.particles.addFloatingText(enemy.x, deflectorY - 22, `COUNTER: 2X HASAR (-${Math.round(counterDamage)})`, '#00f3ff', true);
-        soundManager.playEmpWave();
-        soundManager.playShieldBoost();
-        soundManager.triggerVibrate([50, 70, 50]);
-
-        // Yukarı doğru 2 kat güçlü mavi-mor kinetik şok plazma oku fırlat
-        this.projectiles.push({
-          id: `counter_${Date.now()}_${Math.random()}`,
-          type: 'kinetic_counter',
-          lane: enemy.lane,
-          x: enemy.x,
-          y: deflectorY - 10,
-          startX: enemy.x,
-          startY: deflectorY - 10,
-          vx: (Math.random() - 0.5) * 50,
-          vy: -820,
-          damage: counterDamage * 0.9,
-          color: '#a855f7',
-          width: 6,
-          height: 24,
-          radius: 8,
-          life: 0,
-          maxLife: 1.1,
-          element: 'deflector'
-        });
-
-        if (enemy.hp > 0) {
-          enemy.y = Math.max(30, deflectorY - 140); // Massive knockback
-        } else {
-          this.enemies.splice(i, 1);
-          if (enemy.isBoss) this.activeBoss = null;
-        }
-      } else if (enemy.y + enemy.height * 0.5 >= this.shieldBarrierY) {
-        // Ana Kalkan Normal Darbe (Main Barrier Hit)
+      if (enemy.y + enemy.height * 0.5 >= this.shieldBarrierY) {
         this.hitShield(enemy.attackPower);
         this.particles.addExplosion(enemy.x, this.shieldBarrierY, enemy.color, 16);
         this.particles.triggerScreenShake(6, 0.25);
@@ -1710,19 +1709,6 @@ export class BattlefieldEngine {
       p.x += p.vx * effectiveDt;
       p.y += p.vy * effectiveDt;
 
-      // Kinetic Counter Shot collision
-      if (p.type === 'kinetic_counter') {
-        const hitEnemy = this.enemies.find(e => Math.hypot(e.x - p.x, e.y - p.y) < e.width * 0.65);
-        if (hitEnemy) {
-          this.applyDamageToEnemy(hitEnemy, p.damage, 'deflector', true);
-          this.particles.addExplosion(p.x, p.y, '#14b8a6', 18, true);
-          this.particles.addFloatingText(hitEnemy.x, hitEnemy.y - 14, '2X COUNTER!', '#14b8a6', true);
-          soundManager.playExplosion(false);
-          this.projectiles.splice(i, 1);
-          continue;
-        }
-      }
-
       // Rocket collision
       if (p.type === 'cluster_rocket') {
         const hitEnemy = this.enemies.find(e => Math.hypot(e.x - p.x, e.y - p.y) < e.width * 0.6);
@@ -1739,6 +1725,60 @@ export class BattlefieldEngine {
         if (hitEnemy) {
           this.applyDamageToEnemy(hitEnemy, p.damage, 'orbital_drone', false);
           this.particles.addLaserImpact(p.x, p.y, '#94a3b8', 5);
+          this.projectiles.splice(i, 1);
+          continue;
+        }
+      }
+
+      // Enemy Bullet Collision (Hits Barrier or gets DEFLECTED by Kinetic Deflector)
+      if (p.type === 'enemy_bullet') {
+        if (p.y >= this.shieldBarrierY - 6) {
+          const turret = this.turrets[p.lane];
+          if (turret && turret.deflectorTimer && turret.deflectorTimer > 0) {
+            // ⚡ KİNETİK DEFLEKTÖR KARŞI SALDIRI: 0 Hasar Alma, 2X Kinetik Geri Yansıtma!
+            this.projectiles.push({
+              id: `reflected_bullet_${Date.now()}_${Math.random()}`,
+              type: 'reflected_bullet',
+              lane: p.lane,
+              x: p.x,
+              y: this.shieldBarrierY - 14,
+              startX: p.x,
+              startY: this.shieldBarrierY - 14,
+              vx: (Math.random() - 0.5) * 30,
+              vy: -680,
+              damage: p.damage * 2.0, // 2X HASARLI KARŞI VURUŞ
+              color: '#14b8a6',
+              width: 8,
+              height: 22,
+              radius: 7,
+              life: 0,
+              maxLife: 2.0,
+              element: 'deflector'
+            });
+
+            soundManager.playShieldHit();
+            this.particles.addExplosion(p.x, this.shieldBarrierY, '#14b8a6', 18, true);
+            this.particles.addFloatingText(p.x, this.shieldBarrierY - 30, '⚡ 2X KİNETİK YANSITMA!', '#14b8a6', true);
+            this.particles.triggerScreenShake(3, 0.15);
+          } else {
+            // Normal kalkan darbesi
+            this.hitShield(p.damage);
+            this.particles.addExplosion(p.x, this.shieldBarrierY, '#f97316', 10);
+            soundManager.playShieldHit();
+          }
+          this.projectiles.splice(i, 1);
+          continue;
+        }
+      }
+
+      // Reflected Counter-Attack Bullet Collision (Hits enemies in flight)
+      if (p.type === 'reflected_bullet') {
+        const hitEnemy = this.enemies.find(e => Math.hypot(e.x - p.x, e.y - p.y) < e.width * 0.6);
+        if (hitEnemy) {
+          this.applyDamageToEnemy(hitEnemy, p.damage, 'deflector', true);
+          this.particles.addExplosion(p.x, p.y, '#14b8a6', 16, true);
+          this.particles.addFloatingText(hitEnemy.x, hitEnemy.y - 15, `-${Math.round(p.damage)} [2X COUNTER]`, '#2dd4bf', true);
+          soundManager.playExplosion(false);
           this.projectiles.splice(i, 1);
           continue;
         }
@@ -1924,14 +1964,9 @@ export class BattlefieldEngine {
   private renderDefenseBarrier(ctx: CanvasRenderingContext2D) {
     const y = this.shieldBarrierY;
     const hpRatio = this.shieldHp / this.maxShieldHp;
-    const isFlashing = this.shieldHitFlash > 0;
-    const barrierColor = isFlashing ? '#ff0055' : (hpRatio < 0.3 ? '#ffaa00' : '#00f3ff');
-    const laneWidth = this.getLaneWidth();
+    const barrierColor = this.shieldHitFlash > 0 ? '#ff0055' : (hpRatio < 0.3 ? '#ffaa00' : '#00f3ff');
 
-    // =========================================================
-    // 🛡️ 1. ANA SAVUNMA BARİYERİ (MAIN STATION BARRIER - ORİJİNAL KONUM)
-    // =========================================================
-    // Dış Işıma Hattı
+    // Outer glow line
     ctx.strokeStyle = barrierColor;
     ctx.lineWidth = 4;
     ctx.globalAlpha = 0.35;
@@ -1940,7 +1975,7 @@ export class BattlefieldEngine {
     ctx.lineTo(this.width, y);
     ctx.stroke();
 
-    // Parlak Beyaz Manyetik Çekirdek Çizgisi
+    // Core bright barrier line
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 1.5;
     ctx.globalAlpha = 0.9;
@@ -1950,121 +1985,49 @@ export class BattlefieldEngine {
     ctx.stroke();
     ctx.globalAlpha = 1;
 
-    // Kalkan Darbe / Enerji Katmanı
-    ctx.fillStyle = isFlashing ? 'rgba(255, 0, 85, 0.25)' : 'rgba(0, 243, 255, 0.08)';
+    // Energetic pulse overlay on barrier
+    ctx.fillStyle = this.shieldHitFlash > 0 ? 'rgba(255, 0, 85, 0.25)' : 'rgba(0, 243, 255, 0.08)';
     ctx.fillRect(0, y, this.width, 5);
 
-    // =========================================================
-    // ⚡ 2. REAKTİF KİNETİK KALKAN (NAMLULAR ÜSTÜNDE KALIN MAVİ-MOR PLAZMA)
-    // =========================================================
-    if (this.kineticDeflectorTimer > 0) {
-      const defY = this.shieldBarrierY - 32; // Taret namlularının belirgin üstünde!
-      const pulse = 1 + Math.sin(Date.now() * 0.012) * 0.12;
+    // ==========================================
+    // REAKTİF KİNETİK KALKAN (KINETIC DEFLECTOR FIELDS)
+    // ==========================================
+    const laneWidth = this.getLaneWidth();
+    for (let i = 0; i < NUM_LANES; i++) {
+      const turret = this.turrets[i];
+      if (turret.deflectorTimer && turret.deflectorTimer > 0) {
+        const lx = i * laneWidth;
+        const alpha = Math.min(1, turret.deflectorTimer / 0.5);
 
-      // 1. Geniş 42px Parlak Mavi-Mor Plazma Dış Aurası
-      const auraGrad = ctx.createLinearGradient(0, defY - 22, 0, defY + 20);
-      auraGrad.addColorStop(0, 'rgba(112, 0, 255, 0)');
-      auraGrad.addColorStop(0.25, 'rgba(168, 85, 247, 0.4)');
-      auraGrad.addColorStop(0.5, 'rgba(0, 243, 255, 0.7)');
-      auraGrad.addColorStop(0.75, 'rgba(126, 34, 206, 0.4)');
-      auraGrad.addColorStop(1, 'rgba(112, 0, 255, 0)');
-      ctx.fillStyle = auraGrad;
-      ctx.fillRect(0, defY - 22, this.width, 42);
+        // Radiant Emerald Deflection Field above barrier
+        const fieldGrad = ctx.createLinearGradient(0, y - 28, 0, y);
+        fieldGrad.addColorStop(0, 'rgba(20, 184, 166, 0)');
+        fieldGrad.addColorStop(0.5, 'rgba(45, 212, 191, 0.45)');
+        fieldGrad.addColorStop(1, 'rgba(20, 184, 166, 0.9)');
 
-      // 2. Üst ve Alt Manyetik Plazma İletken Rayları (Dual Containment Rails)
-      // Üst Neon Mor Ray
-      ctx.strokeStyle = '#c084fc';
-      ctx.lineWidth = 3.5;
-      ctx.globalAlpha = 0.95;
-      ctx.beginPath();
-      ctx.moveTo(0, defY - 7);
-      ctx.lineTo(this.width, defY - 7);
-      ctx.stroke();
+        ctx.fillStyle = fieldGrad;
+        ctx.globalAlpha = alpha * 0.75;
+        ctx.fillRect(lx, y - 24, laneWidth, 24);
 
-      // Alt Neon Mavi/Camgöbeği Ray
-      ctx.strokeStyle = '#38bdf8';
-      ctx.lineWidth = 3.5;
-      ctx.beginPath();
-      ctx.moveTo(0, defY + 7);
-      ctx.lineTo(this.width, defY + 7);
-      ctx.stroke();
-
-      // 3. Kalın Yüksek Enerjili Mavi-Mor Plazma Çekirdeği (Thick Solid Plasma Beam)
-      const coreGrad = ctx.createLinearGradient(0, defY - 5, 0, defY + 5);
-      coreGrad.addColorStop(0, '#7000ff');
-      coreGrad.addColorStop(0.5, '#00f3ff');
-      coreGrad.addColorStop(1, '#a855f7');
-      ctx.strokeStyle = coreGrad;
-      ctx.lineWidth = 10 * pulse;
-      ctx.globalAlpha = 0.65;
-      ctx.beginPath();
-      ctx.moveTo(0, defY);
-      ctx.lineTo(this.width, defY);
-      ctx.stroke();
-
-      // Süper-Parlak Sıcak Lazer Çekirdek
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 4.5;
-      ctx.globalAlpha = 0.95;
-      ctx.beginPath();
-      ctx.moveTo(0, defY);
-      ctx.lineTo(this.width, defY);
-      ctx.stroke();
-      ctx.globalAlpha = 1;
-
-      // 4. Dinamik Titreşen Plazma Dalgaları (Plasma Ripples)
-      ctx.save();
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      const waveT = Date.now() * 0.008;
-      for (let x = 0; x <= this.width; x += 6) {
-        const wy = defY + Math.sin(x * 0.06 + waveT) * 3;
-        if (x === 0) ctx.moveTo(x, wy);
-        else ctx.lineTo(x, wy);
-      }
-      ctx.stroke();
-      ctx.restore();
-
-      // 5. Şerit Kristal Plazma Reaktör Düğümleri (Hex/Diamond Emitters)
-      for (let i = 0; i <= NUM_LANES; i++) {
-        const nx = i * laneWidth;
-        // Dış Mor Halka
-        ctx.fillStyle = '#581c87';
-        ctx.strokeStyle = '#00f3ff';
-        ctx.lineWidth = 1.8;
+        // Hexagonal / Angled Reflective Barrier Crest
+        ctx.strokeStyle = '#2dd4bf';
+        ctx.lineWidth = 2.5;
+        ctx.globalAlpha = alpha * 0.95;
         ctx.beginPath();
-        ctx.arc(nx, defY, 6, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.moveTo(lx + 2, y);
+        ctx.lineTo(lx + laneWidth * 0.25, y - 16);
+        ctx.lineTo(lx + laneWidth * 0.75, y - 16);
+        ctx.lineTo(lx + laneWidth - 2, y);
         ctx.stroke();
 
-        // İç Camgöbeği/Beyaz Çekirdek
-        ctx.fillStyle = '#38bdf8';
-        ctx.beginPath();
-        ctx.arc(nx, defY, 3, 0, Math.PI * 2);
-        ctx.fill();
-
+        // Pulsating Center Counter-Spark / Chevron
         ctx.fillStyle = '#ffffff';
+        ctx.globalAlpha = alpha * 0.85;
         ctx.beginPath();
-        ctx.arc(nx, defY, 1.2, 0, Math.PI * 2);
+        ctx.arc(lx + laneWidth * 0.5, y - 16, 3, 0, Math.PI * 2);
         ctx.fill();
+        ctx.globalAlpha = 1;
       }
-
-      // 6. Plazma Kalkanı Aktif Rozeti (Counter-Attack Active Badge)
-      ctx.save();
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
-      ctx.strokeStyle = '#a855f7';
-      ctx.lineWidth = 1.8;
-      const badgeW = 240;
-      const badgeX = (this.width - badgeW) / 2;
-      ctx.fillRect(badgeX, defY - 26, badgeW, 18);
-      ctx.strokeRect(badgeX, defY - 26, badgeW, 18);
-
-      ctx.fillStyle = '#00f3ff';
-      ctx.font = 'bold 10px Rajdhani, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(`⚡ KİNETİK TERS VURUŞ [2X]: ${this.kineticDeflectorTimer.toFixed(1)}s ⚡`, this.width / 2, defY - 13);
-      ctx.restore();
     }
   }
 
@@ -2326,6 +2289,43 @@ export class BattlefieldEngine {
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
+      } else if (enemy.type === 'siege') {
+        // Kuşatma Topçusu (Heavy Artillery Gunship with dual forward cannons & charging muzzle)
+        ctx.beginPath();
+        ctx.moveTo(0, enemy.height * 0.45);
+        ctx.lineTo(enemy.width * 0.48, enemy.height * 0.15);
+        ctx.lineTo(enemy.width * 0.45, -enemy.height * 0.45);
+        ctx.lineTo(enemy.width * 0.15, -enemy.height * 0.55);
+        ctx.lineTo(-enemy.width * 0.15, -enemy.height * 0.55);
+        ctx.lineTo(-enemy.width * 0.45, -enemy.height * 0.45);
+        ctx.lineTo(-enemy.width * 0.48, enemy.height * 0.15);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // Forward Dual Heavy Cannons
+        ctx.fillStyle = '#0f172a';
+        ctx.strokeStyle = '#f97316';
+        ctx.lineWidth = 1.2;
+        ctx.fillRect(-enemy.width * 0.28, enemy.height * 0.08, 4.5, 12);
+        ctx.strokeRect(-enemy.width * 0.28, enemy.height * 0.08, 4.5, 12);
+        ctx.fillRect(enemy.width * 0.28 - 4.5, enemy.height * 0.08, 4.5, 12);
+        ctx.strokeRect(enemy.width * 0.28 - 4.5, enemy.height * 0.08, 4.5, 12);
+
+        // Center Siege Glowing Fusion Core
+        ctx.fillStyle = '#f97316';
+        ctx.beginPath();
+        ctx.arc(0, -2, 5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Charging Plasma Flare before firing (last 1.2s of 5.0s cycle)
+        if (enemy.shootTimer && enemy.shootTimer >= 3.8) {
+          const chargeRatio = (enemy.shootTimer - 3.8) / 1.2;
+          ctx.fillStyle = '#ffedd5';
+          ctx.beginPath();
+          ctx.arc(0, enemy.height * 0.45, 2.5 + chargeRatio * 4.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
       } else if (enemy.type === 'bomber') {
         // Heavy Hexagon Bomber
         ctx.beginPath();
@@ -2546,30 +2546,43 @@ export class BattlefieldEngine {
         ctx.fillRect(-8, -2.5, 16, 5);
         ctx.fillStyle = '#94a3b8';
         ctx.fillRect(-10, -1, 4, 2);
-      } else if (p.type === 'kinetic_counter') {
+      } else if (p.type === 'enemy_bullet') {
         ctx.translate(p.x, p.y);
         ctx.rotate(Math.atan2(p.vy, p.vx));
 
-        // High-velocity Kinetic Counter Shock Lance (Blue-Purple Plasma)
-        ctx.fillStyle = 'rgba(168, 85, 247, 0.45)';
+        // Outer fiery orange/red aura
+        const aura = ctx.createRadialGradient(0, 0, 1, 0, 0, 12);
+        aura.addColorStop(0, '#ffffff');
+        aura.addColorStop(0.35, '#f97316');
+        aura.addColorStop(1, 'rgba(239, 68, 68, 0)');
+        ctx.fillStyle = aura;
         ctx.beginPath();
-        ctx.ellipse(0, 0, 18, 7, 0, 0, Math.PI * 2);
+        ctx.arc(0, 0, 12, 0, Math.PI * 2);
         ctx.fill();
 
-        ctx.fillStyle = '#8b5cf6';
-        ctx.beginPath();
-        ctx.ellipse(0, 0, 13, 4.5, 0, 0, Math.PI * 2);
-        ctx.fill();
+        // Core plasma bolt
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(-6, -2, 12, 4);
+        ctx.fillStyle = '#f97316';
+        ctx.fillRect(-9, -3, 18, 6);
+      } else if (p.type === 'reflected_bullet') {
+        ctx.translate(p.x, p.y);
+        ctx.rotate(Math.atan2(p.vy, p.vx));
 
-        ctx.fillStyle = '#00f3ff';
+        // Supersonic Emerald Kinetic Spear
+        const aura = ctx.createRadialGradient(0, 0, 2, 0, 0, 15);
+        aura.addColorStop(0, '#ffffff');
+        aura.addColorStop(0.45, '#2dd4bf');
+        aura.addColorStop(1, 'rgba(20, 184, 166, 0)');
+        ctx.fillStyle = aura;
         ctx.beginPath();
-        ctx.ellipse(2, 0, 9, 2.5, 0, 0, Math.PI * 2);
+        ctx.arc(0, 0, 15, 0, Math.PI * 2);
         ctx.fill();
 
         ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.ellipse(3, 0, 5, 1.2, 0, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.fillRect(-10, -2, 20, 4);
+        ctx.fillStyle = '#14b8a6';
+        ctx.fillRect(-14, -3, 28, 6);
       }
 
       ctx.restore();
@@ -2897,7 +2910,6 @@ export class BattlefieldEngine {
     this.spectrumWalls = [];
     this.orbitalDrones = [];
     this.supernovaStars = [];
-    this.kineticDeflectorTimer = 0;
     this.particles.clear();
     this.shieldHp = BASE_SHIELD_MAX;
     this.maxShieldHp = BASE_SHIELD_MAX;

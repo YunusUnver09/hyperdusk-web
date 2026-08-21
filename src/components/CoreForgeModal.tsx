@@ -24,7 +24,7 @@ import {
   Disc,
   Satellite,
   Star,
-  ShieldAlert,
+  ShieldCheck,
   X,
   Lock,
   Check,
@@ -65,7 +65,7 @@ export const CoreForgeModal: React.FC<CoreForgeModalProps> = ({ isOpen, onClose,
       case 'static_web': return <Disc size={size} color="#ffffff" />;
       case 'orbital_drone': return <Satellite size={size} color="#ffffff" />;
       case 'supernova': return <Star size={size} color="#ffffff" />;
-      case 'deflector': return <ShieldAlert size={size} color="#ffffff" />;
+      case 'deflector': return <ShieldCheck size={size} color="#ffffff" />;
       default: return <Sparkles size={size} color="#ffffff" />;
     }
   };
