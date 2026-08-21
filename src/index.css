@@ -18,26 +18,36 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  user-select: none;
-  -webkit-user-select: none;
-  -webkit-touch-callout: none;
 }
 
-html, body, #root {
+html {
   width: 100%;
-  height: 100%;
-  overflow: hidden;
+  min-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+
+body {
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
   background-color: var(--bg-space);
+  background: radial-gradient(circle at 50% 20%, #151c38 0%, #070913 70%, #030408 100%);
   color: #ffffff;
   font-family: var(--font-body);
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
 }
 
-/* Background animated stars & cosmic dust */
-body {
-  background: radial-gradient(circle at 50% 20%, #151c38 0%, #070913 70%, #030408 100%);
+#root {
+  width: 100%;
+  min-height: 100vh;
   display: flex;
-  justify-content: center;
-  align-items: center;
+  flex-direction: column;
 }
 
 /* Container Frame - Mobile App Layout */
@@ -3186,8 +3196,12 @@ body {
 /* Master Portal Layout */
 .hyperdusk-portal-layout {
   min-height: 100vh;
+  width: 100%;
   position: relative;
   overflow-x: hidden;
+  overflow-y: visible;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
   background: radial-gradient(circle at 50% 0%, #101428 0%, #060813 60%, #04050a 100%);
 }
 
@@ -3205,6 +3219,8 @@ body {
   z-index: 1;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  touch-action: pan-y;
 }
 
 /* ========================================================= */
