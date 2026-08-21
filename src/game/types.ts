@@ -388,6 +388,16 @@ export interface GameStats {
 
 export type GameState = 'menu' | 'map' | 'playing' | 'paused' | 'wave_cleared' | 'level_victory' | 'game_over' | 'victory';
 
+export type AmbientType =
+  | 'asteroids'
+  | 'plasma'
+  | 'cyber_grid'
+  | 'cryo_snow'
+  | 'ion_lightning'
+  | 'void_vortex'
+  | 'quantum_pulse'
+  | 'warp_tunnel';
+
 export interface LevelConfig {
   id: number;
   name: string;
@@ -400,6 +410,10 @@ export interface LevelConfig {
   miniBossTitle: string;
   mainBossName: string;
   mainBossTitle: string;
+  ambientType: AmbientType;
+  enemyWeights: Partial<Record<EnemyType, number>>;
+  spawnIntervalBase: number;
+  spawnCountBase: number;
   starsRequired?: number;
   rewardFragments?: number;
 }

@@ -128,6 +128,46 @@ export class BattlefieldEngine {
   // Background stars
   private stars: Star[] = [];
 
+  // Sector Ambient Animated Background State
+  public ambientTimer: number = 0;
+  public ambientAsteroids: Array<{
+    x: number;
+    y: number;
+    size: number;
+    rotation: number;
+    vRot: number;
+    vx: number;
+    vy: number;
+    vertices: Array<{ x: number; y: number }>;
+  }> = [];
+  public ambientSnow: Array<{
+    x: number;
+    y: number;
+    size: number;
+    speed: number;
+    drift: number;
+    alpha: number;
+    angle: number;
+  }> = [];
+  public ambientLightning: Array<{
+    segments: Array<{ x1: number; y1: number; x2: number; y2: number }>;
+    alpha: number;
+    timer: number;
+    color: string;
+  }> = [];
+  public ambientLightningCooldown: number = 2.0;
+  public ambientGridOffset: number = 0;
+  public ambientVortexAngle: number = 0;
+  public ambientReactorPulse: number = 0;
+  public ambientWarpStars: Array<{
+    x: number;
+    y: number;
+    length: number;
+    speed: number;
+    alpha: number;
+    width: number;
+  }> = [];
+
   // Upgrades & Stats
   public upgrades: PlayerUpgrades = {
     plasmaDamageMult: 1,
@@ -256,8 +296,10 @@ export class BattlefieldEngine {
 
     this.shieldBarrierY = this.height - 38;
     this.initStars(35);
+    this.initSectorAmbient(this.currentLevel);
 
     // Pre-cache background gradient once on resize
+    const lvlConfig = getLevelConfig(this.currentLevel);
     const bgGrad = this.ctx.createRadialGradient(
       this.width * 0.5,
       this.height * 0.3,
@@ -266,10 +308,76 @@ export class BattlefieldEngine {
       this.height * 0.3,
       this.width * 0.8
     );
-    bgGrad.addColorStop(0, 'rgba(112, 0, 255, 0.12)');
-    bgGrad.addColorStop(0.6, 'rgba(0, 243, 255, 0.05)');
+    bgGrad.addColorStop(0, `${lvlConfig.gradient[0]}22`);
+    bgGrad.addColorStop(0.6, `${lvlConfig.gradient[1]}0f`);
     bgGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
     this.bgGradient = bgGrad;
+  }
+
+  public initSectorAmbient(level: number = this.currentLevel) {
+    const lvlConfig = getLevelConfig(level);
+    const ambientType = lvlConfig.ambientType;
+
+    this.ambientAsteroids = [];
+    this.ambientSnow = [];
+    this.ambientLightning = [];
+    this.ambientWarpStars = [];
+    this.ambientGridOffset = 0;
+    this.ambientVortexAngle = 0;
+    this.ambientReactorPulse = 0;
+    this.ambientLightningCooldown = 1.5;
+
+    const w = this.width || 400;
+    const h = this.height || 340;
+
+    if (ambientType === 'asteroids') {
+      const count = 9;
+      for (let i = 0; i < count; i++) {
+        const size = Math.random() * 18 + 10;
+        const numPoints = Math.floor(Math.random() * 3) + 6;
+        const vertices: Array<{ x: number; y: number }> = [];
+        for (let p = 0; p < numPoints; p++) {
+          const ang = (p * 2 * Math.PI) / numPoints;
+          const dist = size * (0.7 + Math.random() * 0.5);
+          vertices.push({ x: Math.cos(ang) * dist, y: Math.sin(ang) * dist });
+        }
+        this.ambientAsteroids.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          size,
+          rotation: Math.random() * Math.PI * 2,
+          vRot: (Math.random() - 0.5) * 0.8,
+          vx: (Math.random() - 0.5) * 6,
+          vy: Math.random() * 14 + 10,
+          vertices
+        });
+      }
+    } else if (ambientType === 'cryo_snow') {
+      const count = 35;
+      for (let i = 0; i < count; i++) {
+        this.ambientSnow.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          size: Math.random() * 3.5 + 2.0,
+          speed: Math.random() * 25 + 18,
+          drift: Math.random() * Math.PI * 2,
+          alpha: Math.random() * 0.6 + 0.35,
+          angle: Math.random() * Math.PI * 2
+        });
+      }
+    } else if (ambientType === 'warp_tunnel') {
+      const count = 45;
+      for (let i = 0; i < count; i++) {
+        this.ambientWarpStars.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          length: Math.random() * 35 + 15,
+          speed: Math.random() * 260 + 180,
+          alpha: Math.random() * 0.7 + 0.3,
+          width: Math.random() * 1.5 + 0.8
+        });
+      }
+    }
   }
 
   public startWave(waveNumber: number) {
@@ -279,6 +387,8 @@ export class BattlefieldEngine {
     this.waveSpawnTimer = 0.5; // Quick initial spawn
     this.adrenalineTriggeredThisWave = false;
     this.emergencySlowTimer = 0;
+
+    const lvlConfig = getLevelConfig(this.currentLevel);
 
     // Wave 4 is Mini Boss, Wave 8 is Main Sector Boss
     const isMini = waveNumber === 4;
@@ -290,14 +400,14 @@ export class BattlefieldEngine {
     this.activeBoss = null;
 
     if (isMain) {
-      this.waveEnemiesToSpawn = 12 + this.currentLevel * 2;
-      this.waveSpawnInterval = 1.4;
+      this.waveEnemiesToSpawn = Math.round(lvlConfig.spawnCountBase * 1.45 + this.currentLevel * 2);
+      this.waveSpawnInterval = Math.max(0.70, lvlConfig.spawnIntervalBase * 0.90);
     } else if (isMini) {
-      this.waveEnemiesToSpawn = 10 + this.currentLevel * 2;
-      this.waveSpawnInterval = 1.3;
+      this.waveEnemiesToSpawn = Math.round(lvlConfig.spawnCountBase * 1.25 + this.currentLevel * 2);
+      this.waveSpawnInterval = Math.max(0.75, lvlConfig.spawnIntervalBase * 0.95);
     } else {
-      this.waveEnemiesToSpawn = 7 + waveNumber * 2 + this.currentLevel;
-      this.waveSpawnInterval = Math.max(0.70, 1.45 - waveNumber * 0.08);
+      this.waveEnemiesToSpawn = Math.round(lvlConfig.spawnCountBase + (waveNumber - 1) * 2);
+      this.waveSpawnInterval = Math.max(0.60, lvlConfig.spawnIntervalBase - (waveNumber - 1) * 0.08);
     }
     this.waveEnemiesSpawned = 0;
 
@@ -412,14 +522,29 @@ export class BattlefieldEngine {
       }
     }
 
-    // Determine enemy type based on wave progression & sector
-    const availableTypes: EnemyType[] = ['drone', 'scout'];
-    if (this.currentWave >= 2 || this.currentLevel >= 2) availableTypes.push('speeder');
-    if (this.currentWave >= 2 || this.currentLevel >= 2) availableTypes.push('siege');
-    if (this.currentWave >= 3 || this.currentLevel >= 3) availableTypes.push('shielded');
-    if (this.currentWave >= 5 || this.currentLevel >= 4) availableTypes.push('bomber');
+    // Determine enemy type based on sector-specific weights and wave gates
+    const baseWeights = lvlConfig.enemyWeights || { drone: 50, scout: 30, speeder: 20 };
+    const weightedTypes = (Object.keys(baseWeights) as EnemyType[]).filter(type => {
+      if (type === 'speeder' || type === 'siege') return this.currentWave >= 2 || this.currentLevel >= 2;
+      if (type === 'shielded') return this.currentWave >= 2 || this.currentLevel >= 3;
+      if (type === 'bomber') return this.currentWave >= 3 || this.currentLevel >= 4;
+      return true;
+    });
 
-    const randType = availableTypes[Math.floor(Math.random() * availableTypes.length)];
+    let totalWeight = 0;
+    for (const t of weightedTypes) {
+      totalWeight += (baseWeights[t] || 10);
+    }
+    let roll = Math.random() * (totalWeight > 0 ? totalWeight : 100);
+    let randType: EnemyType = weightedTypes[0] || 'drone';
+    for (const t of weightedTypes) {
+      const w = baseWeights[t] || 10;
+      if (roll <= w) {
+        randType = t;
+        break;
+      }
+      roll -= w;
+    }
     const lane = Math.floor(Math.random() * NUM_LANES);
     const laneX = this.getLaneX(lane);
 
@@ -1299,6 +1424,83 @@ export class BattlefieldEngine {
     }
   }
 
+  private updateSectorAmbient(effectiveDt: number, dt: number) {
+    this.ambientTimer += dt;
+    const lvlConfig = getLevelConfig(this.currentLevel);
+    const ambientType = lvlConfig.ambientType;
+    const w = this.width || 400;
+    const h = this.height || 340;
+
+    if (ambientType === 'asteroids') {
+      for (const a of this.ambientAsteroids) {
+        a.y += a.vy * effectiveDt;
+        a.x += a.vx * effectiveDt;
+        a.rotation += a.vRot * effectiveDt;
+        if (a.y > h + 50) {
+          a.y = -50;
+          a.x = Math.random() * w;
+        }
+        if (a.x < -50) a.x = w + 50;
+        if (a.x > w + 50) a.x = -50;
+      }
+    } else if (ambientType === 'cryo_snow') {
+      for (const s of this.ambientSnow) {
+        s.y += s.speed * effectiveDt;
+        s.x += Math.sin(this.ambientTimer * 1.5 + s.drift) * 16 * effectiveDt;
+        s.angle += effectiveDt * 1.2;
+        if (s.y > h + 20) {
+          s.y = -20;
+          s.x = Math.random() * w;
+        }
+      }
+    } else if (ambientType === 'cyber_grid') {
+      this.ambientGridOffset = (this.ambientGridOffset + effectiveDt * 42) % 36;
+    } else if (ambientType === 'ion_lightning') {
+      this.ambientLightningCooldown -= dt;
+      if (this.ambientLightningCooldown <= 0) {
+        this.ambientLightningCooldown = Math.random() * 1.8 + 1.2;
+        // Generate a new lightning bolt
+        const startX = Math.random() * w;
+        let currX = startX;
+        let currY = 0;
+        const segments: Array<{ x1: number; y1: number; x2: number; y2: number }> = [];
+        while (currY < h * 0.75) {
+          const nextX = currX + (Math.random() - 0.5) * 36;
+          const nextY = currY + Math.random() * 32 + 16;
+          segments.push({ x1: currX, y1: currY, x2: nextX, y2: nextY });
+          currX = nextX;
+          currY = nextY;
+        }
+        this.ambientLightning.push({
+          segments,
+          alpha: 1.0,
+          timer: 0.28,
+          color: Math.random() > 0.4 ? '#c084fc' : '#38bdf8'
+        });
+      }
+      for (let i = this.ambientLightning.length - 1; i >= 0; i--) {
+        const l = this.ambientLightning[i];
+        l.timer -= dt;
+        l.alpha = Math.max(0, l.timer / 0.28);
+        if (l.timer <= 0) {
+          this.ambientLightning.splice(i, 1);
+        }
+      }
+    } else if (ambientType === 'void_vortex') {
+      this.ambientVortexAngle += effectiveDt * 0.75;
+    } else if (ambientType === 'quantum_pulse') {
+      this.ambientReactorPulse += effectiveDt * 2.2;
+    } else if (ambientType === 'warp_tunnel') {
+      for (const st of this.ambientWarpStars) {
+        st.y += st.speed * effectiveDt;
+        if (st.y > h + st.length) {
+          st.y = -st.length;
+          st.x = Math.random() * w;
+        }
+      }
+    }
+  }
+
   public update(dt: number) {
     // Process Hit-Stop / Time Dilation (Micro Slow-Motion on Impact)
     let effectiveDt = dt;
@@ -1324,6 +1526,9 @@ export class BattlefieldEngine {
         star.x = Math.random() * this.width;
       }
     }
+
+    // Update sector ambient animations
+    this.updateSectorAmbient(effectiveDt, dt);
 
     // Turret cool-down & recoil decay (elastic spring return)
     for (const turret of this.turrets) {
@@ -2048,6 +2253,9 @@ export class BattlefieldEngine {
     }
     ctx.globalAlpha = 1;
 
+    // Render Sector Dynamic Thematic Background
+    this.renderSectorBackground(ctx);
+
     // Render 8 Defense Lanes
     const laneWidth = this.getLaneWidth();
     for (let i = 0; i < NUM_LANES; i++) {
@@ -2112,6 +2320,315 @@ export class BattlefieldEngine {
     this.particles.render(ctx);
 
     ctx.restore();
+  }
+
+  private renderSectorBackground(ctx: CanvasRenderingContext2D) {
+    const lvlConfig = getLevelConfig(this.currentLevel);
+    const ambientType = lvlConfig.ambientType;
+    const w = this.width;
+    const h = this.height;
+
+    // 1. Dynamic Themed Radial Glow
+    const bgGrad = ctx.createRadialGradient(w * 0.5, h * 0.35, 10, w * 0.5, h * 0.35, w * 0.85);
+    bgGrad.addColorStop(0, `${lvlConfig.gradient[0]}22`);
+    bgGrad.addColorStop(0.5, `${lvlConfig.gradient[1]}0f`);
+    bgGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, w, h);
+
+    // 2. Specific Sector Atmospheric Rendering
+    switch (ambientType) {
+      case 'asteroids': {
+        // Render 3D shaded rocky asteroids drifting
+        for (const a of this.ambientAsteroids) {
+          ctx.save();
+          ctx.translate(a.x, a.y);
+          ctx.rotate(a.rotation);
+
+          const rockGrad = ctx.createLinearGradient(-a.size, -a.size, a.size, a.size);
+          rockGrad.addColorStop(0, '#475569');
+          rockGrad.addColorStop(0.5, '#1e293b');
+          rockGrad.addColorStop(1, '#0f172a');
+          ctx.fillStyle = rockGrad;
+          ctx.strokeStyle = 'rgba(0, 243, 255, 0.28)';
+          ctx.lineWidth = 1;
+
+          ctx.beginPath();
+          if (a.vertices.length > 0) {
+            ctx.moveTo(a.vertices[0].x, a.vertices[0].y);
+            for (let i = 1; i < a.vertices.length; i++) {
+              ctx.lineTo(a.vertices[i].x, a.vertices[i].y);
+            }
+            ctx.closePath();
+          }
+          ctx.fill();
+          ctx.stroke();
+
+          // Highlight facet & craters
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.09)';
+          ctx.beginPath();
+          ctx.arc(-a.size * 0.25, -a.size * 0.25, a.size * 0.35, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+          ctx.beginPath();
+          ctx.arc(a.size * 0.2, a.size * 0.2, a.size * 0.2, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.restore();
+        }
+        break;
+      }
+
+      case 'plasma': {
+        // Multi-layer pulsating plasma clouds
+        const pulse = Math.sin(this.ambientTimer * 1.5);
+        const pGrad = ctx.createRadialGradient(
+          w * (0.5 + Math.sin(this.ambientTimer * 0.6) * 0.15),
+          h * (0.3 + Math.cos(this.ambientTimer * 0.5) * 0.1),
+          15,
+          w * 0.5,
+          h * 0.4,
+          w * (0.6 + pulse * 0.1)
+        );
+        pGrad.addColorStop(0, 'rgba(255, 42, 95, 0.22)');
+        pGrad.addColorStop(0.45, 'rgba(234, 88, 12, 0.12)');
+        pGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = pGrad;
+        ctx.fillRect(0, 0, w, h);
+
+        // Second organic plasma cloud lobe
+        const pGrad2 = ctx.createRadialGradient(
+          w * (0.3 + Math.cos(this.ambientTimer * 0.8) * 0.2),
+          h * (0.6 + Math.sin(this.ambientTimer * 0.7) * 0.12),
+          10,
+          w * 0.35,
+          h * 0.55,
+          w * 0.55
+        );
+        pGrad2.addColorStop(0, 'rgba(255, 85, 0, 0.15)');
+        pGrad2.addColorStop(0.5, 'rgba(180, 0, 48, 0.08)');
+        pGrad2.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = pGrad2;
+        ctx.fillRect(0, 0, w, h);
+        break;
+      }
+
+      case 'cyber_grid': {
+        // Retro-futuristic Cyber Wireframe Perspective Grid
+        ctx.save();
+        const step = 36;
+        for (let y = this.ambientGridOffset; y < h; y += step) {
+          const depthAlpha = Math.min(0.22, (y / h) * 0.25);
+          ctx.strokeStyle = `rgba(255, 208, 0, ${depthAlpha})`;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(w, y);
+          ctx.stroke();
+        }
+
+        // Perspective vertical converging grid lines
+        const vanishX = w * 0.5;
+        const vanishY = -40;
+        const vCount = 10;
+        for (let v = 0; v <= vCount; v++) {
+          const bottomX = (v / vCount) * w;
+          ctx.strokeStyle = 'rgba(255, 208, 0, 0.12)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(vanishX, vanishY);
+          ctx.lineTo(bottomX, h);
+          ctx.stroke();
+        }
+
+        // Scanning cyber laser line
+        const scanY = (this.ambientTimer * 90) % h;
+        ctx.strokeStyle = 'rgba(255, 225, 50, 0.35)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(0, scanY);
+        ctx.lineTo(w, scanY);
+        ctx.stroke();
+        ctx.restore();
+        break;
+      }
+
+      case 'cryo_snow': {
+        // Floating hexagonal ice crystals and falling snow
+        for (const s of this.ambientSnow) {
+          ctx.save();
+          ctx.translate(s.x, s.y);
+          ctx.rotate(s.angle);
+          ctx.fillStyle = '#6be5ff';
+          ctx.strokeStyle = '#e0f2fe';
+          ctx.globalAlpha = s.alpha;
+          ctx.lineWidth = 1;
+
+          // Hexagonal 6-arm crystal
+          for (let arm = 0; arm < 3; arm++) {
+            ctx.beginPath();
+            ctx.moveTo(-s.size, 0);
+            ctx.lineTo(s.size, 0);
+            ctx.stroke();
+            ctx.rotate(Math.PI / 3);
+          }
+          ctx.beginPath();
+          ctx.arc(0, 0, s.size * 0.35, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.restore();
+        }
+        break;
+      }
+
+      case 'ion_lightning': {
+        // Flash backlight glow when lightning strikes
+        for (const l of this.ambientLightning) {
+          if (l.alpha > 0) {
+            ctx.save();
+            ctx.strokeStyle = l.color;
+            ctx.lineWidth = 2.0;
+            ctx.shadowBlur = 14;
+            ctx.shadowColor = l.color;
+            ctx.globalAlpha = l.alpha * 0.85;
+
+            ctx.beginPath();
+            for (const seg of l.segments) {
+              ctx.moveTo(seg.x1, seg.y1);
+              ctx.lineTo(seg.x2, seg.y2);
+            }
+            ctx.stroke();
+
+            // Ambient background flash
+            ctx.fillStyle = l.color;
+            ctx.globalAlpha = l.alpha * 0.08;
+            ctx.fillRect(0, 0, w, h);
+
+            ctx.restore();
+          }
+        }
+        break;
+      }
+
+      case 'void_vortex': {
+        // Deep Black Hole Singularity & Accretion Disk
+        const bhX = w * 0.5;
+        const bhY = h * 0.28;
+        const bhRadius = 38;
+
+        ctx.save();
+        ctx.translate(bhX, bhY);
+
+        // 1. Outer Swirling Accretion Disk
+        ctx.rotate(this.ambientVortexAngle);
+        const diskGrad = ctx.createRadialGradient(0, 0, bhRadius * 0.8, 0, 0, bhRadius * 2.8);
+        diskGrad.addColorStop(0, 'rgba(192, 132, 252, 0.45)');
+        diskGrad.addColorStop(0.4, 'rgba(99, 102, 241, 0.25)');
+        diskGrad.addColorStop(0.8, 'rgba(67, 56, 202, 0.12)');
+        diskGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+        ctx.fillStyle = diskGrad;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, bhRadius * 2.8, bhRadius * 1.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Accretion spirals
+        ctx.strokeStyle = 'rgba(192, 132, 252, 0.4)';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([12, 16]);
+        ctx.beginPath();
+        ctx.ellipse(0, 0, bhRadius * 2.2, bhRadius * 1.1, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // 2. Event Horizon Halo & Deep Black Hole Core
+        ctx.rotate(-this.ambientVortexAngle * 1.5);
+        ctx.shadowBlur = 18;
+        ctx.shadowColor = '#818cf8';
+        ctx.fillStyle = '#000000';
+        ctx.beginPath();
+        ctx.arc(0, 0, bhRadius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // Gravitational lensing rim
+        ctx.strokeStyle = '#c084fc';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(0, 0, bhRadius, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.restore();
+        break;
+      }
+
+      case 'quantum_pulse': {
+        // Supercharged Quantum Reactor Core
+        const coreX = w * 0.5;
+        const coreY = h * 0.25;
+        const pulse = Math.sin(this.ambientReactorPulse);
+        const radius = 32 + pulse * 4;
+
+        ctx.save();
+        ctx.translate(coreX, coreY);
+
+        // Expanding concentric containment shockwaves
+        for (let ring = 1; ring <= 3; ring++) {
+          const rSize = radius * (1 + ring * 0.6) + ((this.ambientTimer * 30 * ring) % 65);
+          const rAlpha = Math.max(0, 0.35 - (rSize / (radius * 3.5)) * 0.35);
+          ctx.strokeStyle = `rgba(255, 136, 0, ${rAlpha})`;
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.arc(0, 0, rSize, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        // Reactor Aura
+        const rGrad = ctx.createRadialGradient(0, 0, 5, 0, 0, radius * 2.2);
+        rGrad.addColorStop(0, '#ffffff');
+        rGrad.addColorStop(0.3, '#ffaa44');
+        rGrad.addColorStop(0.7, 'rgba(255, 100, 0, 0.2)');
+        rGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = rGrad;
+        ctx.beginPath();
+        ctx.arc(0, 0, radius * 2.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Core Center
+        ctx.fillStyle = '#ffeedd';
+        ctx.beginPath();
+        ctx.arc(0, 0, radius * 0.65, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+        break;
+      }
+
+      case 'warp_tunnel': {
+        // Hyper-Speed Matrix Warp Speed Streaks
+        ctx.save();
+        for (const st of this.ambientWarpStars) {
+          ctx.strokeStyle = '#00ff88';
+          ctx.lineWidth = st.width;
+          ctx.globalAlpha = st.alpha;
+          ctx.beginPath();
+          ctx.moveTo(st.x, st.y);
+          ctx.lineTo(st.x, st.y + st.length);
+          ctx.stroke();
+        }
+
+        // Warp center glow
+        const wGrad = ctx.createRadialGradient(w * 0.5, h * 0.3, 10, w * 0.5, h * 0.3, w * 0.6);
+        wGrad.addColorStop(0, 'rgba(0, 255, 136, 0.18)');
+        wGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = wGrad;
+        ctx.fillRect(0, 0, w, h);
+
+        ctx.restore();
+        break;
+      }
+    }
   }
 
   private renderDefenseBarrier(ctx: CanvasRenderingContext2D) {
@@ -3624,5 +4141,6 @@ export class BattlefieldEngine {
       deflector: 0
     };
     this.initTurrets();
+    this.initSectorAmbient(level);
   }
 }

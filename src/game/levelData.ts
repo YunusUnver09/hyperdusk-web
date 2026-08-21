@@ -12,7 +12,11 @@ export const LEVELS: LevelConfig[] = [
     miniBossName: 'GÖLGE AVCISI (Ağır Dron)',
     miniBossTitle: 'MİNİ BOSS • 4. DALGA',
     mainBossName: 'ASTEROID PARÇALAYICI TİTAN',
-    mainBossTitle: 'SEKTÖR PATRONU • 8. DALGA'
+    mainBossTitle: 'SEKTÖR PATRONU • 8. DALGA',
+    ambientType: 'asteroids',
+    enemyWeights: { drone: 55, scout: 35, speeder: 10 },
+    spawnIntervalBase: 1.40,
+    spawnCountBase: 7
   },
   {
     id: 2,
@@ -25,7 +29,11 @@ export const LEVELS: LevelConfig[] = [
     miniBossName: 'KIZIL TAARRUZ ZIRHLISI',
     miniBossTitle: 'MİNİ BOSS • 4. DALGA',
     mainBossName: 'PLAZMA CEHENNEMİ KRUVAZÖRÜ',
-    mainBossTitle: 'SEKTÖR PATRONU • 8. DALGA'
+    mainBossTitle: 'SEKTÖR PATRONU • 8. DALGA',
+    ambientType: 'plasma',
+    enemyWeights: { speeder: 35, drone: 30, scout: 25, siege: 10 },
+    spawnIntervalBase: 1.25,
+    spawnCountBase: 9
   },
   {
     id: 3,
@@ -38,7 +46,11 @@ export const LEVELS: LevelConfig[] = [
     miniBossName: 'SİBER MUHAFIZ KULESİ',
     miniBossTitle: 'MİNİ BOSS • 4. DALGA',
     mainBossName: 'FABRİKA AMİRALİ PROMETHEUS',
-    mainBossTitle: 'SEKTÖR PATRONU • 8. DALGA'
+    mainBossTitle: 'SEKTÖR PATRONU • 8. DALGA',
+    ambientType: 'cyber_grid',
+    enemyWeights: { siege: 40, shielded: 30, drone: 20, speeder: 10 },
+    spawnIntervalBase: 1.30,
+    spawnCountBase: 10
   },
   {
     id: 4,
@@ -51,7 +63,11 @@ export const LEVELS: LevelConfig[] = [
     miniBossName: 'BUZUL TAŞIYICI KRUVAZÖR',
     miniBossTitle: 'MİNİ BOSS • 4. DALGA',
     mainBossName: 'MUTLAK SIFIR GOLİATH',
-    mainBossTitle: 'SEKTÖR PATRONU • 8. DALGA'
+    mainBossTitle: 'SEKTÖR PATRONU • 8. DALGA',
+    ambientType: 'cryo_snow',
+    enemyWeights: { shielded: 45, siege: 25, drone: 20, bomber: 10 },
+    spawnIntervalBase: 1.35,
+    spawnCountBase: 11
   },
   {
     id: 5,
@@ -64,7 +80,11 @@ export const LEVELS: LevelConfig[] = [
     miniBossName: 'ELEKTRO-ŞOK FIRTINASI',
     miniBossTitle: 'MİNİ BOSS • 4. DALGA',
     mainBossName: 'TESLA DREADNOUGHT TİTAN',
-    mainBossTitle: 'SEKTÖR PATRONU • 8. DALGA'
+    mainBossTitle: 'SEKTÖR PATRONU • 8. DALGA',
+    ambientType: 'ion_lightning',
+    enemyWeights: { speeder: 45, scout: 35, shielded: 15, bomber: 5 },
+    spawnIntervalBase: 1.05,
+    spawnCountBase: 13
   },
   {
     id: 6,
@@ -77,7 +97,11 @@ export const LEVELS: LevelConfig[] = [
     miniBossName: 'HİÇLİK GÖZETLEYİCİSİ',
     miniBossTitle: 'MİNİ BOSS • 4. DALGA',
     mainBossName: 'KARA DELİK HÜKÜMDARI',
-    mainBossTitle: 'SEKTÖR PATRONU • 8. DALGA'
+    mainBossTitle: 'SEKTÖR PATRONU • 8. DALGA',
+    ambientType: 'void_vortex',
+    enemyWeights: { shielded: 35, bomber: 30, speeder: 20, siege: 15 },
+    spawnIntervalBase: 1.35,
+    spawnCountBase: 12
   },
   {
     id: 7,
@@ -90,7 +114,11 @@ export const LEVELS: LevelConfig[] = [
     miniBossName: 'KUANTUM DARBE KRUVAZÖRÜ',
     miniBossTitle: 'MİNİ BOSS • 4. DALGA',
     mainBossName: 'AŞIRI YÜKLÜ REAKTÖR TİTANI',
-    mainBossTitle: 'SEKTÖR PATRONU • 8. DALGA'
+    mainBossTitle: 'SEKTÖR PATRONU • 8. DALGA',
+    ambientType: 'quantum_pulse',
+    enemyWeights: { bomber: 40, siege: 30, shielded: 20, speeder: 10 },
+    spawnIntervalBase: 1.15,
+    spawnCountBase: 14
   },
   {
     id: 8,
@@ -103,7 +131,11 @@ export const LEVELS: LevelConfig[] = [
     miniBossName: 'OMEGA MUHAFIZ KRUVAZÖRÜ',
     miniBossTitle: 'MİNİ BOSS • 4. DALGA',
     mainBossName: 'VOID GOLIATH PRIME (NİHAİ TİTAN)',
-    mainBossTitle: 'GALAKTİK PATRON • 8. DALGA'
+    mainBossTitle: 'GALAKTİK PATRON • 8. DALGA',
+    ambientType: 'warp_tunnel',
+    enemyWeights: { bomber: 25, speeder: 25, shielded: 25, siege: 25 },
+    spawnIntervalBase: 0.95,
+    spawnCountBase: 16
   }
 ];
 
