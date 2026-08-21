@@ -41,6 +41,7 @@ export class Match3Engine {
   public onGridUpdated?: (grid: (Gem | null)[][], activeGems: Gem[]) => void;
   public onInvalidSwap?: (r1: number, c1: number, r2: number, c2: number) => void;
   public onProcessingStateChange?: (isProcessing: boolean) => void;
+  public activeMatchGroups: MatchGroup[] = [];
 
   constructor() {
     this.initBoard();
@@ -324,14 +325,18 @@ export class Match3Engine {
       });
     }
 
+    this.activeMatchGroups = [{ gems: matchedGems, type: targetType } as MatchGroup];
+    this.notifyUpdate();
+
     // Pop animation
-    await this.animateTween(200, (p) => {
+    await this.animateTween(240, (p) => {
       for (const g of matchedGems) {
         g.scale = Math.max(0, 1 - p * 1.1);
         g.alpha = Math.max(0, 1 - p);
       }
     });
 
+    this.activeMatchGroups = [];
     this.removeMatchedGems();
     await this.applyGravityAndAnimateFall();
     await this.runRecursiveCascadeLoop();
@@ -342,7 +347,7 @@ export class Match3Engine {
    * 1. Detect matches on current grid.
    * 2. If matches exist:
    *    a. Mark gems as matched & play pop animation + audio + battlefield lasers.
-   *    b. Animate shrink/pop of matched gems (200ms).
+   *    b. Animate shrink/pop of matched gems (240ms).
    *    c. Clear matched gems and calculate gravity + spawn new gems at top.
    *    d. Animate smooth physics-based fall slide down with organic bounce (500ms).
    *    e. Pause 120ms for player recognition.
@@ -404,13 +409,18 @@ export class Match3Engine {
         });
       }
 
-      // 1. Pop & Shrink Animation (200ms)
-      await this.animateTween(200, (p) => {
+      this.activeMatchGroups = matchGroups;
+      this.notifyUpdate();
+
+      // 1. Pop & Shrink Animation (240ms)
+      await this.animateTween(240, (p) => {
         for (const gem of matchedGemsList) {
           gem.scale = Math.max(0, 1 - p * 1.1);
           gem.alpha = Math.max(0, 1 - p);
         }
       });
+
+      this.activeMatchGroups = [];
 
       // 2. Remove destroyed gems from board
       this.removeMatchedGems();

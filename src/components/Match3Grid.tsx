@@ -56,6 +56,30 @@ const CORE_ICON_TINTS: Record<GemType, string> = {
   supernova: '#fef9c3'
 };
 
+const ELEMENT_BEAM_COLORS: Record<GemType, string> = {
+  plasma: '#ff3344',
+  cryo: '#00f3ff',
+  electric: '#ffea00',
+  void: '#bf00ff',
+  explosive: '#ff8800',
+  nano: '#00ff88',
+  solaris: '#ffd700',
+  antimatter: '#ff00aa',
+  chronos: '#00bbff',
+  toxic: '#76ff03',
+  gravity: '#7986cb',
+  vampiric: '#e91e63',
+  prism: '#ffffff',
+  anchor: '#ffd600',
+  echo: '#e0e0e0',
+  wormhole: '#1de9b6',
+  parasite: '#d500f9',
+  static_web: '#00e5ff',
+  orbital_drone: '#eceff1',
+  supernova: '#ffff00',
+  deflector: '#00e676'
+};
+
 const renderElementIcon = (type: GemType, special: string) => {
   if (special === 'hyper_cube') {
     return <Sparkles size={22} color="#ffffff" />;
@@ -121,7 +145,6 @@ export const Match3GridComponent: React.FC<Match3GridProps> = ({ uiState }) => {
   const bossLanes = uiState?.bossLanes || [];
   const activeLanes = uiState?.activeLanes || [];
 
-  // Touch tracking for swipe gestures
   const touchStartRef = useRef<{ x: number; y: number; row: number; col: number } | null>(null);
 
   const updateGridState = useCallback((_grid: (Gem | null)[][], activeGems: Gem[]) => {
@@ -182,21 +205,17 @@ export const Match3GridComponent: React.FC<Match3GridProps> = ({ uiState }) => {
     if (absX > minSwipeDistance || absY > minSwipeDistance) {
       const { row, col } = touchStartRef.current;
       if (absX > absY) {
-        // Horizontal swipe
         gameEngine.match3.swipeMove(row, col, dx > 0 ? 'right' : 'left');
       } else {
-        // Vertical swipe
         gameEngine.match3.swipeMove(row, col, dy > 0 ? 'down' : 'up');
       }
       setSelectedGem(null);
     } else {
-      // Tap action
       handleTileClick(touchStartRef.current.row, touchStartRef.current.col);
     }
     touchStartRef.current = null;
   }, [handleTileClick]);
 
-  // Memoize background grid slots so 64 DOM elements are never recreated
   const backgroundSlots = useMemo(() => (
     <div className="match3-background-grid">
       {STATIC_SLOT_INDICES.map((i) => (
@@ -205,11 +224,11 @@ export const Match3GridComponent: React.FC<Match3GridProps> = ({ uiState }) => {
     </div>
   ), []);
 
+  const activeMatchGroups = gameEngine.match3.activeMatchGroups || [];
+
   return (
     <div className={`match3-container ${isLocked ? 'locked' : ''}`}>
-      {/* 8x8 Board Frame with Background Slots */}
       <div className="match3-board-frame">
-        {/* Top Column Threat Warning & Turret Conduit Emitters Bar */}
         <div className="grid-threat-indicator-bar" aria-hidden="true">
           {Array.from({ length: GRID_COLS }).map((_, col) => {
             const isThreatened = threatenedLanes.includes(col);
@@ -220,7 +239,6 @@ export const Match3GridComponent: React.FC<Match3GridProps> = ({ uiState }) => {
                 key={`threat_${col}`}
                 className={`col-threat-cell ${isThreatened ? 'active' : ''} ${isBoss ? 'boss' : ''} ${isFiring ? 'firing' : ''}`}
               >
-                {/* Turret Energy Conduit Top Emitter Port */}
                 <div className={`col-conduit-emitter ${isFiring ? 'firing' : ''}`}>
                   <span className="conduit-emitter-core" />
                   {isFiring && <span className="conduit-surge-pulse" />}
@@ -235,27 +253,71 @@ export const Match3GridComponent: React.FC<Match3GridProps> = ({ uiState }) => {
                     </div>
                   </>
                 )}
-
-                {/* Upward Column Energy Conduit Surge on Match */}
-                {isFiring && <div className="col-energy-surge-beam" />}
               </div>
             );
           })}
         </div>
 
-        {/* Background slot grid for visual depth */}
         {backgroundSlots}
 
-        {/* Center Sector Dividing Line (Left Sector vs Right Sector) */}
         <div className="tactical-center-divider" />
 
-        {/* Absolute Smooth-Animated Gem Layer (Direct Physics Position Binding) */}
+        {activeMatchGroups.length > 0 && (
+          <svg className="match-lasers-overlay" viewBox="0 0 100 100" preserveAspectRatio="none">
+            {activeMatchGroups.map((group, gIdx) => {
+              if (!group.gems || group.gems.length < 2) return null;
+              const beamColor = ELEMENT_BEAM_COLORS[group.type] || '#00f3ff';
+              const sortedGems = [...group.gems].sort(
+                (a, b) => a.displayRow + a.displayCol - (b.displayRow + b.displayCol)
+              );
+              const points = sortedGems
+                .map((g) => `${(g.displayCol + 0.5) * 12.5},${(g.displayRow + 0.5) * 12.5}`)
+                .join(' ');
+
+              return (
+                <g key={`match_grp_${gIdx}`}>
+                  <polyline
+                    points={points}
+                    fill="none"
+                    stroke={beamColor}
+                    strokeWidth="3.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="match-group-laser-glow"
+                  />
+                  <polyline
+                    points={points}
+                    fill="none"
+                    stroke="#ffffff"
+                    strokeWidth="1.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="match-group-laser-core"
+                  />
+                  {sortedGems.map((g) => (
+                    <circle
+                      key={`node_${g.id}`}
+                      cx={(g.displayCol + 0.5) * 12.5}
+                      cy={(g.displayRow + 0.5) * 12.5}
+                      r="1.8"
+                      fill="#ffffff"
+                      stroke={beamColor}
+                      strokeWidth="0.8"
+                      className="match-node-pulsar"
+                    />
+                  ))}
+                </g>
+              );
+            })}
+          </svg>
+        )}
+
         <div className="match3-gems-layer">
           {gems.map((gem) => {
             const isSelected = selectedGem?.row === gem.row && selectedGem?.col === gem.col;
             const isHint = hintGem?.row === gem.row && hintGem?.col === gem.col;
+            const beamColor = ELEMENT_BEAM_COLORS[gem.type] || '#00f3ff';
 
-            // Direct smooth RAF physics coordinates
             const transformStyle: React.CSSProperties = {
               transform: `translate3d(${gem.displayCol * 100}%, ${gem.displayRow * 100}%, 0) scale(${gem.scale ?? 1})`,
               opacity: gem.alpha ?? 1
@@ -273,32 +335,37 @@ export const Match3GridComponent: React.FC<Match3GridProps> = ({ uiState }) => {
                 <div
                   className={`gem-tile sphere ${gem.type} ${gem.special === 'hyper_cube' ? 'hyper-cube' : ''} ${
                     isSelected ? 'selected' : ''
-                  } ${isHint ? 'hint' : ''} ${gem.special !== 'none' ? `special-${gem.special}` : ''}`}
+                  } ${isHint ? 'hint' : ''} ${gem.isMatched ? 'is-shattering' : ''} ${gem.special !== 'none' ? `special-${gem.special}` : ''}`}
                 >
-                  {/* Subtle Satin Surface Sheen */}
                   <span className="sphere-specular-gloss" />
-
-                  {/* Slowly Rotating Radiant Rim Ring */}
                   <span className="core-rim-glow-ring" />
 
-                  {/* Icon Core */}
                   <div className="sphere-icon-wrap">
                     {renderElementIcon(gem.type, gem.special)}
                   </div>
 
-                  {/* Special Orbital Energy Ring */}
                   {(gem.special === 'column_laser' || gem.special === 'row_laser') && (
                     <span className={`sphere-orbit-ring ${gem.special}`} />
                   )}
 
-                  {/* Special Bomb Pulsar */}
                   {gem.special === 'bomb_cross' && (
                     <span className="sphere-pulsar-ring" />
                   )}
 
-                  {/* Special Badge Indicator */}
                   {gem.special !== 'none' && gem.special !== 'hyper_cube' && (
                     <span className="special-badge" />
+                  )}
+
+                  {gem.isMatched && (
+                    <div className="core-shatter-burst">
+                      <span className="shatter-shard s1" style={{ '--shard-color': beamColor } as React.CSSProperties} />
+                      <span className="shatter-shard s2" style={{ '--shard-color': beamColor } as React.CSSProperties} />
+                      <span className="shatter-shard s3" style={{ '--shard-color': beamColor } as React.CSSProperties} />
+                      <span className="shatter-shard s4" style={{ '--shard-color': beamColor } as React.CSSProperties} />
+                      <span className="shatter-shard s5" style={{ '--shard-color': beamColor } as React.CSSProperties} />
+                      <span className="shatter-shard s6" style={{ '--shard-color': beamColor } as React.CSSProperties} />
+                      <span className="shatter-flash" style={{ '--shard-color': beamColor } as React.CSSProperties} />
+                    </div>
                   )}
                 </div>
               </div>
