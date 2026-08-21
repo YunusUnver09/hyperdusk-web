@@ -2186,31 +2186,7 @@ export class BattlefieldEngine {
       const podH = 14;
 
       // ==========================================
-      // 1. TAHTADAN GELEN DİKEY ENERJİ İLETİM SÜTUNU
-      // ==========================================
-      if (turret.conduitPulse > 0 || turret.glowIntensity > 0) {
-        const pulseAlpha = Math.max(turret.conduitPulse, turret.glowIntensity * 0.6);
-        const conduitGrad = ctx.createLinearGradient(cx, this.height, cx, socketY);
-        conduitGrad.addColorStop(0, 'rgba(255, 255, 255, 0.45)');
-        conduitGrad.addColorStop(0.3, elemColor);
-        conduitGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-
-        ctx.fillStyle = conduitGrad;
-        ctx.globalAlpha = pulseAlpha * 0.35;
-        ctx.fillRect(cx - 5, socketY, 10, this.height - socketY);
-
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 1.5;
-        ctx.globalAlpha = pulseAlpha * 0.65;
-        ctx.beginPath();
-        ctx.moveTo(cx, this.height);
-        ctx.lineTo(cx, socketY);
-        ctx.stroke();
-        ctx.globalAlpha = 1;
-      }
-
-      // ==========================================
-      // 2. SABİT TARET YUVASI (SOCKET POD & MOUNT)
+      // SABİT TARET YUVASI (SOCKET POD & MOUNT)
       // ==========================================
       // Yumuşak radyal yuva aurası (Socket Back-Glow)
       const glowRadius = laneWidth * 0.72;

@@ -143,7 +143,6 @@ export const Match3GridComponent: React.FC<Match3GridProps> = ({ uiState }) => {
 
   const threatenedLanes = uiState?.threatenedLanes || [];
   const bossLanes = uiState?.bossLanes || [];
-  const activeLanes = uiState?.activeLanes || [];
 
   const touchStartRef = useRef<{ x: number; y: number; row: number; col: number } | null>(null);
 
@@ -172,35 +171,26 @@ export const Match3GridComponent: React.FC<Match3GridProps> = ({ uiState }) => {
   }, [updateGridState]);
 
   const handleTileClick = useCallback((row: number, col: number) => {
-    if (gameEngine.match3.isProcessing) return;
+    if (isLocked) return;
     gameEngine.match3.selectTile(row, col);
     setSelectedGem(gameEngine.match3.selectedGem);
-  }, []);
+  }, [isLocked]);
 
-  const handleTouchStart = useCallback((e: React.TouchEvent, row: number, col: number) => {
-    if (gameEngine.match3.isProcessing) return;
+  const handleTouchStart = (e: React.TouchEvent, row: number, col: number) => {
+    if (isLocked) return;
     const touch = e.touches[0];
-    touchStartRef.current = {
-      x: touch.clientX,
-      y: touch.clientY,
-      row,
-      col
-    };
-  }, []);
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY, row, col };
+  };
 
   const handleTouchEnd = useCallback((e: React.TouchEvent) => {
-    if (!touchStartRef.current || gameEngine.match3.isProcessing) {
-      touchStartRef.current = null;
-      return;
-    }
-
+    if (isLocked || !touchStartRef.current) return;
     const touch = e.changedTouches[0];
     const dx = touch.clientX - touchStartRef.current.x;
     const dy = touch.clientY - touchStartRef.current.y;
     const absX = Math.abs(dx);
     const absY = Math.abs(dy);
 
-    const minSwipeDistance = 18;
+    const minSwipeDistance = 25;
 
     if (absX > minSwipeDistance || absY > minSwipeDistance) {
       const { row, col } = touchStartRef.current;
@@ -214,7 +204,7 @@ export const Match3GridComponent: React.FC<Match3GridProps> = ({ uiState }) => {
       handleTileClick(touchStartRef.current.row, touchStartRef.current.col);
     }
     touchStartRef.current = null;
-  }, [handleTileClick]);
+  }, [handleTileClick, isLocked]);
 
   const backgroundSlots = useMemo(() => (
     <div className="match3-background-grid">
@@ -233,17 +223,11 @@ export const Match3GridComponent: React.FC<Match3GridProps> = ({ uiState }) => {
           {Array.from({ length: GRID_COLS }).map((_, col) => {
             const isThreatened = threatenedLanes.includes(col);
             const isBoss = bossLanes.includes(col);
-            const isFiring = activeLanes.includes(col);
             return (
               <div
                 key={`threat_${col}`}
-                className={`col-threat-cell ${isThreatened ? 'active' : ''} ${isBoss ? 'boss' : ''} ${isFiring ? 'firing' : ''}`}
+                className={`col-threat-cell ${isThreatened ? 'active' : ''} ${isBoss ? 'boss' : ''}`}
               >
-                <div className={`col-conduit-emitter ${isFiring ? 'firing' : ''}`}>
-                  <span className="conduit-emitter-core" />
-                  {isFiring && <span className="conduit-surge-pulse" />}
-                </div>
-
                 {isThreatened && (
                   <>
                     <div className="threat-column-guide" />
