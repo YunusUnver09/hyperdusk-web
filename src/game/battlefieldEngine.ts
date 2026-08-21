@@ -111,6 +111,19 @@ export class BattlefieldEngine {
     angle: number;
     targetEnemyId: string | null;
   }> = [];
+  public supernovaStars: Array<{
+    id: string;
+    lane: number;
+    x: number;
+    y: number;
+    targetY: number;
+    life: number;
+    maxLife: number;
+    radius: number;
+    maxRadius: number;
+    damage: number;
+    pulseAngle: number;
+  }> = [];
 
   // Background stars
   private stars: Star[] = [];
@@ -173,6 +186,9 @@ export class BattlefieldEngine {
         recoil: 0,
         recoilAngle: 0,
         glowIntensity: 0,
+        socketGlow: 0,
+        muzzleFlash: 0,
+        conduitPulse: 0,
         lastFiredElement: 'idle',
         chargeLevel: 0
       });
@@ -433,8 +449,11 @@ export class BattlefieldEngine {
   public fireLaneWeapons(lane: number, type: GemType, count: number, specialCount: number = 0, combo: number = 1) {
     if (lane < 0 || lane >= NUM_LANES) return;
     const turret = this.turrets[lane];
-    turret.recoil = 12;
-    turret.glowIntensity = 1;
+    turret.recoil = 14 + Math.min(6, count * 1.2);
+    turret.glowIntensity = 1.0;
+    turret.socketGlow = 1.0;
+    turret.muzzleFlash = 1.0;
+    turret.conduitPulse = 1.0;
     turret.lastFiredElement = type;
 
     if (type !== 'echo') {
@@ -443,6 +462,8 @@ export class BattlefieldEngine {
 
     const laneX = this.getLaneX(lane);
     const turretY = this.shieldBarrierY + 12;
+    const elemColor = GEM_ELEMENTS[type]?.color || '#00f3ff';
+    this.particles.addMuzzleBlast(laneX, this.shieldBarrierY - 6, elemColor);
     const baseDmg = 85 * count * (1 + (combo - 1) * 0.35);
 
     const isCrit = Math.random() < this.upgrades.critChance;
@@ -967,6 +988,33 @@ export class BattlefieldEngine {
         this.particles.addLaserImpact(laneX, this.shieldBarrierY - 60, '#38bdf8', 12);
         break;
       }
+      case 'supernova': {
+        // Süpernova Çekirdeği (Supernova Implosion): Şeridin ortasına hızla şişen bir mini yıldız fırlatır.
+        // Yıldız 2s boyunca etrafındaki düşmanları/maddeleri kendine çeker; ardından ekrandaki tüm düşmanları kör edip dev patlamayla infilak eder.
+        const finalDamage = baseDmg * 1.65 * critMult;
+        soundManager.playOrbitalStrike();
+
+        const targetY = Math.max(80, this.shieldBarrierY * 0.44);
+
+        this.supernovaStars.push({
+          id: `supernova_${Date.now()}_${Math.random()}`,
+          lane,
+          x: laneX,
+          y: turretY - 20,
+          targetY,
+          life: 0,
+          maxLife: 2.0,
+          radius: 8,
+          maxRadius: 32,
+          damage: finalDamage,
+          pulseAngle: 0
+        });
+
+        this.particles.triggerScreenShake(3.5, 0.2);
+        this.particles.addFloatingText(laneX, targetY, 'YILDIZ ÇÖKMESİ (2s)!', '#fef08a', true);
+        this.particles.addLaserImpact(laneX, targetY, '#fef08a', 12);
+        break;
+      }
     }
   }
 
@@ -1163,13 +1211,22 @@ export class BattlefieldEngine {
       }
     }
 
-    // Turret cool-down & recoil decay
+    // Turret cool-down & recoil decay (elastic spring return)
     for (const turret of this.turrets) {
       if (turret.recoil > 0) {
-        turret.recoil = Math.max(0, turret.recoil - dt * 45);
+        turret.recoil = Math.max(0, turret.recoil - dt * (36 + turret.recoil * 5.0));
       }
       if (turret.glowIntensity > 0) {
-        turret.glowIntensity = Math.max(0, turret.glowIntensity - dt * 2.5);
+        turret.glowIntensity = Math.max(0, turret.glowIntensity - dt * 2.2);
+      }
+      if (turret.socketGlow > 0) {
+        turret.socketGlow = Math.max(0, turret.socketGlow - dt * 2.0);
+      }
+      if (turret.muzzleFlash > 0) {
+        turret.muzzleFlash = Math.max(0, turret.muzzleFlash - dt * 7.5);
+      }
+      if (turret.conduitPulse > 0) {
+        turret.conduitPulse = Math.max(0, turret.conduitPulse - dt * 3.0);
       }
     }
 
@@ -1328,6 +1385,104 @@ export class BattlefieldEngine {
       } else {
         drone.targetEnemyId = null;
         drone.angle = -Math.PI / 2;
+      }
+    }
+
+    // Update Supernova Implosion Stars (Swells for 2s, pulls matter inward, then detonates!)
+    for (let i = this.supernovaStars.length - 1; i >= 0; i--) {
+      const star = this.supernovaStars[i];
+      star.life += dt;
+      star.pulseAngle += dt * 10;
+
+      // Smooth rise towards target altitude
+      star.y += (star.targetY - star.y) * Math.min(1, dt * 7);
+
+      // Rapidly swelling stellar radius
+      const swellProgress = Math.min(1, star.life / star.maxLife);
+      star.radius = 8 + swellProgress * (star.maxRadius - 8) + Math.sin(star.pulseAngle) * 2.5;
+
+      // Gravitational accretion: pull nearby enemies within 170px towards the star
+      for (const enemy of this.enemies) {
+        const edx = star.x - enemy.x;
+        const edy = star.y - enemy.y;
+        const dist = Math.hypot(edx, edy);
+        if (dist > 5 && dist < 170) {
+          const pullForce = (1 - dist / 170) * 48 * effectiveDt;
+          enemy.x += (edx / dist) * pullForce;
+          enemy.y += (edy / dist) * pullForce;
+        }
+      }
+
+      // Inward spiraling accretion particles
+      if (Math.random() < 0.45) {
+        const inAngle = Math.random() * Math.PI * 2;
+        const inDist = star.radius * (1.6 + Math.random() * 1.5);
+        this.particles.addParticle({
+          x: star.x + Math.cos(inAngle) * inDist,
+          y: star.y + Math.sin(inAngle) * inDist,
+          vx: -Math.cos(inAngle) * 140,
+          vy: -Math.sin(inAngle) * 140,
+          size: Math.random() * 2.4 + 1.2,
+          color: Math.random() > 0.4 ? '#fef08a' : '#ffffff',
+          alpha: 1,
+          life: 0,
+          maxLife: 0.18,
+          shape: 'spark'
+        });
+      }
+
+      // Detonation at 2.0s -> Supernova Implosion Blast!
+      if (star.life >= star.maxLife) {
+        this.particles.triggerScreenShake(9, 0.45);
+        this.triggerHitStop(0.12, 0.18);
+        soundManager.playExplosion(true);
+        soundManager.playOrbitalStrike();
+
+        // 1. Massive multi-ring explosion particles
+        this.particles.addExplosion(star.x, star.y, '#fef08a', 24, true);
+        this.particles.addExplosion(star.x, star.y, '#ffffff', 16, true);
+
+        // Expanding super-corona shockwave ring
+        this.particles.addParticle({
+          x: star.x,
+          y: star.y,
+          vx: 0,
+          vy: 0,
+          size: 15,
+          color: '#fef08a',
+          alpha: 1,
+          life: 0,
+          maxLife: 0.5,
+          shape: 'ring'
+        });
+        this.particles.addParticle({
+          x: star.x,
+          y: star.y,
+          vx: 0,
+          vy: 0,
+          size: 10,
+          color: '#ffffff',
+          alpha: 1,
+          life: 0,
+          maxLife: 0.35,
+          shape: 'ring'
+        });
+
+        // 2. Screen-wide blinding flash & devastating burst damage to ALL enemies on screen
+        for (const enemy of this.enemies) {
+          if (enemy.y > -50 && enemy.y <= this.shieldBarrierY + 20) {
+            // Apply damage
+            this.applyDamageToEnemy(enemy, star.damage, 'supernova', true);
+            // Apply 3s Blind / Slow & Shock stun
+            enemy.frozenTimer = Math.max(enemy.frozenTimer, 3.0);
+            enemy.shockTimer = Math.max(enemy.shockTimer, 2.5);
+            enemy.hitFlashTimer = 0.28;
+            this.particles.addLaserImpact(enemy.x, enemy.y, '#fef08a', 8);
+          }
+        }
+
+        this.particles.addFloatingText(star.x, star.y - 30, '💥 SÜPERNOVA PATLAMASI! 💥', '#fef08a', true);
+        this.supernovaStars.splice(i, 1);
       }
     }
 
@@ -1625,12 +1780,26 @@ export class BattlefieldEngine {
       ctx.lineTo(lx, this.shieldBarrierY);
       ctx.stroke();
 
-      // Lane active fire highlight glow
+      // Lane active fire highlight glow & vertical light spine
       if (turret.glowIntensity > 0) {
         const elemColor = turret.lastFiredElement !== 'idle' ? GEM_ELEMENTS[turret.lastFiredElement].color : '#00f3ff';
-        ctx.fillStyle = elemColor;
-        ctx.globalAlpha = turret.glowIntensity * 0.16;
+        const laneGrad = ctx.createLinearGradient(0, this.shieldBarrierY, 0, 0);
+        laneGrad.addColorStop(0, elemColor);
+        laneGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+        ctx.fillStyle = laneGrad;
+        ctx.globalAlpha = turret.glowIntensity * 0.22;
         ctx.fillRect(lx, 0, laneWidth, this.shieldBarrierY);
+
+        // Center neon energy spine running up the lane
+        ctx.strokeStyle = elemColor;
+        ctx.lineWidth = 1.5;
+        ctx.globalAlpha = turret.glowIntensity * 0.45;
+        ctx.beginPath();
+        ctx.moveTo(lx + laneWidth * 0.5, this.shieldBarrierY);
+        ctx.lineTo(lx + laneWidth * 0.5, 0);
+        ctx.stroke();
+
         ctx.globalAlpha = 1;
       }
     }
@@ -1638,7 +1807,7 @@ export class BattlefieldEngine {
     // Render Station Shield / Defense Barrier Line
     this.renderDefenseBarrier(ctx);
 
-    // Render Turrets at Defense Barrier
+    // Render Turrets at Defense Barrier (Pod socket + Recoiling Cannon)
     this.renderTurrets(ctx);
 
     // Render Static Mines & Wormholes
@@ -1649,6 +1818,7 @@ export class BattlefieldEngine {
     this.renderSpectrumWalls(ctx);
     this.renderHomingSpores(ctx);
     this.renderOrbitalDrones(ctx);
+    this.renderSupernovaStars(ctx);
 
     // Render Projectiles
     this.renderProjectiles(ctx);
@@ -1691,42 +1861,192 @@ export class BattlefieldEngine {
     ctx.fillRect(0, y, this.width, 5);
   }
 
+  private drawMuzzleFlash(ctx: CanvasRenderingContext2D, x: number, y: number, color: string, alpha: number) {
+    ctx.save();
+    ctx.globalAlpha = Math.min(1, alpha);
+
+    // Outer radiant bloom
+    const grad = ctx.createRadialGradient(x, y, 1, x, y, 13);
+    grad.addColorStop(0, '#ffffff');
+    grad.addColorStop(0.35, color);
+    grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(x, y, 13, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Starburst ray cross
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.moveTo(x - 8, y);
+    ctx.lineTo(x + 8, y);
+    ctx.moveTo(x, y - 8);
+    ctx.lineTo(x, y + 8);
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
   private renderTurrets(ctx: CanvasRenderingContext2D) {
     const laneWidth = this.getLaneWidth();
-    const y = this.shieldBarrierY + 14;
+    const socketY = this.shieldBarrierY + 12;
 
     for (let i = 0; i < NUM_LANES; i++) {
       const cx = this.getLaneX(i);
       const turret = this.turrets[i];
       const elemColor = turret.lastFiredElement !== 'idle' ? GEM_ELEMENTS[turret.lastFiredElement].color : '#00f3ff';
+      const podW = laneWidth * 0.72;
+      const podH = 14;
 
-      ctx.save();
-      ctx.translate(cx, y + turret.recoil);
+      // ==========================================
+      // 1. TAHTADAN GELEN DİKEY ENERJİ İLETİM SÜTUNU
+      // ==========================================
+      if (turret.conduitPulse > 0 || turret.glowIntensity > 0) {
+        const pulseAlpha = Math.max(turret.conduitPulse, turret.glowIntensity * 0.6);
+        const conduitGrad = ctx.createLinearGradient(cx, this.height, cx, socketY);
+        conduitGrad.addColorStop(0, 'rgba(255, 255, 255, 0.45)');
+        conduitGrad.addColorStop(0.3, elemColor);
+        conduitGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
 
-      // Turret base mount
-      ctx.fillStyle = '#0f172a';
-      ctx.strokeStyle = elemColor;
-      ctx.lineWidth = 1.5;
+        ctx.fillStyle = conduitGrad;
+        ctx.globalAlpha = pulseAlpha * 0.35;
+        ctx.fillRect(cx - 5, socketY, 10, this.height - socketY);
+
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1.5;
+        ctx.globalAlpha = pulseAlpha * 0.65;
+        ctx.beginPath();
+        ctx.moveTo(cx, this.height);
+        ctx.lineTo(cx, socketY);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+      }
+
+      // ==========================================
+      // 2. SABİT TARET YUVASI (SOCKET POD & MOUNT)
+      // ==========================================
+      // Yumuşak radyal yuva aurası (Socket Back-Glow)
+      const glowRadius = laneWidth * 0.72;
+      const podGlow = ctx.createRadialGradient(cx, socketY - 2, 2, cx, socketY - 2, glowRadius);
+      const glowAlpha = 0.06 + turret.socketGlow * 0.44;
+      podGlow.addColorStop(0, elemColor);
+      podGlow.addColorStop(0.45, elemColor);
+      podGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+      ctx.fillStyle = podGlow;
+      ctx.globalAlpha = glowAlpha;
       ctx.beginPath();
-      ctx.arc(0, 0, laneWidth * 0.34, Math.PI, 0, false);
+      ctx.arc(cx, socketY - 2, glowRadius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+
+      // Sabit Yuva Mekanik Gövdesi (Armored Cradle Base)
+      ctx.fillStyle = '#0a1020';
+      ctx.strokeStyle = turret.socketGlow > 0 ? elemColor : 'rgba(0, 243, 255, 0.35)';
+      ctx.lineWidth = turret.socketGlow > 0 ? 1.6 : 1.0;
+      ctx.beginPath();
+      ctx.roundRect(cx - podW * 0.5, socketY - 2, podW, podH, [3, 3, 6, 6]);
       ctx.fill();
       ctx.stroke();
 
-      // Barrel aiming up (bright core)
-      if (turret.glowIntensity > 0) {
+      // Sol & Sağ Hidrolik Piston Kılavuz Silindirleri
+      ctx.fillStyle = '#1e293b';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+      ctx.lineWidth = 1;
+      ctx.fillRect(cx - podW * 0.42, socketY - 6, 3.5, 12);
+      ctx.strokeRect(cx - podW * 0.42, socketY - 6, 3.5, 12);
+      ctx.fillRect(cx + podW * 0.42 - 3.5, socketY - 6, 3.5, 12);
+      ctx.strokeRect(cx + podW * 0.42 - 3.5, socketY - 6, 3.5, 12);
+
+      // Yuva İç Enerji Odacığı (Chamber Cavity)
+      ctx.fillStyle = '#060a14';
+      ctx.beginPath();
+      ctx.arc(cx, socketY + 3, podW * 0.26, Math.PI, 0, false);
+      ctx.fill();
+
+      if (turret.socketGlow > 0) {
         ctx.fillStyle = elemColor;
-        ctx.globalAlpha = 0.4;
-        ctx.fillRect(-4.5, -laneWidth * 0.45, 9, laneWidth * 0.45);
+        ctx.globalAlpha = turret.socketGlow * 0.55;
+        ctx.beginPath();
+        ctx.arc(cx, socketY + 3, podW * 0.22, Math.PI, 0, false);
+        ctx.fill();
         ctx.globalAlpha = 1;
       }
-      ctx.fillStyle = elemColor;
-      ctx.fillRect(-2.5, -laneWidth * 0.45, 5, laneWidth * 0.45);
 
-      // Center glowing core
+      // ==========================================
+      // 3. GERİ TEPEN TARET KAFASI & NAMLU MEKANİZMASI (RECOIL CARRIAGE)
+      // ==========================================
+      const recoilY = socketY + turret.recoil;
+
+      // Hidrolik Piston Kolları (Sabit yuva ile hareketli gövdeyi bağlar)
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(cx - podW * 0.40, socketY - 6);
+      ctx.lineTo(cx - podW * 0.40, recoilY - 2);
+      ctx.moveTo(cx + podW * 0.40 - 1.5, socketY - 6);
+      ctx.lineTo(cx + podW * 0.40 - 1.5, recoilY - 2);
+      ctx.stroke();
+
+      ctx.save();
+      ctx.translate(cx, recoilY);
+
+      // Taret Gövdesi (Angular Breech Carriage)
+      ctx.fillStyle = '#0f172a';
+      ctx.strokeStyle = elemColor;
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.arc(0, 2, laneWidth * 0.26, Math.PI, 0, false);
+      ctx.fill();
+      ctx.stroke();
+
+      // Çift Ağır Raylı Namlu (Twin Railgun Barrels)
+      const barrelLen = laneWidth * 0.48;
+      const barrelW = 3.2;
+      const barrelSpread = 4.2;
+
+      // Sol Namlu
+      ctx.fillStyle = '#1e293b';
+      ctx.strokeStyle = elemColor;
+      ctx.lineWidth = 0.9;
+      ctx.fillRect(-barrelSpread - barrelW * 0.5, -barrelLen, barrelW, barrelLen);
+      ctx.strokeRect(-barrelSpread - barrelW * 0.5, -barrelLen, barrelW, barrelLen);
+
+      // Sağ Namlu
+      ctx.fillRect(barrelSpread - barrelW * 0.5, -barrelLen, barrelW, barrelLen);
+      ctx.strokeRect(barrelSpread - barrelW * 0.5, -barrelLen, barrelW, barrelLen);
+
+      // Namlu İçindeki Işıldayan Enerji Çizgileri
+      const barrelGlowAlpha = 0.35 + turret.glowIntensity * 0.65;
+      ctx.fillStyle = elemColor;
+      ctx.globalAlpha = barrelGlowAlpha;
+      ctx.fillRect(-barrelSpread - 0.8, -barrelLen + 2, 1.6, barrelLen - 2);
+      ctx.fillRect(barrelSpread - 0.8, -barrelLen + 2, 1.6, barrelLen - 2);
+      ctx.globalAlpha = 1;
+
+      // Taret Merkez Füzyon Çekirdeği (Mercek)
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.arc(0, -1, 4.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = elemColor;
+      ctx.beginPath();
+      ctx.arc(0, -1, 3, 0, Math.PI * 2);
+      ctx.fill();
+
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
-      ctx.arc(0, -2, 2.5, 0, Math.PI * 2);
+      ctx.arc(0, -1, 1.5, 0, Math.PI * 2);
       ctx.fill();
+
+      // Namlu Ucu Patlama Parlaması (Muzzle Flash Starburst)
+      if (turret.muzzleFlash > 0) {
+        const flashAlpha = turret.muzzleFlash;
+        this.drawMuzzleFlash(ctx, -barrelSpread, -barrelLen, elemColor, flashAlpha);
+        this.drawMuzzleFlash(ctx, barrelSpread, -barrelLen, elemColor, flashAlpha);
+      }
 
       ctx.restore();
     }
@@ -2274,6 +2594,69 @@ export class BattlefieldEngine {
     }
   }
 
+  private renderSupernovaStars(ctx: CanvasRenderingContext2D) {
+    for (const star of this.supernovaStars) {
+      ctx.save();
+      ctx.translate(star.x, star.y);
+
+      const swell = star.radius;
+
+      // 1. Dış Radyal Korona Aurası (Yumuşak Işıldayan Güneş Aurası)
+      const auraGrad = ctx.createRadialGradient(0, 0, 2, 0, 0, swell * 2.4);
+      auraGrad.addColorStop(0, '#ffffff');
+      auraGrad.addColorStop(0.3, '#fef08a');
+      auraGrad.addColorStop(0.65, 'rgba(234, 179, 8, 0.45)');
+      auraGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+      ctx.fillStyle = auraGrad;
+      ctx.beginPath();
+      ctx.arc(0, 0, swell * 2.4, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 2. Kütleçekimsel Akresyon Halkaları (Dönen Kesikli Halkalar)
+      ctx.save();
+      ctx.rotate(star.pulseAngle * 0.4);
+      ctx.strokeStyle = 'rgba(254, 240, 138, 0.8)';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([8, 10]);
+      ctx.beginPath();
+      ctx.arc(0, 0, swell * 1.45, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.rotate(-star.pulseAngle * 0.9);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([5, 8]);
+      ctx.beginPath();
+      ctx.arc(0, 0, swell * 1.85, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+
+      // 3. Dinamik Güneş Patlaması Işınları (6 Radyal Işın Kolu)
+      ctx.save();
+      ctx.rotate(star.pulseAngle * 0.3);
+      ctx.strokeStyle = 'rgba(254, 240, 138, 0.75)';
+      ctx.lineWidth = 2.5;
+      for (let r = 0; r < 6; r++) {
+        const rayAngle = (r * Math.PI) / 3;
+        const rayLen = swell * (1.6 + Math.sin(star.pulseAngle + r) * 0.35);
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(Math.cos(rayAngle) * rayLen, Math.sin(rayAngle) * rayLen);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // 4. Parlak Beyaz-Altın Yıldız Çekirdeği
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(0, 0, swell * 0.75, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
+  }
+
   public resetGame(level: number = 1) {
     this.enemies = [];
     this.projectiles = [];
@@ -2282,6 +2665,7 @@ export class BattlefieldEngine {
     this.homingSpores = [];
     this.spectrumWalls = [];
     this.orbitalDrones = [];
+    this.supernovaStars = [];
     this.particles.clear();
     this.shieldHp = BASE_SHIELD_MAX;
     this.maxShieldHp = BASE_SHIELD_MAX;

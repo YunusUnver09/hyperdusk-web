@@ -270,6 +270,20 @@ export const GEM_ELEMENTS: Record<GemType, GemElementConfig> = {
     lore: 'Tam otonom kuantum yapay zekâ ile donatılmış yörünge savaş platformu.',
     isUnlockedByDefault: false,
     unlockCost: 600
+  },
+  supernova: {
+    type: 'supernova',
+    name: 'Supernova Implosion',
+    turkishName: 'Süpernova Çekirdeği',
+    color: '#fef08a',
+    gradient: ['#ffffff', '#fef08a'],
+    glowColor: 'rgba(254, 240, 138, 0.95)',
+    iconName: 'Star',
+    turretType: 'Yıldız Çökertici Batarya',
+    description: 'Şeridin ortasına hızla şişen bir mini yıldız fırlatır. Yıldız 2 saniye boyunca etrafındaki tüm düşman mermilerini içine çeker; ardından ekrandaki tüm düşmanları kör edip hasar veren dev bir süpernova patlamasıyla infilak eder.',
+    lore: 'Kendi çekim kuvveti altında çökerek evrenin en parlak kozmik infilakını yaratan minyatür yıldız çekirdeği.',
+    isUnlockedByDefault: false,
+    unlockCost: 650
   }
 };
 
@@ -278,12 +292,12 @@ export const DEFAULT_ACTIVE_CORES: GemType[] = ['plasma', 'cryo', 'electric', 'v
 export const ALL_CRUSH_CORES: GemType[] = [
   'plasma', 'cryo', 'electric', 'void', 'explosive', 'nano',
   'solaris', 'antimatter', 'chronos', 'toxic', 'gravity', 'vampiric',
-  'prism', 'anchor', 'echo', 'wormhole', 'parasite', 'static_web', 'orbital_drone'
+  'prism', 'anchor', 'echo', 'wormhole', 'parasite', 'static_web', 'orbital_drone', 'supernova'
 ];
 
 export const FORGE_UNLOCKABLE_CORES: GemType[] = [
   'solaris', 'antimatter', 'chronos', 'toxic', 'gravity', 'vampiric',
-  'prism', 'anchor', 'echo', 'wormhole', 'parasite', 'static_web', 'orbital_drone'
+  'prism', 'anchor', 'echo', 'wormhole', 'parasite', 'static_web', 'orbital_drone', 'supernova'
 ];
 
 export const GEM_TYPES_ARRAY: GemType[] = DEFAULT_ACTIVE_CORES;

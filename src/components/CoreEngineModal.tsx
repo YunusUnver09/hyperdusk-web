@@ -23,6 +23,7 @@ import {
   Bug,
   Disc,
   Satellite,
+  Star,
   X,
   Plus,
   Minus,
@@ -78,6 +79,7 @@ export const CoreEngineModal: React.FC<CoreEngineModalProps> = ({ isOpen, onClos
       case 'parasite': return <Bug size={size} color="#ffffff" />;
       case 'static_web': return <Disc size={size} color="#ffffff" />;
       case 'orbital_drone': return <Satellite size={size} color="#ffffff" />;
+      case 'supernova': return <Star size={size} color="#ffffff" />;
       default: return <Sparkles size={size} color="#ffffff" />;
     }
   };

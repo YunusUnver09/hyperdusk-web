@@ -21,6 +21,7 @@ import {
   Bug,
   Disc,
   Satellite,
+  Star,
   Play,
   Crosshair
 } from 'lucide-react';
@@ -55,6 +56,7 @@ export const CoreLabSection: React.FC<CoreLabSectionProps> = ({ onPlayWithCore }
       case 'parasite': return <Bug size={size} color="#ffffff" />;
       case 'static_web': return <Disc size={size} color="#ffffff" />;
       case 'orbital_drone': return <Satellite size={size} color="#ffffff" />;
+      case 'supernova': return <Star size={size} color="#ffffff" />;
       default: return <Sparkles size={size} color="#ffffff" />;
     }
   };
@@ -67,7 +69,7 @@ export const CoreLabSection: React.FC<CoreLabSectionProps> = ({ onPlayWithCore }
           <span>İNTERAKTİF LABORATUVAR</span>
         </div>
         <h2 className="section-title">
-          19 CRUSH CORE: <span className="title-highlight purple">KUANTUM ÇEKİRDEK SİSTEMİ</span>
+          20 CRUSH CORE: <span className="title-highlight purple">KUANTUM ÇEKİRDEK SİSTEMİ</span>
         </h2>
         <p className="section-desc">
           Her Crush Core, taretinizi farklı bir kuantum silahına dönüştürür. Çekirdekleri seçerek taktiksel özelliklerini,

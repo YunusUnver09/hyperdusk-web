@@ -21,7 +21,8 @@ import {
   Compass,
   Bug,
   Disc,
-  Satellite
+  Satellite,
+  Star
 } from 'lucide-react';
 
 interface Match3GridProps {
@@ -74,6 +75,8 @@ const renderElementIcon = (type: GemType, special: string) => {
       return <Disc size={15} color="#ffffff" />;
     case 'orbital_drone':
       return <Satellite size={15} color="#ffffff" />;
+    case 'supernova':
+      return <Star size={15} color="#ffffff" />;
     default:
       return null;
   }
@@ -87,6 +90,7 @@ export const Match3GridComponent: React.FC<Match3GridProps> = ({ uiState }) => {
 
   const threatenedLanes = uiState?.threatenedLanes || [];
   const bossLanes = uiState?.bossLanes || [];
+  const activeLanes = uiState?.activeLanes || [];
 
   // Touch tracking for swipe gestures
   const touchStartRef = useRef<{ x: number; y: number; row: number; col: number } | null>(null);
@@ -176,16 +180,23 @@ export const Match3GridComponent: React.FC<Match3GridProps> = ({ uiState }) => {
     <div className={`match3-container ${isLocked ? 'locked' : ''}`}>
       {/* 8x8 Board Frame with Background Slots */}
       <div className="match3-board-frame">
-        {/* Top Column Threat Warning Indicators */}
+        {/* Top Column Threat Warning & Turret Conduit Emitters Bar */}
         <div className="grid-threat-indicator-bar" aria-hidden="true">
           {Array.from({ length: GRID_COLS }).map((_, col) => {
             const isThreatened = threatenedLanes.includes(col);
             const isBoss = bossLanes.includes(col);
+            const isFiring = activeLanes.includes(col);
             return (
               <div
                 key={`threat_${col}`}
-                className={`col-threat-cell ${isThreatened ? 'active' : ''} ${isBoss ? 'boss' : ''}`}
+                className={`col-threat-cell ${isThreatened ? 'active' : ''} ${isBoss ? 'boss' : ''} ${isFiring ? 'firing' : ''}`}
               >
+                {/* Turret Energy Conduit Top Emitter Port */}
+                <div className={`col-conduit-emitter ${isFiring ? 'firing' : ''}`}>
+                  <span className="conduit-emitter-core" />
+                  {isFiring && <span className="conduit-surge-pulse" />}
+                </div>
+
                 {isThreatened && (
                   <>
                     <div className="threat-column-guide" />
@@ -195,6 +206,9 @@ export const Match3GridComponent: React.FC<Match3GridProps> = ({ uiState }) => {
                     </div>
                   </>
                 )}
+
+                {/* Upward Column Energy Conduit Surge on Match */}
+                {isFiring && <div className="col-energy-surge-beam" />}
               </div>
             );
           })}

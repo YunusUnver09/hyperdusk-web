@@ -17,7 +17,8 @@ export type GemType =
   | 'wormhole'
   | 'parasite'
   | 'static_web'
-  | 'orbital_drone';
+  | 'orbital_drone'
+  | 'supernova';
 
 export type SpecialGemType = 'none' | 'column_laser' | 'row_laser' | 'bomb_cross' | 'hyper_cube';
 
@@ -127,7 +128,8 @@ export type ProjectileType =
   | 'wormhole_pulse'
   | 'nanite_pod'
   | 'static_mine'
-  | 'drone_bullet';
+  | 'drone_bullet'
+  | 'supernova_star';
 
 export interface Projectile {
   id: string;
@@ -160,6 +162,9 @@ export interface Turret {
   recoil: number;
   recoilAngle: number;
   glowIntensity: number;
+  socketGlow: number; // Pod/socket soft radial aura intensity [0..1]
+  muzzleFlash: number; // Barrel tip firing burst flash [0..1]
+  conduitPulse: number; // Upward energy conduit pulse intensity [0..1]
   lastFiredElement: GemType | 'idle';
   chargeLevel: number;
 }

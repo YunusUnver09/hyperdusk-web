@@ -114,6 +114,54 @@ export class ParticleSystem {
     }
   }
 
+  public addMuzzleBlast(x: number, y: number, color: string) {
+    // 1. Upward directional sparks
+    for (let i = 0; i < 4; i++) {
+      const angle = -Math.PI * 0.5 + (Math.random() - 0.5) * 0.85;
+      const speed = Math.random() * 120 + 60;
+      this.addParticle({
+        x: x + (Math.random() - 0.5) * 6,
+        y: y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        size: Math.random() * 2.2 + 1.2,
+        color: Math.random() > 0.4 ? color : '#ffffff',
+        alpha: 1,
+        life: 0,
+        maxLife: Math.random() * 0.14 + 0.08,
+        shape: 'spark'
+      });
+    }
+
+    // 2. Micro shockwave ring at muzzle tip
+    this.addParticle({
+      x,
+      y: y - 2,
+      vx: 0,
+      vy: -15,
+      size: 2.5,
+      color,
+      alpha: 0.95,
+      life: 0,
+      maxLife: 0.18,
+      shape: 'ring'
+    });
+
+    // 3. Fast micro smoke puff
+    this.addParticle({
+      x,
+      y: y - 3,
+      vx: (Math.random() - 0.5) * 10,
+      vy: -25,
+      size: 3.5,
+      color: 'rgba(200, 220, 255, 0.35)',
+      alpha: 0.5,
+      life: 0,
+      maxLife: 0.22,
+      shape: 'smoke'
+    });
+  }
+
   public addLightningSpark(x1: number, y1: number, x2: number, y2: number, color: string = '#ffd000') {
     const steps = 3;
     let currX = x1;
