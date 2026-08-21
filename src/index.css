@@ -367,11 +367,14 @@ body {
   position: relative;
   width: 100%;
   height: 100%;
-  background: rgba(13, 20, 42, 0.6);
-  border: 1px solid rgba(0, 243, 255, 0.2);
-  border-radius: 10px;
+  background: radial-gradient(circle at 50% 50%, rgba(13, 20, 38, 0.9) 0%, rgba(6, 10, 22, 0.98) 100%);
+  border: 1.5px solid rgba(0, 243, 255, 0.32);
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.6);
+  box-shadow:
+    inset 0 0 25px rgba(0, 0, 0, 0.8),
+    0 4px 16px rgba(0, 0, 0, 0.6),
+    0 0 12px rgba(0, 243, 255, 0.08);
 }
 
 /* Column Threat Warning Indicator Bar */
@@ -597,23 +600,40 @@ body {
   }
 }
 
-/* Background Grid Slots */
+/* Background Grid Slots — Tactical Carbon Sockets */
 .match3-background-grid {
   position: absolute;
   inset: 0;
   display: grid;
   grid-template-columns: repeat(8, 1fr);
   grid-template-rows: repeat(8, 1fr);
-  gap: 3px;
   padding: 4px;
   pointer-events: none;
+  gap: 0;
 }
 
 .grid-slot-cell {
-  background: radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 0.35) 0%, rgba(6, 10, 24, 0.7) 100%);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 3.5px;
+  background: radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 0.7) 0%, rgba(8, 13, 28, 0.88) 75%, rgba(4, 7, 18, 0.96) 100%);
   border-radius: 50%;
-  border: 1px solid rgba(0, 243, 255, 0.08);
-  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.75);
+  border: 1px solid rgba(0, 243, 255, 0.16);
+  box-shadow:
+    inset 0 2px 5px rgba(0, 0, 0, 0.85),
+    inset 0 -1px 2px rgba(255, 255, 255, 0.05),
+    0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.grid-slot-cell::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  border: 1px dashed rgba(0, 243, 255, 0.1);
+  pointer-events: none;
 }
 
 /* Tactical Center Divider (Left Sector vs Right Sector) */
