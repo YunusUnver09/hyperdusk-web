@@ -184,6 +184,8 @@ export class BattlefieldEngine {
   // Hit-Stop / Time Dilation (Micro Slow-Motion on Impact)
   public hitStopTimer: number = 0;
   public timeDilationScale: number = 1.0;
+  public emergencySlowTimer: number = 0;
+  public adrenalineTriggeredThisWave: boolean = false;
 
   // Callbacks
   public onShieldDamage?: (hp: number, maxHp: number) => void;
@@ -275,6 +277,8 @@ export class BattlefieldEngine {
     this.stats.wave = waveNumber;
     this.isWaveInProgress = true;
     this.waveSpawnTimer = 0.5; // Quick initial spawn
+    this.adrenalineTriggeredThisWave = false;
+    this.emergencySlowTimer = 0;
 
     // Wave 4 is Mini Boss, Wave 8 is Main Sector Boss
     const isMini = waveNumber === 4;
@@ -293,9 +297,20 @@ export class BattlefieldEngine {
       this.waveSpawnInterval = 1.3;
     } else {
       this.waveEnemiesToSpawn = 7 + waveNumber * 2 + this.currentLevel;
-      this.waveSpawnInterval = Math.max(0.65, 1.5 - waveNumber * 0.08);
+      this.waveSpawnInterval = Math.max(0.70, 1.45 - waveNumber * 0.08);
     }
     this.waveEnemiesSpawned = 0;
+
+    // Visual wave banner announcement
+    if (this.width > 0 && this.height > 0) {
+      const speedPct = Math.round((waveNumber - 1) * 15);
+      const dmgPct = Math.round((waveNumber - 1) * 20);
+      const bannerY = Math.max(45, this.height * 0.26);
+      this.particles.addFloatingText(this.width * 0.5, bannerY, `⚔️ DALGA ${waveNumber} / 8 ⚔️`, '#38bdf8', true);
+      if (waveNumber > 1) {
+        this.particles.addFloatingText(this.width * 0.5, bannerY + 22, `⚡ HIZ: +%${speedPct} | 💥 HASAR: +%${dmgPct}`, '#facc15', false);
+      }
+    }
   }
 
   public getLaneX(laneIndex: number): number {
@@ -313,10 +328,16 @@ export class BattlefieldEngine {
     const lvlConfig = getLevelConfig(this.currentLevel);
     const diff = lvlConfig.difficultyMult;
 
+    // Dynamic wave & level progression multipliers (Tangible, high-impact progression)
+    const waveSpeedMultiplier = 1 + (this.currentWave - 1) * 0.15 + (this.currentLevel - 1) * 0.05;
+    const waveDamageMultiplier = 1 + (this.currentWave - 1) * 0.20 + (this.currentLevel - 1) * 0.18;
+
     if (forceBoss || (this.isBossActive && !this.activeBoss && this.waveEnemiesSpawned >= Math.floor(this.waveEnemiesToSpawn * 0.28))) {
       if (this.isMainBoss) {
         // Spawn Main Titan Boss (covers lanes 2, 3, 4, 5)
         const bossHp = Math.round((2800 + this.currentLevel * 950) * diff);
+        const bossSpeed = (6.0 + this.currentLevel * 0.5) * waveSpeedMultiplier;
+        const bossAttack = Math.round((220 + this.currentLevel * 30) * (1 + (this.currentLevel - 1) * 0.18));
         const boss: Enemy = {
           id: `boss_main_${Date.now()}`,
           type: 'titan_boss',
@@ -330,12 +351,12 @@ export class BattlefieldEngine {
           height: 78,
           hp: bossHp,
           maxHp: bossHp,
-          speed: 5.5 + this.currentLevel * 0.5,
-          baseSpeed: 5.5 + this.currentLevel * 0.5,
+          speed: bossSpeed,
+          baseSpeed: bossSpeed,
           color: '#ff0055',
           glowColor: 'rgba(255, 0, 85, 0.95)',
           scoreValue: 2000 * this.currentLevel,
-          attackPower: 200 + this.currentLevel * 25,
+          attackPower: bossAttack,
           frozenTimer: 0,
           shockTimer: 0,
           burnTimer: 0,
@@ -352,6 +373,8 @@ export class BattlefieldEngine {
       } else if (this.isMiniBoss) {
         // Spawn Mini Boss (covers lanes 3, 4)
         const bossHp = Math.round((1300 + this.currentLevel * 500) * diff);
+        const bossSpeed = (9.0 + this.currentLevel * 0.6) * waveSpeedMultiplier;
+        const bossAttack = Math.round((130 + this.currentLevel * 20) * (1 + (this.currentLevel - 1) * 0.15));
         const boss: Enemy = {
           id: `boss_mini_${Date.now()}`,
           type: 'titan_boss',
@@ -367,12 +390,12 @@ export class BattlefieldEngine {
           maxHp: bossHp,
           shieldHp: Math.round(bossHp * 0.3),
           maxShieldHp: Math.round(bossHp * 0.3),
-          speed: 8 + this.currentLevel * 0.6,
-          baseSpeed: 8 + this.currentLevel * 0.6,
+          speed: bossSpeed,
+          baseSpeed: bossSpeed,
           color: '#ffd000',
           glowColor: 'rgba(255, 208, 0, 0.9)',
           scoreValue: 1000 * this.currentLevel,
-          attackPower: 120 + this.currentLevel * 15,
+          attackPower: bossAttack,
           frozenTimer: 0,
           shockTimer: 0,
           burnTimer: 0,
@@ -400,57 +423,62 @@ export class BattlefieldEngine {
     const lane = Math.floor(Math.random() * NUM_LANES);
     const laneX = this.getLaneX(lane);
 
-    let baseHp = (85 + this.currentWave * 30 + this.currentLevel * 25) * diff;
-    let speed = (14 + Math.random() * 4 + this.currentWave * 0.8 + this.currentLevel * 0.5) * Math.min(1.4, Math.pow(diff, 0.25));
+    // Baseline archetype stats with tangible scaling
+    let baseHp = (85 + this.currentWave * 26 + this.currentLevel * 22) * diff;
+    let baseSpeed = 20 + Math.random() * 3.0;
+    let baseAttack = 55;
     let color = '#00f3ff';
     let score = 50 * this.currentLevel;
-    let attack = 50 + this.currentLevel * 10;
     let width = laneWidth * 0.72;
     let height = 30;
     let shieldHp: number | undefined = undefined;
 
     if (randType === 'scout') {
-      baseHp *= 0.65;
-      speed *= 1.20;
+      baseHp = (55 + this.currentWave * 18 + this.currentLevel * 16) * diff;
+      baseSpeed = 26 + Math.random() * 2.5;
+      baseAttack = 40;
       color = '#00ffcc';
       score = 40 * this.currentLevel;
-      attack = 35 + this.currentLevel * 8;
-      width *= 0.8;
+      width = laneWidth * 0.58;
       height = 24;
     } else if (randType === 'speeder') {
-      baseHp *= 0.8;
-      speed *= 1.28;
+      baseHp = (70 + this.currentWave * 20 + this.currentLevel * 18) * diff;
+      baseSpeed = 32 + Math.random() * 3.0;
+      baseAttack = 50;
       color = '#ffaa00';
       score = 65 * this.currentLevel;
-      attack = 45 + this.currentLevel * 10;
-      width *= 0.75;
+      width = laneWidth * 0.55;
       height = 26;
     } else if (randType === 'siege') {
-      // Kuşatma Topçusu: Ekranda sabitlenir, 5 saniyede bir şeride ağır plazma mermisi sıkar
-      baseHp *= 1.45;
-      speed = 36;
+      // Kuşatma Topçusu: Ekranda mevzilenir, periyodik ağır plazma sıkar
+      baseHp = (125 + this.currentWave * 35 + this.currentLevel * 30) * diff;
+      baseSpeed = 36;
+      baseAttack = 65;
       color = '#f97316';
       score = 110 * this.currentLevel;
-      attack = 60 + this.currentLevel * 12;
-      width *= 0.86;
+      width = laneWidth * 0.86;
       height = 32;
     } else if (randType === 'shielded') {
-      baseHp *= 1.25;
-      speed *= 0.75;
-      color = '#a855f7';
+      baseHp = (110 + this.currentWave * 32 + this.currentLevel * 28) * diff;
       shieldHp = baseHp * 0.75;
+      baseSpeed = 15 + Math.random() * 2.0;
+      baseAttack = 80;
+      color = '#a855f7';
       score = 90 * this.currentLevel;
-      attack = 70 + this.currentLevel * 15;
+      width = laneWidth * 0.72;
       height = 34;
     } else if (randType === 'bomber') {
-      baseHp *= 1.6;
-      speed *= 0.60;
+      baseHp = (140 + this.currentWave * 40 + this.currentLevel * 35) * diff;
+      baseSpeed = 12 + Math.random() * 1.8;
+      baseAttack = 140;
       color = '#ff3344';
       score = 120 * this.currentLevel;
-      attack = 120 + this.currentLevel * 25;
-      width *= 0.9;
+      width = laneWidth * 0.9;
       height = 36;
     }
+
+    const finalSpeed = baseSpeed * waveSpeedMultiplier;
+    const finalAttack = Math.round(baseAttack * waveDamageMultiplier);
 
     const enemy: Enemy = {
       id: `enemy_${Date.now()}_${Math.random()}`,
@@ -464,12 +492,12 @@ export class BattlefieldEngine {
       maxHp: baseHp,
       shieldHp,
       maxShieldHp: shieldHp,
-      speed,
-      baseSpeed: speed,
+      speed: finalSpeed,
+      baseSpeed: finalSpeed,
       color,
       glowColor: color,
       scoreValue: score,
-      attackPower: attack,
+      attackPower: finalAttack,
       frozenTimer: 0,
       shockTimer: 0,
       burnTimer: 0,
@@ -1282,6 +1310,12 @@ export class BattlefieldEngine {
       }
     }
 
+    // Emergency Adrenaline Buffer (Tactical slow-motion cushion when shield is critical)
+    if (this.emergencySlowTimer > 0) {
+      this.emergencySlowTimer -= dt;
+      effectiveDt *= 0.75;
+    }
+
     // Background starfield scroll
     for (const star of this.stars) {
       star.y += star.speed * (effectiveDt * 0.6 + dt * 0.4);
@@ -1693,10 +1727,11 @@ export class BattlefieldEngine {
           enemy.isSiegeMode = true;
           enemy.y = targetStopY + Math.sin(enemy.enginePulse * 0.4) * 1.5;
 
-          // 5 saniyede bir ağır plazma mermisi ateşleme
+          // Dalga ve sektöre göre periyodik ağır plazma mermisi ateşleme (Dengeli frekans)
           if (enemy.frozenTimer <= 0 && enemy.shockTimer <= 0) {
             enemy.shootTimer = (enemy.shootTimer || 0) + effectiveDt;
-            if (enemy.shootTimer >= 5.0) {
+            const siegeInterval = Math.max(2.4, 4.8 - (this.currentWave - 1) * 0.28 - (this.currentLevel - 1) * 0.18);
+            if (enemy.shootTimer >= siegeInterval) {
               enemy.shootTimer = 0;
               soundManager.playLaser();
               this.particles.addExplosion(enemy.x, enemy.y + enemy.height * 0.5, '#f97316', 8);
@@ -1712,7 +1747,7 @@ export class BattlefieldEngine {
                 targetX: enemy.x,
                 targetY: this.shieldBarrierY,
                 vx: 0,
-                vy: 320,
+                vy: 320 + (this.currentWave - 1) * 12,
                 damage: enemy.attackPower * 0.85,
                 color: '#f97316',
                 width: 8,
@@ -1779,6 +1814,7 @@ export class BattlefieldEngine {
 
         this.hitShield(enemy.attackPower);
         this.particles.addExplosion(enemy.x, this.shieldBarrierY, enemy.color, 16);
+        this.particles.addFloatingText(enemy.x, this.shieldBarrierY - 24, `-${Math.round(enemy.attackPower)}`, '#ef4444', true);
         this.particles.triggerScreenShake(6, 0.25);
         soundManager.playShieldHit();
         soundManager.triggerVibrate([40, 50, 40]);
@@ -1870,6 +1906,7 @@ export class BattlefieldEngine {
             // Normal kalkan darbesi
             this.hitShield(p.damage);
             this.particles.addExplosion(p.x, this.shieldBarrierY, '#f97316', 10);
+            this.particles.addFloatingText(p.x, this.shieldBarrierY - 20, `-${Math.round(p.damage)}`, '#f97316', true);
             soundManager.playShieldHit();
           }
           this.projectiles.splice(i, 1);
@@ -1966,6 +2003,16 @@ export class BattlefieldEngine {
     if (this.onShieldDamage) {
       this.onShieldDamage(this.shieldHp, this.maxShieldHp);
     }
+
+    // Emergency Adrenaline Buffer (Tactical survival cushion when shield falls <= 25%)
+    if (this.shieldHp > 0 && this.shieldHp / this.maxShieldHp <= 0.25 && !this.adrenalineTriggeredThisWave) {
+      this.adrenalineTriggeredThisWave = true;
+      this.emergencySlowTimer = 3.0;
+      this.particles.triggerScreenShake(10, 0.35);
+      this.particles.addFloatingText(this.width * 0.5, this.shieldBarrierY - 45, '⚠️ KRİTİK SEVİYE: ACİL DURUM TAMPONU!', '#f59e0b', true);
+      soundManager.playEmpWave();
+    }
+
     if (this.shieldHp <= 0) {
       soundManager.playGameOver();
       if (this.onGameOver) {
@@ -2325,10 +2372,11 @@ export class BattlefieldEngine {
       const isFrozen = enemy.frozenTimer > 0;
       const isShocked = enemy.shockTimer > 0;
 
-      // Engine Thruster Flame (dual nacelle exhausts)
-      const flameHeight = Math.sin(enemy.enginePulse) * 4 + 7;
-      const flameColor1 = isFrozen ? '#00d2ff' : '#ff5500';
-      const flameColor2 = isFrozen ? '#80eeff' : '#ffaa00';
+      // Engine Thruster Flame (dynamically scales with enemy speed)
+      const speedScale = Math.min(1.8, Math.max(0.7, enemy.speed / 16));
+      const flameHeight = (Math.sin(enemy.enginePulse) * 4 + 7) * speedScale;
+      const flameColor1 = isFrozen ? '#00d2ff' : (enemy.speed > 25 ? '#ff3300' : '#ff5500');
+      const flameColor2 = isFrozen ? '#80eeff' : (enemy.speed > 25 ? '#ffea00' : '#ffaa00');
       const eW = enemy.width;
       const eH = enemy.height;
 
@@ -2350,10 +2398,35 @@ export class BattlefieldEngine {
       ctx.fillStyle = flameColor2;
       ctx.beginPath();
       ctx.moveTo(-eW * 0.08, -eH * 0.4);
-      ctx.lineTo(0, -eH * 0.4 - flameHeight * 1.1);
+      ctx.lineTo(0, -eH * 0.4 - flameHeight * 1.15);
       ctx.lineTo(eW * 0.08, -eH * 0.4);
       ctx.fill();
       ctx.globalAlpha = 1;
+
+      // High Threat Danger Aura (Overcharged / High Damage Telegraphing)
+      if (enemy.attackPower >= 100 && !enemy.isBoss && !isFrozen) {
+        ctx.strokeStyle = '#ef4444';
+        ctx.lineWidth = 1.4;
+        ctx.globalAlpha = 0.3 + Math.sin(enemy.enginePulse * 1.8) * 0.25;
+        ctx.beginPath();
+        ctx.arc(0, 0, eW * 0.62, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+      }
+
+      // Speed trails / velocity streaks for fast-moving ships (speed >= 28)
+      if (enemy.speed >= 28 && !isFrozen && enemy.y > 0) {
+        ctx.strokeStyle = enemy.color;
+        ctx.lineWidth = 1.2;
+        ctx.globalAlpha = Math.min(0.45, (enemy.speed - 20) * 0.012);
+        ctx.beginPath();
+        ctx.moveTo(-eW * 0.22, -eH * 0.5);
+        ctx.lineTo(-eW * 0.22, -eH * 0.5 - (enemy.speed * 0.4));
+        ctx.moveTo(eW * 0.22, -eH * 0.5);
+        ctx.lineTo(eW * 0.22, -eH * 0.5 - (enemy.speed * 0.4));
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+      }
 
       // Enemy Ship Body
       const baseHull = isWhiteFlash ? '#ffffff' : (isFrozen ? '#0072aa' : '#11192e');
