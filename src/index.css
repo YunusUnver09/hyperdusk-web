@@ -634,7 +634,7 @@ body {
   transition: transform 0.18s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.18s ease, opacity 0.2s ease;
   will-change: transform;
   user-select: none;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .gem-tile:active {
@@ -657,30 +657,18 @@ body {
 /* Slowly Rotating Radiant Quantum Containment Rim Ring */
 .core-rim-glow-ring {
   position: absolute;
-  inset: -1px;
+  inset: -3px;
   border-radius: 50%;
-  padding: 1.5px;
-  background: conic-gradient(
-    from 0deg,
-    transparent 0deg,
-    rgba(255, 255, 255, 0.65) 40deg,
-    rgba(255, 255, 255, 0.15) 80deg,
-    transparent 120deg,
-    transparent 180deg,
-    rgba(255, 255, 255, 0.45) 220deg,
-    rgba(255, 255, 255, 0.1) 260deg,
-    transparent 300deg,
-    transparent 360deg
-  );
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask-composite: exclude;
-  animation: core-rim-spin 14s linear infinite;
+  border: 1.5px solid transparent;
+  border-top-color: #ffffff;
+  border-right-color: rgba(255, 255, 255, 0.25);
+  border-bottom-color: rgba(255, 255, 255, 0.75);
+  border-left-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.55);
+  animation: core-rim-spin 9s linear infinite;
   pointer-events: none;
-  z-index: 3;
-  opacity: 0.8;
-  filter: drop-shadow(0 0 2.5px rgba(255, 255, 255, 0.35));
+  z-index: 6;
+  opacity: 0.85;
 }
 
 @keyframes core-rim-spin {
@@ -2678,7 +2666,7 @@ body {
   margin-bottom: 8px;
   border: 1.5px solid rgba(15, 23, 42, 0.9);
   box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.25), inset 0 -3px 6px rgba(0, 0, 0, 0.6), 0 4px 8px rgba(0, 0, 0, 0.4);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .forge-core-info {
@@ -2761,7 +2749,7 @@ body {
   justify-content: center;
   border: 1.5px solid rgba(15, 23, 42, 0.95);
   box-shadow: inset 0 2px 5px rgba(255, 255, 255, 0.3), inset 0 -4px 8px rgba(0, 0, 0, 0.7), 0 6px 12px rgba(0, 0, 0, 0.5);
-  overflow: hidden;
+  overflow: visible;
   flex-shrink: 0;
 }
 
@@ -3056,7 +3044,7 @@ body {
   justify-content: center;
   border: 1.5px solid rgba(15, 23, 42, 0.9);
   box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.25), inset 0 -3px 6px rgba(0, 0, 0, 0.6), 0 3px 6px rgba(0, 0, 0, 0.4);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .core-slot-name {
@@ -3155,7 +3143,7 @@ body {
   justify-content: center;
   border: 1.5px solid rgba(15, 23, 42, 0.9);
   box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.25), inset 0 -3px 6px rgba(0, 0, 0, 0.6), 0 3px 6px rgba(0, 0, 0, 0.4);
-  overflow: hidden;
+  overflow: visible;
   flex-shrink: 0;
 }
 
@@ -4514,6 +4502,7 @@ body {
   width: 28px !important;
   height: 28px !important;
   flex-shrink: 0;
+  overflow: visible !important;
 }
 
 .core-chip-name {
@@ -4615,6 +4604,7 @@ body {
   width: 86px !important;
   height: 86px !important;
   z-index: 2;
+  overflow: visible !important;
   animation: float-sphere 3s infinite ease-in-out;
 }
 

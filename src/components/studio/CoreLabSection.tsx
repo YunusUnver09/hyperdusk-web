@@ -36,30 +36,55 @@ export const CoreLabSection: React.FC<CoreLabSectionProps> = ({ onPlayWithCore }
 
   const coreConfig = GEM_ELEMENTS[selectedCore];
 
+  const CORE_ICON_TINTS: Record<GemType, string> = {
+    plasma: '#fecaca',
+    cryo: '#cffafe',
+    electric: '#fef08a',
+    void: '#e9d5ff',
+    explosive: '#fed7aa',
+    nano: '#a7f3d0',
+    solaris: '#fde68a',
+    antimatter: '#fbcfe8',
+    chronos: '#bfdbfe',
+    toxic: '#d9f99d',
+    gravity: '#c7d2fe',
+    vampiric: '#fecdd3',
+    prism: '#ffffff',
+    anchor: '#fef08a',
+    echo: '#f8fafc',
+    wormhole: '#99f6e4',
+    parasite: '#f5d0fe',
+    deflector: '#a7f3d0',
+    static_web: '#bae6fd',
+    orbital_drone: '#e2e8f0',
+    supernova: '#fef9c3'
+  };
+
   const renderIcon = (type: GemType, size: number = 18) => {
+    const iconColor = CORE_ICON_TINTS[type] || '#ffffff';
     switch (type) {
-      case 'plasma': return <Flame size={size} color="#ffffff" />;
-      case 'cryo': return <Snowflake size={size} color="#ffffff" />;
-      case 'electric': return <Zap size={size} color="#ffffff" />;
-      case 'void': return <Orbit size={size} color="#ffffff" />;
-      case 'explosive': return <Bomb size={size} color="#ffffff" />;
-      case 'nano': return <Shield size={size} color="#ffffff" />;
-      case 'solaris': return <Sun size={size} color="#ffffff" />;
-      case 'antimatter': return <Atom size={size} color="#ffffff" />;
-      case 'chronos': return <Clock size={size} color="#ffffff" />;
-      case 'toxic': return <Biohazard size={size} color="#ffffff" />;
-      case 'gravity': return <Radio size={size} color="#ffffff" />;
-      case 'vampiric': return <Activity size={size} color="#ffffff" />;
-      case 'prism': return <Sparkles size={size} color="#ffffff" />;
-      case 'anchor': return <Anchor size={size} color="#ffffff" />;
-      case 'echo': return <Copy size={size} color="#ffffff" />;
-      case 'wormhole': return <Compass size={size} color="#ffffff" />;
-      case 'parasite': return <Bug size={size} color="#ffffff" />;
-      case 'static_web': return <Disc size={size} color="#ffffff" />;
-      case 'orbital_drone': return <Satellite size={size} color="#ffffff" />;
-      case 'supernova': return <Star size={size} color="#ffffff" />;
-      case 'deflector': return <ShieldCheck size={size} color="#ffffff" />;
-      default: return <Sparkles size={size} color="#ffffff" />;
+      case 'plasma': return <Flame size={size} color={iconColor} />;
+      case 'cryo': return <Snowflake size={size} color={iconColor} />;
+      case 'electric': return <Zap size={size} color={iconColor} />;
+      case 'void': return <Orbit size={size} color={iconColor} />;
+      case 'explosive': return <Bomb size={size} color={iconColor} />;
+      case 'nano': return <Shield size={size} color={iconColor} />;
+      case 'solaris': return <Sun size={size} color={iconColor} />;
+      case 'antimatter': return <Atom size={size} color={iconColor} />;
+      case 'chronos': return <Clock size={size} color={iconColor} />;
+      case 'toxic': return <Biohazard size={size} color={iconColor} />;
+      case 'gravity': return <Radio size={size} color={iconColor} />;
+      case 'vampiric': return <Activity size={size} color={iconColor} />;
+      case 'prism': return <Sparkles size={size} color={iconColor} />;
+      case 'anchor': return <Anchor size={size} color={iconColor} />;
+      case 'echo': return <Copy size={size} color={iconColor} />;
+      case 'wormhole': return <Compass size={size} color={iconColor} />;
+      case 'parasite': return <Bug size={size} color={iconColor} />;
+      case 'static_web': return <Disc size={size} color={iconColor} />;
+      case 'orbital_drone': return <Satellite size={size} color={iconColor} />;
+      case 'supernova': return <Star size={size} color={iconColor} />;
+      case 'deflector': return <ShieldCheck size={size} color={iconColor} />;
+      default: return <Sparkles size={size} color={iconColor} />;
     }
   };
 
@@ -102,8 +127,9 @@ export const CoreLabSection: React.FC<CoreLabSectionProps> = ({ onPlayWithCore }
                   }}
                 >
                   <div className={`gem-tile ${coreKey} core-chip-sphere`}>
-                    <div className="sphere-inner-specular" />
-                    <div className="gem-icon-container">
+                    <span className="sphere-specular-gloss" />
+                    <span className="core-rim-glow-ring" />
+                    <div className="sphere-icon-wrap">
                       {renderIcon(coreKey, 14)}
                     </div>
                   </div>
@@ -138,9 +164,9 @@ export const CoreLabSection: React.FC<CoreLabSectionProps> = ({ onPlayWithCore }
 
               {/* Large 3D Volumetric Sphere */}
               <div className={`gem-tile ${selectedCore} inspector-large-sphere`}>
-                <div className="sphere-inner-specular" />
-                <div className="sphere-glow-layer" style={{ boxShadow: `0 0 35px ${coreConfig.color}aa` }} />
-                <div className="gem-icon-container">
+                <span className="sphere-specular-gloss" />
+                <span className="core-rim-glow-ring" />
+                <div className="sphere-icon-wrap">
                   {renderIcon(selectedCore, 38)}
                 </div>
               </div>
