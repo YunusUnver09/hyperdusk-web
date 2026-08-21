@@ -88,59 +88,6 @@ export const CoreLabSection: React.FC<CoreLabSectionProps> = ({ onPlayWithCore }
     }
   };
 
-  const renderCoreElementAura = (type: GemType) => {
-    switch (type) {
-      case 'electric':
-        return (
-          <span className="core-element-aura aura-electric">
-            <span className="spark-arc spark-1" />
-            <span className="spark-arc spark-2" />
-            <span className="spark-zap-node" />
-          </span>
-        );
-      case 'plasma':
-        return (
-          <span className="core-element-aura aura-plasma">
-            <span className="plasma-flame-flicker" />
-          </span>
-        );
-      case 'cryo':
-        return (
-          <span className="core-element-aura aura-cryo">
-            <span className="cryo-frost-sparkle glint-1" />
-            <span className="cryo-frost-sparkle glint-2" />
-          </span>
-        );
-      case 'void':
-        return (
-          <span className="core-element-aura aura-void">
-            <span className="void-singularity-orbit" />
-          </span>
-        );
-      case 'toxic':
-        return (
-          <span className="core-element-aura aura-toxic">
-            <span className="toxic-vapor-bubble b1" />
-            <span className="toxic-vapor-bubble b2" />
-          </span>
-        );
-      case 'solaris':
-        return (
-          <span className="core-element-aura aura-solaris">
-            <span className="solaris-corona-ray" />
-          </span>
-        );
-      case 'explosive':
-        return (
-          <span className="core-element-aura aura-explosive">
-            <span className="explosive-ember-glint" />
-          </span>
-        );
-      default:
-        return <span className={`core-element-aura aura-${type}`} />;
-    }
-  };
-
   return (
     <section id="core-lab" className="studio-section core-lab-section">
       <div className="section-header-wrap">
@@ -182,7 +129,6 @@ export const CoreLabSection: React.FC<CoreLabSectionProps> = ({ onPlayWithCore }
                   <div className={`gem-tile ${coreKey} core-chip-sphere`}>
                     <span className="sphere-specular-gloss" />
                     <span className="core-rim-glow-ring" />
-                    {renderCoreElementAura(coreKey)}
                     <div className="sphere-icon-wrap">
                       {renderIcon(coreKey, 14)}
                     </div>
@@ -220,7 +166,6 @@ export const CoreLabSection: React.FC<CoreLabSectionProps> = ({ onPlayWithCore }
               <div className={`gem-tile ${selectedCore} inspector-large-sphere`}>
                 <span className="sphere-specular-gloss" />
                 <span className="core-rim-glow-ring" />
-                {renderCoreElementAura(selectedCore)}
                 <div className="sphere-icon-wrap">
                   {renderIcon(selectedCore, 38)}
                 </div>

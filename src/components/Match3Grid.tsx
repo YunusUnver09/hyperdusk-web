@@ -135,59 +135,6 @@ const renderElementIcon = (type: GemType, special: string) => {
   }
 };
 
-const renderCoreElementAura = (type: GemType) => {
-  switch (type) {
-    case 'electric':
-      return (
-        <span className="core-element-aura aura-electric">
-          <span className="spark-arc spark-1" />
-          <span className="spark-arc spark-2" />
-          <span className="spark-zap-node" />
-        </span>
-      );
-    case 'plasma':
-      return (
-        <span className="core-element-aura aura-plasma">
-          <span className="plasma-flame-flicker" />
-        </span>
-      );
-    case 'cryo':
-      return (
-        <span className="core-element-aura aura-cryo">
-          <span className="cryo-frost-sparkle glint-1" />
-          <span className="cryo-frost-sparkle glint-2" />
-        </span>
-      );
-    case 'void':
-      return (
-        <span className="core-element-aura aura-void">
-          <span className="void-singularity-orbit" />
-        </span>
-      );
-    case 'toxic':
-      return (
-        <span className="core-element-aura aura-toxic">
-          <span className="toxic-vapor-bubble b1" />
-          <span className="toxic-vapor-bubble b2" />
-        </span>
-      );
-    case 'solaris':
-      return (
-        <span className="core-element-aura aura-solaris">
-          <span className="solaris-corona-ray" />
-        </span>
-      );
-    case 'explosive':
-      return (
-        <span className="core-element-aura aura-explosive">
-          <span className="explosive-ember-glint" />
-        </span>
-      );
-    default:
-      return <span className={`core-element-aura aura-${type}`} />;
-  }
-};
-
 export const Match3GridComponent: React.FC<Match3GridProps> = ({ uiState }) => {
   const [gems, setGems] = useState<Gem[]>(() => gameEngine.match3.getAllGems());
   const [selectedGem, setSelectedGem] = useState<{ row: number; col: number } | null>(null);
@@ -380,18 +327,16 @@ export const Match3GridComponent: React.FC<Match3GridProps> = ({ uiState }) => {
           </svg>
         )}
 
-        {/* Dynamic Gems Layer */}
         <div className="match3-gems-layer">
           {gems.map((gem) => {
             const isSelected = selectedGem?.row === gem.row && selectedGem?.col === gem.col;
             const isHint = hintGem?.row === gem.row && hintGem?.col === gem.col;
+            const beamColor = ELEMENT_BEAM_COLORS[gem.type] || '#00f3ff';
 
             const transformStyle: React.CSSProperties = {
               transform: `translate3d(${gem.displayCol * 100}%, ${gem.displayRow * 100}%, 0) scale(${gem.scale ?? 1})`,
               opacity: gem.alpha ?? 1
             };
-
-            const beamColor = ELEMENT_BEAM_COLORS[gem.type] || '#00f3ff';
 
             return (
               <div
@@ -409,7 +354,6 @@ export const Match3GridComponent: React.FC<Match3GridProps> = ({ uiState }) => {
                 >
                   <span className="sphere-specular-gloss" />
                   <span className="core-rim-glow-ring" />
-                  {renderCoreElementAura(gem.type)}
 
                   <div className="sphere-icon-wrap">
                     {renderElementIcon(gem.type, gem.special)}
