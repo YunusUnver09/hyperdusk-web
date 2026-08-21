@@ -679,7 +679,11 @@ body {
   border-radius: 50%;
   cursor: pointer;
   border: 1.5px solid rgba(15, 23, 42, 0.9);
-  box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.25), inset 0 -3px 6px rgba(0, 0, 0, 0.6), 0 4px 8px rgba(0, 0, 0, 0.4);
+  box-shadow:
+    inset 0 2px 4px rgba(255, 255, 255, 0.28),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.65),
+    0 4px 10px rgba(0, 0, 0, 0.5),
+    0 0 10px color-mix(in srgb, var(--core-color, #00f3ff) 22%, transparent);
   transition: transform 0.18s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.18s ease, opacity 0.2s ease;
   will-change: transform;
   user-select: none;
@@ -703,21 +707,23 @@ body {
   z-index: 2;
 }
 
-/* Slowly Rotating Radiant Color-Matching Quantum Rim Ring (Dual Symmetrical Arcs) */
+/* Slowly Rotating Radiant Color-Matching Quantum Rim Ring (Continuous Cohesive Track) */
 .core-rim-glow-ring {
   position: absolute;
   inset: -5px;
   border-radius: 50%;
-  border: 2.6px solid transparent;
-  border-top-color: var(--core-color, #00f3ff);
-  border-bottom-color: var(--core-color, #00f3ff);
-  border-left-color: transparent;
-  border-right-color: transparent;
-  filter: drop-shadow(0 0 5px var(--core-color, rgba(0, 243, 255, 0.85)));
-  animation: core-rim-spin 7s linear infinite;
+  border: 2.2px solid color-mix(in srgb, var(--core-color, #00f3ff) 24%, transparent);
+  border-top-color: var(--core-bright, #ffffff);
+  border-right-color: var(--core-color, #00f3ff);
+  border-bottom-color: color-mix(in srgb, var(--core-bright, #ffffff) 70%, var(--core-color, #00f3ff));
+  border-left-color: color-mix(in srgb, var(--core-color, #00f3ff) 32%, transparent);
+  box-shadow:
+    0 0 8px color-mix(in srgb, var(--core-color, #00f3ff) 65%, transparent),
+    inset 0 0 4px color-mix(in srgb, var(--core-color, #00f3ff) 40%, transparent);
+  animation: core-rim-spin 6.5s linear infinite;
   pointer-events: none;
   z-index: 6;
-  opacity: 0.95;
+  opacity: 0.96;
 }
 
 .core-rim-glow-ring::after {
@@ -740,8 +746,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0.88;
-  filter: drop-shadow(0 -1px 0 rgba(0, 0, 0, 0.9)) drop-shadow(0 1px 1px rgba(255, 255, 255, 0.35));
+  opacity: 0.92;
+  filter: drop-shadow(0 -1px 0 rgba(0, 0, 0, 0.95)) drop-shadow(0 0 3.5px color-mix(in srgb, var(--core-color, #00f3ff) 50%, transparent));
 }
 
 /* Selected State */
