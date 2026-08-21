@@ -294,7 +294,7 @@ export const GEM_ELEMENTS: Record<GemType, GemElementConfig> = {
     glowColor: 'rgba(20, 184, 166, 0.95)',
     iconName: 'ShieldCheck',
     turretType: 'Kinetik Reflektör Bataryası',
-    description: 'Kalkan hattına 5 saniyelik reaktif bir enerji bariyeri ekler. Düşman mermileri çarptığında kalkan hasar almaz; darbenin kinetik enerjisini 2x katlayarak düşmana geri yansıtır.',
+    description: 'Kalkan hattına gelen sonraki 1 düşman mermisini engelleyen reaktif bir bariyer ekler. Darbe enerjisini 2x katlayarak geri yansıtır. Eşleşmeler mermi engelleme sayısını stackler.',
     lore: 'Alınan darbelerin kinetik vektörünü faz karşıtı dalgalarla iki kat güçte geri püskürten kuantum yansıtıcı.',
     isUnlockedByDefault: false,
     unlockCost: 500
@@ -736,12 +736,15 @@ export const CORE_UPGRADES: Record<GemType, CoreUpgradeCard> = {
     tiers: [
       {
         level: 1,
-        description: 'Yansıtılan hasar çarpanı 2x\'ten 3.5x\'e çıkar.',
-        apply: (_, u) => { u.deflectorDamageMult = 3.5; }
+        description: 'Her eşleşme 1 yerine 2 mermi engelleme hakkı kazandırır ve yansıtılan hasar 2x\'ten 3.5x\'e çıkar.',
+        apply: (_, u) => {
+          u.deflectorChargesPerMatch = 2;
+          u.deflectorDamageMult = 3.5;
+        }
       },
       {
         level: 2,
-        description: 'Bariyer mermilerin yanı sıra düşman gövdelerinin temas hasarını da geri yansıtır.',
+        description: 'Bariyer mermilerin yanı sıra düşman gövdelerinin temas hasarını da (1 hak harcayarak) geri yansıtır.',
         apply: (_, u) => { u.deflectorReflectBodies = true; }
       },
       {

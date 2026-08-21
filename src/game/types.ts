@@ -173,7 +173,7 @@ export interface Turret {
   socketGlow: number; // Pod/socket soft radial aura intensity [0..1]
   muzzleFlash: number; // Barrel tip firing burst flash [0..1]
   conduitPulse: number; // Upward energy conduit pulse intensity [0..1]
-  deflectorTimer?: number; // Reactive Kinetic Deflector barrier duration in sec
+  deflectorCharges?: number; // Reactive Kinetic Deflector stackable bullet reflection count
   lastFiredElement: GemType | 'idle';
   chargeLevel: number;
 }
@@ -351,6 +351,7 @@ export interface PlayerUpgrades {
 
   // 18. Deflector
   deflectorDamageMult?: number;
+  deflectorChargesPerMatch?: number;
   deflectorReflectBodies?: boolean;
   deflectorHealOnReflect?: boolean;
 

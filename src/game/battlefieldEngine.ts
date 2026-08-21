@@ -213,7 +213,7 @@ export class BattlefieldEngine {
         socketGlow: 0,
         muzzleFlash: 0,
         conduitPulse: 0,
-        deflectorTimer: 0,
+        deflectorCharges: 0,
         lastFiredElement: 'idle',
         chargeLevel: 0
       });
@@ -1074,12 +1074,14 @@ export class BattlefieldEngine {
         break;
       }
       case 'deflector': {
-        // Reaktif Kinetik Kalkan: 5 saniyelik reaktif enerji bariyeri kurar
-        this.turrets[lane].deflectorTimer = 5.0;
+        // Reaktif Kinetik Kalkan: sonraki mermileri engelleyen stacklenebilir reaktif enerji bariyeri kurar
+        const chargesToAdd = this.upgrades.deflectorChargesPerMatch || 1;
+        this.turrets[lane].deflectorCharges = (this.turrets[lane].deflectorCharges || 0) + chargesToAdd;
+        const currentCharges = this.turrets[lane].deflectorCharges;
         soundManager.playShieldHit();
 
         this.particles.triggerScreenShake(3, 0.15);
-        this.particles.addFloatingText(laneX, this.shieldBarrierY - 35, 'KİNETİK REFLEKTÖR AKTİF (5s)!', '#14b8a6', true);
+        this.particles.addFloatingText(laneX, this.shieldBarrierY - 35, `KİNETİK REFLEKTÖR (🛡️ x${currentCharges})!`, '#14b8a6', true);
         this.particles.addLaserImpact(laneX, this.shieldBarrierY, '#2dd4bf', 14);
 
         // Flash kinetic pulse along the lane
@@ -1304,9 +1306,6 @@ export class BattlefieldEngine {
       }
       if (turret.conduitPulse > 0) {
         turret.conduitPulse = Math.max(0, turret.conduitPulse - dt * 3.0);
-      }
-      if (turret.deflectorTimer && turret.deflectorTimer > 0) {
-        turret.deflectorTimer = Math.max(0, turret.deflectorTimer - dt);
       }
     }
 
@@ -1729,14 +1728,17 @@ export class BattlefieldEngine {
       // Check barrier impact
       if (enemy.y + enemy.height * 0.5 >= this.shieldBarrierY) {
         const turret = this.turrets[enemy.lane];
-        if (turret && turret.deflectorTimer && turret.deflectorTimer > 0 && this.upgrades.deflectorReflectBodies) {
-          // Tier 2: Bariyer temas eden düşman gövdelerini geri püskürtüp hasarını geri yansıtır
+        if (turret && turret.deflectorCharges && turret.deflectorCharges > 0 && this.upgrades.deflectorReflectBodies) {
+          // Tier 2: Bariyer temas eden düşman gövdelerini geri püskürtüp hasarını geri yansıtır (1 hak harcar)
+          turret.deflectorCharges -= 1;
+          const remainingCharges = turret.deflectorCharges;
           const deflectorMult = this.upgrades.deflectorDamageMult || 2.0;
           this.applyDamageToEnemy(enemy, enemy.attackPower * deflectorMult, 'deflector', true);
           enemy.y = Math.max(30, this.shieldBarrierY - 120);
           enemy.frozenTimer = 1.5;
           this.particles.addExplosion(enemy.x, this.shieldBarrierY, '#14b8a6', 22, true);
-          this.particles.addFloatingText(enemy.x, this.shieldBarrierY - 35, `⚡ ${deflectorMult}X GÖVDE YANSITMA!`, '#14b8a6', true);
+          const badgeText = remainingCharges > 0 ? `⚡ ${deflectorMult}X GÖVDE YANSITMA! (Kalan: x${remainingCharges})` : `⚡ ${deflectorMult}X GÖVDE YANSITMA!`;
+          this.particles.addFloatingText(enemy.x, this.shieldBarrierY - 35, badgeText, '#14b8a6', true);
           if (this.upgrades.deflectorHealOnReflect) {
             this.healShield(this.maxShieldHp * 0.05);
           }
@@ -1797,7 +1799,11 @@ export class BattlefieldEngine {
       if (p.type === 'enemy_bullet') {
         if (p.y >= this.shieldBarrierY - 6) {
           const turret = this.turrets[p.lane];
-          if (turret && turret.deflectorTimer && turret.deflectorTimer > 0) {
+          if (turret && turret.deflectorCharges && turret.deflectorCharges > 0) {
+            // 1 Deflect hakkı harca
+            turret.deflectorCharges -= 1;
+            const remainingCharges = turret.deflectorCharges;
+
             // ⚡ KİNETİK DEFLEKTÖR KARŞI SALDIRI
             const deflectorMult = this.upgrades.deflectorDamageMult || 2.0;
             this.projectiles.push({
@@ -1826,7 +1832,8 @@ export class BattlefieldEngine {
 
             soundManager.playShieldHit();
             this.particles.addExplosion(p.x, this.shieldBarrierY, '#14b8a6', 18, true);
-            this.particles.addFloatingText(p.x, this.shieldBarrierY - 30, `⚡ ${deflectorMult}X KİNETİK YANSITMA!`, '#14b8a6', true);
+            const badgeText = remainingCharges > 0 ? `⚡ ${deflectorMult}X YANSITMA! (Kalan: x${remainingCharges})` : `⚡ ${deflectorMult}X YANSITMA!`;
+            this.particles.addFloatingText(p.x, this.shieldBarrierY - 30, badgeText, '#14b8a6', true);
             this.particles.triggerScreenShake(3, 0.15);
           } else {
             // Normal kalkan darbesi
@@ -2063,9 +2070,9 @@ export class BattlefieldEngine {
     const laneWidth = this.getLaneWidth();
     for (let i = 0; i < NUM_LANES; i++) {
       const turret = this.turrets[i];
-      if (turret.deflectorTimer && turret.deflectorTimer > 0) {
+      if (turret.deflectorCharges && turret.deflectorCharges > 0) {
         const lx = i * laneWidth;
-        const alpha = Math.min(1, turret.deflectorTimer / 0.5);
+        const charges = turret.deflectorCharges;
 
         // Radiant Emerald Deflection Field above barrier
         const fieldGrad = ctx.createLinearGradient(0, y - 28, 0, y);
@@ -2074,13 +2081,13 @@ export class BattlefieldEngine {
         fieldGrad.addColorStop(1, 'rgba(20, 184, 166, 0.9)');
 
         ctx.fillStyle = fieldGrad;
-        ctx.globalAlpha = alpha * 0.75;
+        ctx.globalAlpha = 0.85;
         ctx.fillRect(lx, y - 24, laneWidth, 24);
 
         // Hexagonal / Angled Reflective Barrier Crest
         ctx.strokeStyle = '#2dd4bf';
         ctx.lineWidth = 2.5;
-        ctx.globalAlpha = alpha * 0.95;
+        ctx.globalAlpha = 0.95;
         ctx.beginPath();
         ctx.moveTo(lx + 2, y);
         ctx.lineTo(lx + laneWidth * 0.25, y - 16);
@@ -2090,10 +2097,20 @@ export class BattlefieldEngine {
 
         // Pulsating Center Counter-Spark / Chevron
         ctx.fillStyle = '#ffffff';
-        ctx.globalAlpha = alpha * 0.85;
         ctx.beginPath();
         ctx.arc(lx + laneWidth * 0.5, y - 16, 3, 0, Math.PI * 2);
         ctx.fill();
+
+        // Stacked Charge Count Indicator (e.g. 🛡️x2)
+        ctx.save();
+        ctx.font = 'bold 11px Rajdhani, sans-serif';
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.shadowColor = '#14b8a6';
+        ctx.shadowBlur = 8;
+        ctx.fillText(`🛡️x${charges}`, lx + laneWidth * 0.5, y - 24);
+        ctx.restore();
         ctx.globalAlpha = 1;
       }
     }
