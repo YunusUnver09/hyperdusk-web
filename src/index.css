@@ -611,7 +611,7 @@ body {
   left: 0;
   width: 12.5%;
   height: 12.5%;
-  padding: 4.5px;
+  padding: 5.5px;
   will-change: transform, opacity;
   box-sizing: border-box;
 }
@@ -2714,8 +2714,8 @@ body {
 
 .forge-core-sphere {
   position: relative;
-  width: 44px;
-  height: 44px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -2798,8 +2798,8 @@ body {
 
 .inspector-sphere-preview {
   position: relative;
-  width: 58px;
-  height: 58px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -3093,8 +3093,8 @@ body {
 
 .core-slot-sphere {
   position: relative;
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -3192,8 +3192,8 @@ body {
 
 .inv-core-sphere {
   position: relative;
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -4556,8 +4556,8 @@ body {
 }
 
 .core-chip-sphere {
-  width: 28px !important;
-  height: 28px !important;
+  width: 26px !important;
+  height: 26px !important;
   flex-shrink: 0;
   overflow: visible !important;
 }
@@ -4658,8 +4658,8 @@ body {
 }
 
 .inspector-large-sphere {
-  width: 86px !important;
-  height: 86px !important;
+  width: 84px !important;
+  height: 84px !important;
   z-index: 2;
   overflow: visible !important;
   animation: float-sphere 3s infinite ease-in-out;
