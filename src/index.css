@@ -647,7 +647,7 @@ body {
   left: 0;
   width: 12.5%;
   height: 12.5%;
-  padding: 6.5px;
+  padding: 4.5px;
   will-change: transform, opacity;
   box-sizing: border-box;
 }
@@ -3384,8 +3384,8 @@ body {
   .game-wrapper-view {
     height: 100vh;
     height: 100dvh;
-    width: min(100vw, calc(100vh * 0.58));
-    max-width: 580px;
+    width: min(100vw, calc(100vh * 0.46));
+    max-width: 440px;
     border-left: 1.5px solid rgba(0, 243, 255, 0.45);
     border-right: 1.5px solid rgba(0, 243, 255, 0.45);
     border-top: none;
