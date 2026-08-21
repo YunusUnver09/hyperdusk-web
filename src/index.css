@@ -611,7 +611,7 @@ body {
   left: 0;
   width: 12.5%;
   height: 12.5%;
-  padding: 5.5px;
+  padding: 6.5px;
   will-change: transform, opacity;
   box-sizing: border-box;
 }
@@ -657,31 +657,31 @@ body {
 /* Slowly Rotating Radiant Color-Matching Quantum Rim Ring */
 .core-rim-glow-ring {
   position: absolute;
-  inset: -3.5px;
+  inset: -6px;
   border-radius: 50%;
-  border: 1.8px solid transparent;
+  border: 2.6px solid transparent;
   border-top-color: var(--core-bright, #ffffff);
   border-right-color: var(--core-color, #00f3ff);
   border-bottom-color: var(--core-bright, #ffffff);
   border-left-color: transparent;
-  box-shadow: 0 0 8px var(--core-color, rgba(0, 243, 255, 0.6)), inset 0 0 4px var(--core-color, rgba(0, 243, 255, 0.4));
+  box-shadow: 0 0 10px var(--core-color, rgba(0, 243, 255, 0.6)), inset 0 0 5px var(--core-color, rgba(0, 243, 255, 0.3));
   animation: core-rim-spin 7s linear infinite;
   pointer-events: none;
   z-index: 6;
-  opacity: 0.92;
+  opacity: 0.95;
 }
 
 .core-rim-glow-ring::after {
   content: '';
   position: absolute;
-  top: -2.5px;
+  top: -3.5px;
   left: 50%;
   transform: translateX(-50%);
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: #ffffff;
-  box-shadow: 0 0 6px var(--core-bright, #ffffff), 0 0 10px var(--core-color, #00f3ff);
+  box-shadow: 0 0 6px var(--core-bright, #ffffff), 0 0 12px var(--core-color, #00f3ff);
 }
 
 @keyframes core-rim-spin {

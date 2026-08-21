@@ -896,8 +896,9 @@ export class BattlefieldEngine {
         }
 
         if (leadEnemy) {
+          const anchorBaseDur = leadEnemy.isBoss ? 3.5 : (this.upgrades.anchorDuration || 5.0);
           leadEnemy.isAnchored = true;
-          leadEnemy.anchorTimer = leadEnemy.isBoss ? 3.5 : 5.0;
+          leadEnemy.anchorTimer = anchorBaseDur;
           this.applyDamageToEnemy(leadEnemy, finalDamage, 'anchor', isCrit);
           this.particles.addFloatingText(leadEnemy.x, leadEnemy.y - 16, 'GRAVITON ANCHORED!', '#b45309', true);
           this.particles.addExplosion(leadEnemy.x, leadEnemy.y, '#b45309', 14);
@@ -1592,6 +1593,30 @@ export class BattlefieldEngine {
       if (enemy.shockTimer > 0) enemy.shockTimer = Math.max(0, enemy.shockTimer - effectiveDt);
       if (enemy.hitFlashTimer > 0) enemy.hitFlashTimer = Math.max(0, enemy.hitFlashTimer - effectiveDt);
 
+      // Graviton Anchor pinning timer countdown & release / detonation
+      if (enemy.isAnchored) {
+        enemy.anchorTimer = (enemy.anchorTimer || 0) - effectiveDt;
+        if (enemy.anchorTimer <= 0) {
+          enemy.isAnchored = false;
+          enemy.anchorTimer = 0;
+          this.particles.addFloatingText(enemy.x, enemy.y - 14, 'PRANGA ÇÖZÜLDÜ', '#cbd5e1', false);
+
+          // Tier 3: Çapa süresi bittiğinde kilitli düşman patlayarak arkasındaki tüm trafiği havaya uçurur
+          if (this.upgrades.anchorDetonation) {
+            soundManager.playExplosion(true);
+            this.particles.triggerScreenShake(8, 0.25);
+            this.particles.addExplosion(enemy.x, enemy.y, '#b45309', 32, true);
+            this.particles.addFloatingText(enemy.x, enemy.y - 25, 'GRAVİTON PATLAMASI!', '#f59e0b', true);
+            const detDmg = 350 + this.currentLevel * 45;
+            for (const other of this.enemies) {
+              if (other.lane === enemy.lane && Math.abs(other.y - enemy.y) <= 120) {
+                this.applyDamageToEnemy(other, detDmg, 'anchor', true);
+              }
+            }
+          }
+        }
+      }
+
       // Burn tick
       if (enemy.burnTimer && enemy.burnTimer > 0) {
         enemy.burnTimer -= effectiveDt;
@@ -1702,7 +1727,7 @@ export class BattlefieldEngine {
         }
       }
 
-      // Graviton Anchor Traffic Bottleneck
+      // Graviton Anchor Traffic Bottleneck & Tier 2 Crush Tension
       if (!enemy.isAnchored && !enemy.isSiegeMode) {
         for (const other of this.enemies) {
           if (other !== enemy && other.isAnchored && other.lane === enemy.lane && other.y > enemy.y) {
@@ -1710,6 +1735,12 @@ export class BattlefieldEngine {
             if (enemy.y + enemy.height >= minAllowedY) {
               enemy.y = minAllowedY - enemy.height;
               currentSpeed = 0;
+
+              if (this.upgrades.anchorCrushTension) {
+                const crushDmg = (45 + this.currentLevel * 8) * effectiveDt;
+                this.applyDamageToEnemy(enemy, crushDmg, 'anchor', false);
+                this.particles.addLaserImpact(enemy.x, enemy.y, '#b45309', 1);
+              }
             }
           }
         }
