@@ -246,8 +246,8 @@ body {
 /* Battlefield Canvas Section (Top Half - Long Flight Airspace) */
 .battlefield-wrapper {
   position: relative;
-  flex: 2.2;
-  min-height: 320px;
+  flex: 1;
+  min-height: 240px;
   width: 100%;
   background: #070a14;
   overflow: hidden;
@@ -343,15 +343,12 @@ body {
   font-weight: 600;
 }
 
-/* Match-3 Section (Bottom Half - Balanced Tactical Grid) */
+/* Match-3 Section (Bottom Half - Full Width Proportional Tactical Grid) */
 .match3-container {
   position: relative;
   width: 100%;
-  max-width: min(44vh, 400px);
-  max-height: min(44vh, 400px);
   aspect-ratio: 1 / 1;
-  margin: 0 auto;
-  padding: 4px;
+  padding: 6px;
   background: #080c1b;
   display: flex;
   flex-direction: column;

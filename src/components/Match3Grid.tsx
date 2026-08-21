@@ -58,54 +58,54 @@ const CORE_ICON_TINTS: Record<GemType, string> = {
 
 const renderElementIcon = (type: GemType, special: string) => {
   if (special === 'hyper_cube') {
-    return <Sparkles size={18} color="#ffffff" />;
+    return <Sparkles size={22} color="#ffffff" />;
   }
 
   const iconColor = CORE_ICON_TINTS[type] || '#ffffff';
 
   switch (type) {
     case 'plasma':
-      return <Flame size={15} color={iconColor} />;
+      return <Flame size={18} color={iconColor} />;
     case 'cryo':
-      return <Snowflake size={15} color={iconColor} />;
+      return <Snowflake size={18} color={iconColor} />;
     case 'electric':
-      return <Zap size={15} color={iconColor} />;
+      return <Zap size={18} color={iconColor} />;
     case 'void':
-      return <Orbit size={15} color={iconColor} />;
+      return <Orbit size={18} color={iconColor} />;
     case 'explosive':
-      return <Bomb size={15} color={iconColor} />;
+      return <Bomb size={18} color={iconColor} />;
     case 'nano':
-      return <Shield size={15} color={iconColor} />;
+      return <Shield size={18} color={iconColor} />;
     case 'solaris':
-      return <Sun size={15} color={iconColor} />;
+      return <Sun size={18} color={iconColor} />;
     case 'antimatter':
-      return <Atom size={15} color={iconColor} />;
+      return <Atom size={18} color={iconColor} />;
     case 'chronos':
-      return <Clock size={15} color={iconColor} />;
+      return <Clock size={18} color={iconColor} />;
     case 'toxic':
-      return <Biohazard size={15} color={iconColor} />;
+      return <Biohazard size={18} color={iconColor} />;
     case 'gravity':
-      return <Radio size={15} color={iconColor} />;
+      return <Radio size={18} color={iconColor} />;
     case 'vampiric':
-      return <Activity size={15} color={iconColor} />;
+      return <Activity size={18} color={iconColor} />;
     case 'prism':
-      return <Sparkles size={15} color={iconColor} />;
+      return <Sparkles size={18} color={iconColor} />;
     case 'anchor':
-      return <Anchor size={15} color={iconColor} />;
+      return <Anchor size={18} color={iconColor} />;
     case 'echo':
-      return <Copy size={15} color={iconColor} />;
+      return <Copy size={18} color={iconColor} />;
     case 'wormhole':
-      return <Compass size={15} color={iconColor} />;
+      return <Compass size={18} color={iconColor} />;
     case 'parasite':
-      return <Bug size={15} color={iconColor} />;
+      return <Bug size={18} color={iconColor} />;
     case 'static_web':
-      return <Disc size={15} color={iconColor} />;
+      return <Disc size={18} color={iconColor} />;
     case 'orbital_drone':
-      return <Satellite size={15} color={iconColor} />;
+      return <Satellite size={18} color={iconColor} />;
     case 'supernova':
-      return <Star size={15} color={iconColor} />;
+      return <Star size={18} color={iconColor} />;
     case 'deflector':
-      return <ShieldCheck size={15} color={iconColor} />;
+      return <ShieldCheck size={18} color={iconColor} />;
     default:
       return null;
   }
