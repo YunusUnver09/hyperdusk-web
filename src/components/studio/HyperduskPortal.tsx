@@ -7,12 +7,19 @@ import { CoreLabSection } from './CoreLabSection';
 import { GamesVaultSection } from './GamesVaultSection';
 import { StudioAboutSection } from './StudioAboutSection';
 import { CommunityFooter } from './CommunityFooter';
+import { Maximize, Minimize } from 'lucide-react';
 
 interface HyperduskPortalProps {
   onPlayGame: (specificCore?: GemType) => void;
+  isFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
 }
 
-export const HyperduskPortal: React.FC<HyperduskPortalProps> = ({ onPlayGame }) => {
+export const HyperduskPortal: React.FC<HyperduskPortalProps> = ({
+  onPlayGame,
+  isFullscreen,
+  onToggleFullscreen
+}) => {
   const [activeSection, setActiveSection] = useState('hero');
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -100,12 +107,27 @@ export const HyperduskPortal: React.FC<HyperduskPortalProps> = ({ onPlayGame }) 
       {/* Background Starfield Canvas */}
       <canvas ref={canvasRef} className="portal-canvas-bg" />
 
-      {/* Header */}
+      {/* Header with Fullscreen Button */}
       <StudioHeader
         onPlayClick={() => onPlayGame()}
         onNavigate={handleNavigate}
         activeSection={activeSection}
+        isFullscreen={isFullscreen}
+        onToggleFullscreen={onToggleFullscreen}
       />
+
+      {/* Floating Fullscreen Action Button for Mobile */}
+      {onToggleFullscreen && (
+        <button
+          className="floating-mobile-fs-fab"
+          onClick={onToggleFullscreen}
+          title={isFullscreen ? 'Tam Ekrandan Çık' : 'Tam Ekran Modu (Arama Çubuğunu Gizle)'}
+          aria-label="Tam Ekran"
+        >
+          {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
+          <span className="fab-tooltip">{isFullscreen ? 'KÜÇÜLT' : 'TAM EKRAN'}</span>
+        </button>
+      )}
 
       {/* Main Content Sections */}
       <main className="portal-main-content">

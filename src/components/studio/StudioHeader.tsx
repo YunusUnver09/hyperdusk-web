@@ -1,16 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { Sparkles, Menu, X, Play, ChevronRight } from 'lucide-react';
+import { Sparkles, Menu, X, Play, ChevronRight, Maximize, Minimize } from 'lucide-react';
 
 interface StudioHeaderProps {
   onPlayClick: () => void;
   onNavigate: (sectionId: string) => void;
   activeSection: string;
+  isFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
 }
 
 export const StudioHeader: React.FC<StudioHeaderProps> = ({
   onPlayClick,
   onNavigate,
-  activeSection
+  activeSection,
+  isFullscreen,
+  onToggleFullscreen
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -75,10 +79,23 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
 
         {/* Action Controls */}
         <div className="studio-header-actions">
+          {/* Fullscreen Toggle Button */}
+          {onToggleFullscreen && (
+            <button
+              className="header-fs-btn"
+              onClick={onToggleFullscreen}
+              title="Tam Ekran Modu (Arama çubuğunu gizle)"
+              aria-label="Tam Ekran"
+            >
+              {isFullscreen ? <Minimize size={15} /> : <Maximize size={15} />}
+              <span className="fs-label">{isFullscreen ? 'KÜÇÜLT' : 'TAM EKRAN'}</span>
+            </button>
+          )}
+
           {/* Quick Play CTA */}
           <button className="header-play-btn" onClick={onPlayClick}>
-            <Play size={15} fill="#070a14" />
-            <span>HEMEN OYNA</span>
+            <Play size={14} fill="#070a14" />
+            <span>OYNA</span>
             <div className="btn-glow-bar" />
           </button>
 
@@ -107,6 +124,19 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
                 <ChevronRight size={18} opacity={0.6} />
               </button>
             ))}
+
+            {onToggleFullscreen && (
+              <button
+                className="mobile-nav-item fs-drawer-btn"
+                onClick={() => { onToggleFullscreen(); setMobileMenuOpen(false); }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {isFullscreen ? <Minimize size={18} color="#00f3ff" /> : <Maximize size={18} color="#00f3ff" />}
+                  <span>{isFullscreen ? 'Tam Ekrandan Çık' : 'Tam Ekran Modu (Arama Çubuğunu Gizle)'}</span>
+                </div>
+              </button>
+            )}
+
             <div className="mobile-drawer-cta">
               <button className="mobile-play-cta" onClick={() => { setMobileMenuOpen(false); onPlayClick(); }}>
                 <Play size={18} fill="#070a14" />

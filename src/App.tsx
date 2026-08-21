@@ -67,7 +67,11 @@ export const App: React.FC = () => {
   return (
     <div className="hyperdusk-app-root">
       {currentView === 'portal' ? (
-        <HyperduskPortal onPlayGame={handleLaunchGame} />
+        <HyperduskPortal
+          onPlayGame={handleLaunchGame}
+          isFullscreen={isFullscreen}
+          onToggleFullscreen={toggleFullscreen}
+        />
       ) : (
         <div className="game-wrapper-view">
           {/* Top Return to Studio Navigation Bar */}
