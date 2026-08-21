@@ -229,13 +229,10 @@ export const Match3GridComponent: React.FC<Match3GridProps> = ({ uiState }) => {
                 className={`col-threat-cell ${isThreatened ? 'active' : ''} ${isBoss ? 'boss' : ''}`}
               >
                 {isThreatened && (
-                  <>
-                    <div className="threat-column-guide" />
-                    <div className={`threat-badge ${isBoss ? 'boss' : ''}`}>
-                      <span className="threat-ping-ring" />
-                      <span className="threat-icon">!</span>
-                    </div>
-                  </>
+                  <div className={`threat-badge ${isBoss ? 'boss' : ''}`}>
+                    <span className="threat-ping-ring" />
+                    <span className="threat-icon">!</span>
+                  </div>
                 )}
               </div>
             );
@@ -246,6 +243,40 @@ export const Match3GridComponent: React.FC<Match3GridProps> = ({ uiState }) => {
 
         <div className="tactical-center-divider" />
 
+        {/* Rectangular Highlights Wrapping Exactly Around The Matched Cores */}
+        {activeMatchGroups.length > 0 && (
+          <div className="match-bounding-rects-layer" style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 28 }}>
+            {activeMatchGroups.map((group, gIdx) => {
+              if (!group.gems || group.gems.length === 0) return null;
+              const beamColor = ELEMENT_BEAM_COLORS[group.type] || '#00f3ff';
+              const minCol = Math.min(...group.gems.map((g) => g.displayCol));
+              const maxCol = Math.max(...group.gems.map((g) => g.displayCol));
+              const minRow = Math.min(...group.gems.map((g) => g.displayRow));
+              const maxRow = Math.max(...group.gems.map((g) => g.displayRow));
+
+              const rectStyle: React.CSSProperties = {
+                position: 'absolute',
+                left: `${minCol * 12.5}%`,
+                top: `${minRow * 12.5}%`,
+                width: `${(maxCol - minCol + 1) * 12.5}%`,
+                height: `${(maxRow - minRow + 1) * 12.5}%`,
+                padding: '2.5px',
+                boxSizing: 'border-box'
+              };
+
+              return (
+                <div key={`match_box_${gIdx}`} style={rectStyle}>
+                  <div
+                    className="match-bounding-rect"
+                    style={{ '--match-color': beamColor } as React.CSSProperties}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Active Laser Connector Overlay (Only spans the exact matched 3-5 cores) */}
         {activeMatchGroups.length > 0 && (
           <svg className="match-lasers-overlay" viewBox="0 0 100 100" preserveAspectRatio="none">
             {activeMatchGroups.map((group, gIdx) => {
