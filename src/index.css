@@ -750,6 +750,236 @@ body {
   filter: drop-shadow(0 -1px 0 rgba(0, 0, 0, 0.95)) drop-shadow(0 0 3.5px color-mix(in srgb, var(--core-color, #00f3ff) 50%, transparent));
 }
 
+/* ========================================================= */
+/* ⚡ SUBTLE ELEMENTAL ABILITY MICRO-AURAS (VERY LIGHTWEIGHT)  */
+/* ========================================================= */
+.core-element-aura {
+  position: absolute;
+  inset: -1.5px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* 1. Plasma: Thermal Ember Shimmer */
+.gem-tile.plasma .core-element-aura {
+  box-shadow: 0 0 5px rgba(220, 38, 38, 0.35);
+  animation: aura-plasma-breathe 2.4s ease-in-out infinite alternate;
+}
+@keyframes aura-plasma-breathe {
+  0% { opacity: 0.2; transform: scale(0.97); }
+  100% { opacity: 0.65; transform: scale(1.02); }
+}
+
+/* 2. Cryo: Frost Crystal Glint */
+.gem-tile.cryo .core-element-aura {
+  box-shadow: 0 0 5px rgba(6, 182, 212, 0.4), inset 0 0 3px rgba(165, 243, 252, 0.25);
+  animation: aura-cryo-shimmer 3s ease-in-out infinite;
+}
+@keyframes aura-cryo-shimmer {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 0.7; filter: brightness(1.25); }
+}
+
+/* 3. Electric: Tiny Dancing Electric Arc Sparks */
+.gem-tile.electric .core-element-aura {
+  border: 1px dashed rgba(250, 204, 21, 0.45);
+  box-shadow: 0 0 6px rgba(250, 204, 21, 0.35);
+  animation: aura-electric-sparks 1.8s steps(4, end) infinite;
+}
+@keyframes aura-electric-sparks {
+  0%, 100% { transform: rotate(0deg) scale(0.98); opacity: 0.25; }
+  25% { transform: rotate(72deg) scale(1.02); opacity: 0.8; filter: drop-shadow(0 0 2px #ffff00); }
+  50% { transform: rotate(160deg) scale(0.99); opacity: 0.3; }
+  75% { transform: rotate(260deg) scale(1.03); opacity: 0.85; filter: drop-shadow(0 0 3px #ffffff); }
+}
+
+/* 4. Void: Gravitational Micro-Vortex */
+.gem-tile.void .core-element-aura {
+  border: 1px dotted rgba(147, 51, 234, 0.35);
+  box-shadow: inset 0 0 5px rgba(147, 51, 234, 0.3);
+  animation: aura-void-spin 5s linear infinite;
+}
+@keyframes aura-void-spin {
+  0% { transform: rotate(0deg); opacity: 0.25; }
+  50% { opacity: 0.65; }
+  100% { transform: rotate(-360deg); opacity: 0.25; }
+}
+
+/* 5. Explosive: Micro Flare Pulse */
+.gem-tile.explosive .core-element-aura {
+  box-shadow: 0 0 6px rgba(234, 88, 12, 0.4);
+  animation: aura-explosive-pulse 2.2s ease-in-out infinite alternate;
+}
+@keyframes aura-explosive-pulse {
+  0% { opacity: 0.2; transform: scale(0.98); }
+  100% { opacity: 0.7; transform: scale(1.02); }
+}
+
+/* 6. Nano: Cellular Matrix Shimmer */
+.gem-tile.nano .core-element-aura {
+  border: 1px dashed rgba(16, 185, 129, 0.32);
+  animation: aura-nano-pulse 2.8s ease-in-out infinite;
+}
+@keyframes aura-nano-pulse {
+  0%, 100% { opacity: 0.2; transform: rotate(0deg); }
+  50% { opacity: 0.65; transform: rotate(45deg); }
+}
+
+/* 7. Solaris: Solar Corona Glow */
+.gem-tile.solaris .core-element-aura {
+  box-shadow: 0 0 6px rgba(217, 119, 6, 0.4);
+  animation: aura-solaris-glow 2.5s ease-in-out infinite alternate;
+}
+@keyframes aura-solaris-glow {
+  0% { opacity: 0.25; transform: scale(0.98); }
+  100% { opacity: 0.7; transform: scale(1.02); }
+}
+
+/* 8. Antimatter: Quantum Rift Flicker */
+.gem-tile.antimatter .core-element-aura {
+  border: 1px dotted rgba(219, 39, 119, 0.38);
+  animation: aura-antimatter-flicker 2.2s ease-in-out infinite alternate;
+}
+@keyframes aura-antimatter-flicker {
+  0% { opacity: 0.25; transform: scale(0.97) rotate(0deg); }
+  100% { opacity: 0.7; transform: scale(1.02) rotate(25deg); }
+}
+
+/* 9. Chronos: Temporal Dial Tick Sweep */
+.gem-tile.chronos .core-element-aura {
+  border-top: 1.5px solid rgba(191, 219, 254, 0.55);
+  animation: aura-chronos-sweep 3.6s linear infinite;
+  opacity: 0.6;
+}
+@keyframes aura-chronos-sweep {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 10. Toxic: Bio-Vapor Shimmer */
+.gem-tile.toxic .core-element-aura {
+  box-shadow: 0 0 5px rgba(132, 204, 22, 0.38), inset 0 0 3px rgba(132, 204, 22, 0.2);
+  animation: aura-toxic-vapor 2.4s ease-in-out infinite alternate;
+}
+@keyframes aura-toxic-vapor {
+  0% { opacity: 0.2; }
+  100% { opacity: 0.65; }
+}
+
+/* 11. Gravity: Gravitational Compression Ring */
+.gem-tile.gravity .core-element-aura {
+  border: 1px solid rgba(79, 70, 229, 0.35);
+  animation: aura-gravity-pulse 3.2s ease-in-out infinite alternate;
+}
+@keyframes aura-gravity-pulse {
+  0% { transform: scale(0.96); opacity: 0.2; }
+  100% { transform: scale(1.03); opacity: 0.65; }
+}
+
+/* 12. Vampiric: Crimson Siphon Whisper */
+.gem-tile.vampiric .core-element-aura {
+  box-shadow: 0 0 5px rgba(190, 18, 60, 0.4);
+  animation: aura-vampiric-pulse 2.2s ease-in-out infinite alternate;
+}
+@keyframes aura-vampiric-pulse {
+  0% { opacity: 0.2; }
+  100% { opacity: 0.7; }
+}
+
+/* 13. Prism: Multi-Chromatic Glint */
+.gem-tile.prism .core-element-aura {
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.45);
+  animation: aura-prism-glint 3s ease-in-out infinite;
+}
+@keyframes aura-prism-glint {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 0.8; filter: brightness(1.3); }
+}
+
+/* 14. Anchor: Magnetic Tension Lock */
+.gem-tile.anchor .core-element-aura {
+  border: 1px solid rgba(180, 83, 9, 0.35);
+  box-shadow: inset 0 0 4px rgba(180, 83, 9, 0.3);
+  animation: aura-anchor-lock 3s ease-in-out infinite alternate;
+}
+@keyframes aura-anchor-lock {
+  0% { opacity: 0.25; }
+  100% { opacity: 0.65; }
+}
+
+/* 15. Echo: Harmonic Wave Ring */
+.gem-tile.echo .core-element-aura {
+  border: 1px solid rgba(203, 213, 225, 0.35);
+  animation: aura-echo-wave 2.8s ease-in-out infinite alternate;
+}
+@keyframes aura-echo-wave {
+  0% { transform: scale(0.96); opacity: 0.2; }
+  100% { transform: scale(1.03); opacity: 0.65; }
+}
+
+/* 16. Wormhole: Spacetime Distortion */
+.gem-tile.wormhole .core-element-aura {
+  border: 1px dashed rgba(15, 118, 110, 0.4);
+  animation: aura-wormhole-warp 4.5s linear infinite;
+}
+@keyframes aura-wormhole-warp {
+  0% { transform: rotate(0deg); opacity: 0.25; }
+  50% { opacity: 0.65; }
+  100% { transform: rotate(360deg); opacity: 0.25; }
+}
+
+/* 17. Parasite: Bio-Spore Pulse */
+.gem-tile.parasite .core-element-aura {
+  box-shadow: 0 0 5px rgba(112, 26, 117, 0.4);
+  animation: aura-parasite-pulse 2.3s ease-in-out infinite alternate;
+}
+@keyframes aura-parasite-pulse {
+  0% { opacity: 0.2; }
+  100% { opacity: 0.7; }
+}
+
+/* 18. Deflector: Kinetic Barrier Sweep */
+.gem-tile.deflector .core-element-aura {
+  border-right: 1.5px solid rgba(20, 184, 166, 0.55);
+  animation: aura-deflector-sweep 3s linear infinite;
+  opacity: 0.6;
+}
+@keyframes aura-deflector-sweep {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 19. Static Web: Electrostatic Network Pulse */
+.gem-tile.static_web .core-element-aura {
+  border: 1px dotted rgba(2, 132, 199, 0.4);
+  animation: aura-static-pulse 2s steps(3, end) infinite;
+}
+@keyframes aura-static-pulse {
+  0%, 100% { opacity: 0.25; transform: rotate(0deg); }
+  50% { opacity: 0.75; transform: rotate(60deg); }
+}
+
+/* 20. Orbital Drone: Telemetry Beacon Ping */
+.gem-tile.orbital_drone .core-element-aura {
+  border: 1px dashed rgba(100, 116, 139, 0.35);
+  animation: aura-drone-ping 3.2s ease-in-out infinite;
+}
+@keyframes aura-drone-ping {
+  0%, 100% { opacity: 0.2; transform: scale(0.97); }
+  50% { opacity: 0.65; transform: scale(1.02); }
+}
+
+/* 21. Supernova: Fusion Corona Flare */
+.gem-tile.supernova .core-element-aura {
+  box-shadow: 0 0 7px rgba(234, 179, 8, 0.45);
+  animation: aura-supernova-flare 2.6s ease-in-out infinite alternate;
+}
+@keyframes aura-supernova-flare {
+  0% { opacity: 0.25; transform: scale(0.97); }
+  100% { opacity: 0.75; transform: scale(1.02); }
+}
+
 /* Selected State */
 .gem-tile.selected {
   outline: none;

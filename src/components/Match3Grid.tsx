@@ -354,6 +354,7 @@ export const Match3GridComponent: React.FC<Match3GridProps> = ({ uiState }) => {
                 >
                   <span className="sphere-specular-gloss" />
                   <span className="core-rim-glow-ring" />
+                  <span className="core-element-aura" />
 
                   <div className="sphere-icon-wrap">
                     {renderElementIcon(gem.type, gem.special)}

@@ -129,6 +129,7 @@ export const CoreLabSection: React.FC<CoreLabSectionProps> = ({ onPlayWithCore }
                   <div className={`gem-tile ${coreKey} core-chip-sphere`}>
                     <span className="sphere-specular-gloss" />
                     <span className="core-rim-glow-ring" />
+                    <span className="core-element-aura" />
                     <div className="sphere-icon-wrap">
                       {renderIcon(coreKey, 14)}
                     </div>
@@ -166,6 +167,7 @@ export const CoreLabSection: React.FC<CoreLabSectionProps> = ({ onPlayWithCore }
               <div className={`gem-tile ${selectedCore} inspector-large-sphere`}>
                 <span className="sphere-specular-gloss" />
                 <span className="core-rim-glow-ring" />
+                <span className="core-element-aura" />
                 <div className="sphere-icon-wrap">
                   {renderIcon(selectedCore, 38)}
                 </div>
