@@ -238,9 +238,11 @@ export const CoreEngineModal: React.FC<CoreEngineModalProps> = ({ isOpen, onClos
                 >
                   {/* Sphere Core */}
                   <div
-                    className="core-slot-sphere"
+                    className={`core-slot-sphere ${core.type}`}
                     style={{
-                      background: `linear-gradient(135deg, ${core.gradient[0]}, ${core.gradient[1]})`
+                      background: `linear-gradient(135deg, ${core.gradient[0]}, ${core.gradient[1]})`,
+                      ['--core-color' as any]: core.color,
+                      ['--core-bright' as any]: CORE_ICON_TINTS[core.type] || '#ffffff'
                     }}
                   >
                     <span className="core-rim-glow-ring" />
@@ -294,10 +296,12 @@ export const CoreEngineModal: React.FC<CoreEngineModalProps> = ({ isOpen, onClos
                     }}
                   >
                     <div
-                      className="inv-core-sphere"
+                      className={`inv-core-sphere ${type}`}
                       style={{
                         background: `linear-gradient(135deg, ${core.gradient[0]}, ${core.gradient[1]})`,
-                        boxShadow: `0 0 10px ${core.glowColor}`
+                        boxShadow: `0 0 10px ${core.glowColor}`,
+                        ['--core-color' as any]: core.color,
+                        ['--core-bright' as any]: CORE_ICON_TINTS[type] || '#ffffff'
                       }}
                     >
                       <span className="core-rim-glow-ring" />

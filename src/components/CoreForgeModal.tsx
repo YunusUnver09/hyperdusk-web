@@ -162,10 +162,12 @@ export const CoreForgeModal: React.FC<CoreForgeModalProps> = ({ isOpen, onClose,
                 >
                   {/* Sphere Avatar */}
                   <div
-                    className="forge-core-sphere"
+                    className={`forge-core-sphere ${type}`}
                     style={{
                       background: `linear-gradient(135deg, ${core.gradient[0]}, ${core.gradient[1]})`,
-                      boxShadow: isUnlocked ? `0 0 15px ${core.glowColor}` : 'none'
+                      boxShadow: isUnlocked ? `0 0 15px ${core.glowColor}` : 'none',
+                      ['--core-color' as any]: core.color,
+                      ['--core-bright' as any]: CORE_ICON_TINTS[type] || '#ffffff'
                     }}
                   >
                     <span className="core-rim-glow-ring" />
@@ -202,10 +204,12 @@ export const CoreForgeModal: React.FC<CoreForgeModalProps> = ({ isOpen, onClose,
             <div className="forge-inspector-panel">
               <div className="inspector-top-row">
                 <div
-                  className="inspector-sphere-preview"
+                  className={`inspector-sphere-preview ${selectedCoreType}`}
                   style={{
                     background: `linear-gradient(135deg, ${selectedCore.gradient[0]}, ${selectedCore.gradient[1]})`,
-                    boxShadow: `0 0 25px ${selectedCore.glowColor}`
+                    boxShadow: `0 0 25px ${selectedCore.glowColor}`,
+                    ['--core-color' as any]: selectedCore.color,
+                    ['--core-bright' as any]: CORE_ICON_TINTS[selectedCoreType] || '#ffffff'
                   }}
                 >
                   <span className="core-rim-glow-ring" />
