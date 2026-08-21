@@ -6,7 +6,15 @@ import { coreManager } from './game/coreManager';
 import { Sparkles, ArrowLeft, Maximize, Minimize } from 'lucide-react';
 
 export const App: React.FC = () => {
-  const [currentView, setCurrentView] = useState<'portal' | 'game'>('portal');
+  const [currentView, setCurrentView] = useState<'portal' | 'game'>(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('view') === 'portal' || window.location.hash === '#portal') {
+        return 'portal';
+      }
+    }
+    return 'game';
+  });
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
