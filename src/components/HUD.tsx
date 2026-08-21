@@ -1,69 +1,85 @@
 import React from 'react';
 import type { UIState } from '../game/types';
 import { soundManager } from '../game/soundManager';
-import { Shield, Zap, Pause, Volume2, VolumeX, Radio } from 'lucide-react';
+import { Shield, Zap, Pause, Volume2, VolumeX, Radio, ArrowLeft, Maximize, Minimize } from 'lucide-react';
 
 interface HUDProps {
   uiState: UIState;
   onPause: () => void;
   isMuted: boolean;
   onToggleMute: () => void;
+  onBackToStudio?: () => void;
+  isFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
 }
 
-export const HUDComponent: React.FC<HUDProps> = ({ uiState, onPause, isMuted, onToggleMute }) => {
+export const HUDComponent: React.FC<HUDProps> = ({
+  uiState,
+  onPause,
+  isMuted,
+  onToggleMute,
+  onBackToStudio,
+  isFullscreen,
+  onToggleFullscreen
+}) => {
   const shieldPercent = Math.max(0, Math.min(100, Math.round((uiState.shieldHp / uiState.maxShieldHp) * 100)));
   const energyPercent = Math.max(0, Math.min(100, Math.round((uiState.energy / uiState.maxEnergy) * 100)));
   const isLowShield = shieldPercent <= 30;
 
   return (
     <div className="hud-container">
-      {/* Top row: Score, Wave badge, controls */}
+      {/* Top row: Studio return, Score, Wave badge, controls */}
       <div className="hud-top-row">
-        <div className="hud-stat-box">
-          <Radio size={14} color="#ffd000" />
-          <span className="hud-score-value">{uiState.score.toLocaleString()}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          {onBackToStudio && (
+            <button
+              onClick={onBackToStudio}
+              className="hud-ctrl-btn studio-btn"
+              title="Hyperdusk Stüdyo Portalı"
+            >
+              <ArrowLeft size={13} />
+              <span className="hud-btn-text">STÜDYO</span>
+            </button>
+          )}
+
+          <div className="hud-stat-box">
+            <Radio size={13} color="#ffd000" />
+            <span className="hud-score-value">{uiState.score.toLocaleString()}</span>
+          </div>
         </div>
 
         <div className="hud-wave-badge">
           SEKTÖR {uiState.currentLevel || 1} • FAZ {uiState.wave} / 8
         </div>
 
-        <div style={{ display: 'flex', gap: '6px' }}>
+        <div style={{ display: 'flex', gap: '5px' }}>
+          {onToggleFullscreen && (
+            <button
+              onClick={onToggleFullscreen}
+              className="hud-ctrl-btn"
+              title={isFullscreen ? 'Küçült' : 'Tam Ekran'}
+            >
+              {isFullscreen ? <Minimize size={14} /> : <Maximize size={14} />}
+            </button>
+          )}
+
           <button
             onClick={() => {
               onToggleMute();
               soundManager.toggleMute();
             }}
-            style={{
-              background: 'rgba(0, 243, 255, 0.1)',
-              border: '1px solid rgba(0, 243, 255, 0.3)',
-              borderRadius: '6px',
-              padding: '5px 7px',
-              color: isMuted ? '#ef4444' : '#00f3ff',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center'
-            }}
+            className={`hud-ctrl-btn ${isMuted ? 'muted' : ''}`}
             title={isMuted ? 'Sesi Aç' : 'Sesi Kapat'}
           >
-            {isMuted ? <VolumeX size={15} /> : <Volume2 size={15} />}
+            {isMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
           </button>
 
           <button
             onClick={onPause}
-            style={{
-              background: 'rgba(0, 243, 255, 0.1)',
-              border: '1px solid rgba(0, 243, 255, 0.3)',
-              borderRadius: '6px',
-              padding: '5px 7px',
-              color: '#00f3ff',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center'
-            }}
+            className="hud-ctrl-btn"
             title="Duraklat"
           >
-            <Pause size={15} />
+            <Pause size={14} />
           </button>
         </div>
       </div>

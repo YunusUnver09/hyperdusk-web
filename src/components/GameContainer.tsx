@@ -8,7 +8,17 @@ import { Match3Grid } from './Match3Grid';
 import { Modals } from './Modals';
 import { coreManager } from '../game/coreManager';
 
-export const GameContainer: React.FC = () => {
+interface GameContainerProps {
+  onBackToStudio?: () => void;
+  isFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
+}
+
+export const GameContainer: React.FC<GameContainerProps> = ({
+  onBackToStudio,
+  isFullscreen,
+  onToggleFullscreen
+}) => {
   const [uiState, setUiState] = useState<UIState>(() => ({
     shieldHp: 1000,
     maxShieldHp: 1000,
@@ -77,6 +87,9 @@ export const GameContainer: React.FC = () => {
         onPause={handlePauseGame}
         isMuted={isMuted}
         onToggleMute={handleToggleMute}
+        onBackToStudio={onBackToStudio}
+        isFullscreen={isFullscreen}
+        onToggleFullscreen={onToggleFullscreen}
       />
 
       {/* 2. Top Half: 8-Lane 60 FPS HTML5 Canvas Battlefield */}
