@@ -625,7 +625,8 @@ export class Match3Engine {
               specialPosition: specialPos,
               isSpecialCreation: specialType !== 'none',
               matchedColumns: cols,
-              count: matchLength
+              count: matchLength,
+              isVertical: false
             });
           }
           matchLength = 1;
@@ -672,7 +673,8 @@ export class Match3Engine {
               specialPosition: specialPos,
               isSpecialCreation: specialType !== 'none',
               matchedColumns: [c],
-              count: matchLength
+              count: matchLength,
+              isVertical: true
             });
           }
           matchLength = 1;

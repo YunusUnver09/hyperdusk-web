@@ -51,6 +51,7 @@ export interface MatchGroup {
   specialPosition?: { row: number; col: number };
   matchedColumns: number[];
   count: number;
+  isVertical?: boolean;
 }
 
 export interface MatchResult {

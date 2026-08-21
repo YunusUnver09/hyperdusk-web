@@ -287,6 +287,36 @@ export class GameEngine {
       );
     }
 
+    // Dikey matchler kendi sütununa ek olarak 1. (0) ve 8. (7) sütunlardan da ateşleme yapsın
+    for (const group of result.matchGroups) {
+      if (group.isVertical) {
+        const mainCol = group.gems[0]?.col ?? 0;
+        const flankCount = Math.max(1, group.count);
+
+        // 1. Sütun (Kolon 0 - En Sol Kenar)
+        if (mainCol !== 0) {
+          this.battlefield.fireLaneWeapons(
+            0,
+            group.type,
+            flankCount,
+            0,
+            result.combo
+          );
+        }
+
+        // 8. Sütun (Kolon 7 - En Sağ Kenar)
+        if (mainCol !== 7) {
+          this.battlefield.fireLaneWeapons(
+            7,
+            group.type,
+            flankCount,
+            0,
+            result.combo
+          );
+        }
+      }
+    }
+
     this.syncUIState();
   }
 
