@@ -3384,8 +3384,8 @@ body {
   .game-wrapper-view {
     height: 100vh;
     height: 100dvh;
-    width: min(100vw, calc(100vh * 0.46));
-    max-width: 440px;
+    width: min(100vw, calc(100vh * 0.50));
+    max-width: 480px;
     border-left: 1.5px solid rgba(0, 243, 255, 0.45);
     border-right: 1.5px solid rgba(0, 243, 255, 0.45);
     border-top: none;
