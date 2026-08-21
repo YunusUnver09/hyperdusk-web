@@ -634,8 +634,8 @@ body {
 .grid-slot-cell::after {
   content: '';
   position: absolute;
-  width: 76%;
-  height: 76%;
+  width: 73%;
+  height: 73%;
   border-radius: 50%;
   border: 1px solid rgba(0, 243, 255, 0.1);
   box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.9);
@@ -688,8 +688,8 @@ body {
 /* ========================================================= */
 .gem-tile {
   position: relative;
-  width: 78%;
-  height: 78%;
+  width: 73%;
+  height: 73%;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -723,7 +723,7 @@ body {
 /* Slowly Rotating Radiant Color-Matching Quantum Rim Ring */
 .core-rim-glow-ring {
   position: absolute;
-  inset: -6px;
+  inset: -5px;
   border-radius: 50%;
   border: 2.6px solid transparent;
   border-top-color: var(--core-bright, #ffffff);
