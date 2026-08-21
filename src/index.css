@@ -654,6 +654,44 @@ body {
   z-index: 2;
 }
 
+/* Slowly Rotating Radiant Quantum Containment Rim Ring */
+.core-rim-glow-ring {
+  position: absolute;
+  inset: -1px;
+  border-radius: 50%;
+  padding: 1.5px;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(255, 255, 255, 0.65) 40deg,
+    rgba(255, 255, 255, 0.15) 80deg,
+    transparent 120deg,
+    transparent 180deg,
+    rgba(255, 255, 255, 0.45) 220deg,
+    rgba(255, 255, 255, 0.1) 260deg,
+    transparent 300deg,
+    transparent 360deg
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  animation: core-rim-spin 14s linear infinite;
+  pointer-events: none;
+  z-index: 3;
+  opacity: 0.8;
+  filter: drop-shadow(0 0 2.5px rgba(255, 255, 255, 0.35));
+}
+
+@keyframes core-rim-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* Engraved / Recessed Metallic Icon Core */
 .sphere-icon-wrap {
   position: relative;
@@ -2630,6 +2668,7 @@ body {
 }
 
 .forge-core-sphere {
+  position: relative;
   width: 44px;
   height: 44px;
   border-radius: 50%;
@@ -2639,6 +2678,7 @@ body {
   margin-bottom: 8px;
   border: 1.5px solid rgba(15, 23, 42, 0.9);
   box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.25), inset 0 -3px 6px rgba(0, 0, 0, 0.6), 0 4px 8px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
 }
 
 .forge-core-info {
@@ -2712,6 +2752,7 @@ body {
 }
 
 .inspector-sphere-preview {
+  position: relative;
   width: 58px;
   height: 58px;
   border-radius: 50%;
@@ -2720,6 +2761,7 @@ body {
   justify-content: center;
   border: 1.5px solid rgba(15, 23, 42, 0.95);
   box-shadow: inset 0 2px 5px rgba(255, 255, 255, 0.3), inset 0 -4px 8px rgba(0, 0, 0, 0.7), 0 6px 12px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
   flex-shrink: 0;
 }
 
@@ -3005,6 +3047,7 @@ body {
 }
 
 .core-slot-sphere {
+  position: relative;
   width: 36px;
   height: 36px;
   border-radius: 50%;
@@ -3013,6 +3056,7 @@ body {
   justify-content: center;
   border: 1.5px solid rgba(15, 23, 42, 0.9);
   box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.25), inset 0 -3px 6px rgba(0, 0, 0, 0.6), 0 3px 6px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
 }
 
 .core-slot-name {
@@ -3102,6 +3146,7 @@ body {
 }
 
 .inv-core-sphere {
+  position: relative;
   width: 36px;
   height: 36px;
   border-radius: 50%;
@@ -3110,6 +3155,7 @@ body {
   justify-content: center;
   border: 1.5px solid rgba(15, 23, 42, 0.9);
   box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.25), inset 0 -3px 6px rgba(0, 0, 0, 0.6), 0 3px 6px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
   flex-shrink: 0;
 }
 

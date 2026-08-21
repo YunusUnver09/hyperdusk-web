@@ -275,8 +275,11 @@ export const Match3GridComponent: React.FC<Match3GridProps> = ({ uiState }) => {
                     isSelected ? 'selected' : ''
                   } ${isHint ? 'hint' : ''} ${gem.special !== 'none' ? `special-${gem.special}` : ''}`}
                 >
-                  {/* Top Glass 3D Specular Sheen */}
+                  {/* Subtle Satin Surface Sheen */}
                   <span className="sphere-specular-gloss" />
+
+                  {/* Slowly Rotating Radiant Rim Ring */}
+                  <span className="core-rim-glow-ring" />
 
                   {/* Icon Core */}
                   <div className="sphere-icon-wrap">

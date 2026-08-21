@@ -168,6 +168,7 @@ export const CoreForgeModal: React.FC<CoreForgeModalProps> = ({ isOpen, onClose,
                       boxShadow: isUnlocked ? `0 0 15px ${core.glowColor}` : 'none'
                     }}
                   >
+                    <span className="core-rim-glow-ring" />
                     {renderCoreIcon(type, 22)}
                   </div>
 
@@ -207,6 +208,7 @@ export const CoreForgeModal: React.FC<CoreForgeModalProps> = ({ isOpen, onClose,
                     boxShadow: `0 0 25px ${selectedCore.glowColor}`
                   }}
                 >
+                  <span className="core-rim-glow-ring" />
                   {renderCoreIcon(selectedCoreType, 36)}
                 </div>
 

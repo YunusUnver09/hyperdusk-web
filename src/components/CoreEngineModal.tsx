@@ -243,6 +243,7 @@ export const CoreEngineModal: React.FC<CoreEngineModalProps> = ({ isOpen, onClos
                       background: `linear-gradient(135deg, ${core.gradient[0]}, ${core.gradient[1]})`
                     }}
                   >
+                    <span className="core-rim-glow-ring" />
                     {renderCoreIcon(core.type, 22)}
                   </div>
 
@@ -299,6 +300,7 @@ export const CoreEngineModal: React.FC<CoreEngineModalProps> = ({ isOpen, onClos
                         boxShadow: `0 0 10px ${core.glowColor}`
                       }}
                     >
+                      <span className="core-rim-glow-ring" />
                       {renderCoreIcon(type, 18)}
                     </div>
 
