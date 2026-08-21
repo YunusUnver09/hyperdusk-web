@@ -6,6 +6,7 @@ export const gameBundleHtml = `<!doctype html>
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta name="theme-color" content="#070913" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>HYPERDUSK GAMES | Next-Gen Arcade & Space Defense Experiences</title>
@@ -31,7 +32,7 @@ Error generating stack: \`+e.message+\`
 /*$vite$:1*/</style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"></div>
   </body>
 </html>
 `;
