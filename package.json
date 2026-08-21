@@ -1,0 +1,40 @@
+{
+  "name": "crush-space",
+  "private": true,
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "expo start",
+    "dev": "vite",
+    "build": "tsc -b && vite build && node scripts/generate-bundle.js",
+    "build:game": "tsc -b && vite build && node scripts/generate-bundle.js",
+    "lint": "oxlint",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@types/canvas-confetti": "^1.9.0",
+    "canvas-confetti": "^1.9.4",
+    "expo": "~54.0.37",
+    "expo-asset": "~12.0.13",
+    "expo-screen-orientation": "~9.0.9",
+    "expo-status-bar": "~3.0.9",
+    "lucide-react": "^1.33.0",
+    "qrcode": "^1.5.4",
+    "qrcode-terminal": "^0.12.0",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "react-native": "0.81.5",
+    "react-native-webview": "13.15.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "@types/react": "~19.1.10",
+    "@types/react-dom": "~19.1.7",
+    "@vitejs/plugin-react": "^6.0.4",
+    "oxlint": "^1.75.0",
+    "typescript": "~5.9.2",
+    "vite": "^8.2.0",
+    "vite-plugin-singlefile": "^2.1.2"
+  }
+}

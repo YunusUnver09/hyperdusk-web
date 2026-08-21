@@ -1,0 +1,310 @@
+export type GemType =
+  | 'plasma'
+  | 'cryo'
+  | 'electric'
+  | 'void'
+  | 'explosive'
+  | 'nano'
+  | 'solaris'
+  | 'antimatter'
+  | 'chronos'
+  | 'toxic'
+  | 'gravity'
+  | 'vampiric'
+  | 'prism'
+  | 'anchor'
+  | 'echo'
+  | 'wormhole'
+  | 'parasite'
+  | 'static_web'
+  | 'orbital_drone';
+
+export type SpecialGemType = 'none' | 'column_laser' | 'row_laser' | 'bomb_cross' | 'hyper_cube';
+
+export interface Gem {
+  id: string;
+  type: GemType;
+  special: SpecialGemType;
+  row: number;
+  col: number;
+  startRow?: number;
+  startCol?: number;
+  // Animation props for smooth rendering/transitions
+  displayRow: number;
+  displayCol: number;
+  isMatched?: boolean;
+  isNew?: boolean;
+  isSwapping?: boolean;
+  scale?: number;
+  alpha?: number;
+  glow?: boolean;
+  sparkleTimer?: number;
+}
+
+export interface MatchGroup {
+  gems: Gem[];
+  type: GemType;
+  isSpecialCreation?: boolean;
+  specialType?: SpecialGemType;
+  specialPosition?: { row: number; col: number };
+  matchedColumns: number[];
+  count: number;
+}
+
+export interface MatchResult {
+  matchGroups: MatchGroup[];
+  totalGemsMatched: number;
+  columnHits: Record<number, { count: number; type: GemType; specialCount: number }>;
+  combo: number;
+  scoreGained: number;
+  energyGained: number;
+}
+
+export type EnemyType = 'scout' | 'drone' | 'shielded' | 'speeder' | 'bomber' | 'titan_boss';
+
+export interface Enemy {
+  id: string;
+  type: EnemyType;
+  lane: number; // 0 to 7 (or primary lane for multi-lane boss)
+  lanesCovered?: number[]; // [2, 3, 4] for Titan Boss
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  hp: number;
+  maxHp: number;
+  speed: number;
+  baseSpeed: number;
+  color: string;
+  glowColor: string;
+  scoreValue: number;
+  attackPower: number;
+  
+  // Status effects
+  frozenTimer: number; // Cryo freeze duration in sec
+  shockTimer: number; // Electric stun
+  burnTimer: number; // Plasma burn damage-over-time
+  shieldHp?: number; // Armored / Shielded enemy extra shield
+  maxShieldHp?: number;
+
+  // New Core Status Effects
+  isAnchored?: boolean; // Graviton anchor locked position
+  anchorTimer?: number;
+  naniteInfected?: boolean; // Nanite Swarm parasite infection
+  naniteTimer?: number;
+  naniteTickTimer?: number;
+
+  // Boss specific
+  isBoss?: boolean;
+  name?: string;
+  bossPhase?: number;
+  attackTimer?: number;
+  specialActionTimer?: number;
+
+  // Visual animation timers
+  hitFlashTimer: number;
+  enginePulse: number;
+}
+
+export type ProjectileType = 
+  | 'laser_beam'
+  | 'cryo_beam'
+  | 'chain_lightning'
+  | 'plasma_bolt'
+  | 'cluster_rocket'
+  | 'orbital_beam'
+  | 'void_vortex'
+  | 'emp_wave'
+  | 'solaris_beam'
+  | 'antimatter_pulse'
+  | 'chronos_wave'
+  | 'toxic_cloud'
+  | 'gravity_shock'
+  | 'vampiric_beam'
+  | 'prism_beam'
+  | 'anchor_shot'
+  | 'echo_wave'
+  | 'wormhole_pulse'
+  | 'nanite_pod'
+  | 'static_mine'
+  | 'drone_bullet';
+
+export interface Projectile {
+  id: string;
+  type: ProjectileType;
+  lane: number;
+  x: number;
+  y: number;
+  startX: number;
+  startY: number;
+  targetX?: number;
+  targetY?: number;
+  vx: number;
+  vy: number;
+  damage: number;
+  color: string;
+  width: number;
+  height: number;
+  radius: number;
+  life: number;
+  maxLife: number;
+  pierce?: boolean;
+  aoeRadius?: number;
+  element: GemType;
+  trailParticles?: boolean;
+}
+
+export interface Turret {
+  lane: number; // 0 to 7
+  level: number;
+  recoil: number;
+  recoilAngle: number;
+  glowIntensity: number;
+  lastFiredElement: GemType | 'idle';
+  chargeLevel: number;
+}
+
+export interface Particle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  size: number;
+  color: string;
+  alpha: number;
+  life: number;
+  maxLife: number;
+  shape: 'circle' | 'spark' | 'ring' | 'glow_line' | 'star' | 'smoke' | 'lightning';
+  rotation?: number;
+  vRotation?: number;
+  shrink?: boolean;
+}
+
+export interface FloatingText {
+  id: string;
+  x: number;
+  y: number;
+  vy: number;
+  text: string;
+  color: string;
+  alpha: number;
+  scale: number;
+  life: number;
+  maxLife: number;
+  isCrit?: boolean;
+}
+
+export interface ScreenShake {
+  intensity: number;
+  duration: number;
+  timer: number;
+}
+
+export interface UpgradeOption {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  rarity: 'common' | 'rare' | 'epic' | 'legendary';
+  category: 'laser' | 'cryo' | 'electric' | 'shield' | 'energy' | 'special';
+  apply: (stats: GameStats, upgrades: PlayerUpgrades) => void;
+}
+
+export interface PlayerUpgrades {
+  plasmaDamageMult: number;
+  cryoDurationMult: number;
+  electricChainBonus: number;
+  explosiveAoeMult: number;
+  nanoShieldBoost: number;
+  voidVortexDuration: number;
+  voidVortexPullForce: number;
+  voidVortexDamageMult: number;
+  baseMaxShield: number;
+  turretFireRate: number;
+  critChance: number;
+  energyRechargeRate: number;
+}
+
+export interface GameStats {
+  score: number;
+  highScore: number;
+  wave: number;
+  maxWaves: number;
+  enemiesKilled: number;
+  combosMade: number;
+  maxCombo: number;
+  matchesMade: number;
+  specialsTriggered: number;
+  damageDealt: number;
+}
+
+export type GameState = 'menu' | 'map' | 'playing' | 'paused' | 'wave_cleared' | 'level_victory' | 'game_over' | 'victory';
+
+export interface LevelConfig {
+  id: number;
+  name: string;
+  subtitle: string;
+  description: string;
+  themeColor: string;
+  gradient: [string, string];
+  difficultyMult: number;
+  miniBossName: string;
+  miniBossTitle: string;
+  mainBossName: string;
+  mainBossTitle: string;
+  starsRequired?: number;
+  rewardFragments?: number;
+}
+
+export interface CoreConfig {
+  type: GemType;
+  name: string;
+  turkishName: string;
+  color: string;
+  gradient: [string, string];
+  glowColor: string;
+  iconName: string;
+  turretType: string;
+  description: string;
+  lore: string;
+  isUnlockedByDefault: boolean;
+  unlockCost: number; // In Core Fragments
+}
+
+export interface UIState {
+  shieldHp: number;
+  maxShieldHp: number;
+  energy: number;
+  maxEnergy: number;
+  combo: number;
+  comboTimer: number;
+  score: number;
+  wave: number;
+  maxWaves: number;
+  waveProgress: number; // 0 to 1
+  isBossWave: boolean;
+  isMiniBoss?: boolean;
+  isMainBoss?: boolean;
+  bossHp?: number;
+  bossMaxHp?: number;
+  bossName?: string;
+  currentLevel: number;
+  unlockedLevel: number;
+  levelName: string;
+  gameState: GameState;
+  coreFragments: number; // Player's Core Fragment currency
+  activeCores: GemType[]; // Currently active 6 Crush Cores
+  unlockedCores: GemType[]; // All unlocked Crush Cores
+  activeLanes: number[]; // Lanes currently firing or glowing
+  threatenedLanes: number[]; // Lanes where enemies are currently approaching
+  bossLanes: number[]; // Lanes covered by active boss
+  abilitiesReady: {
+    orbital: boolean;
+    emp: boolean;
+    shieldOvercharge: boolean;
+  };
+}
+
+export interface GemElementConfig extends CoreConfig {}
+
+

@@ -1,0 +1,27 @@
+{
+  "expo": {
+    "name": "Crush Space",
+    "slug": "crush-space",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./public/favicon.svg",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "backgroundColor": "#070913",
+      "resizeMode": "contain"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.crushspace.defense"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#070913"
+      },
+      "package": "com.crushspace.defense"
+    },
+    "web": {
+      "favicon": "./public/favicon.svg"
+    }
+  }
+}

@@ -1,0 +1,114 @@
+import type { LevelConfig } from './types';
+
+export const LEVELS: LevelConfig[] = [
+  {
+    id: 1,
+    name: 'Sektör 1: Asteroid Kuşağı',
+    subtitle: 'İlk Savunma Hattı',
+    description: 'Uzay istasyonunun sınır bölgesi. Düşman keşif dronları ve hafif avcılar ilk dalgaları oluşturuyor.',
+    themeColor: '#00f3ff',
+    gradient: ['#00f3ff', '#0072aa'],
+    difficultyMult: 1.0,
+    miniBossName: 'GÖLGE AVCISI (Ağır Dron)',
+    miniBossTitle: 'MİNİ BOSS • 4. DALGA',
+    mainBossName: 'ASTEROID PARÇALAYICI TİTAN',
+    mainBossTitle: 'SEKTÖR PATRONU • 8. DALGA'
+  },
+  {
+    id: 2,
+    name: 'Sektör 2: Plazma Fırtınası',
+    subtitle: 'Yüksek Enerjili Radyasyon Bölgesi',
+    description: 'Yoğun plazma bulutları arasında hızlı hız avcıları ve kalkanlı muhafızlar saldırıyor.',
+    themeColor: '#ff2a5f',
+    gradient: ['#ff2a5f', '#b30030'],
+    difficultyMult: 1.25,
+    miniBossName: 'KIZIL TAARRUZ ZIRHLISI',
+    miniBossTitle: 'MİNİ BOSS • 4. DALGA',
+    mainBossName: 'PLAZMA CEHENNEMİ KRUVAZÖRÜ',
+    mainBossTitle: 'SEKTÖR PATRONU • 8. DALGA'
+  },
+  {
+    id: 3,
+    name: 'Sektör 3: Siber Tersane',
+    subtitle: 'Otomatik Üretim Fabrikaları',
+    description: 'Düşman filolarının üretildiği devasa uzay tersanesi. Ağır bombardıman gemileri devriyede.',
+    themeColor: '#ffd000',
+    gradient: ['#ffd000', '#b38f00'],
+    difficultyMult: 1.5,
+    miniBossName: 'SİBER MUHAFIZ KULESİ',
+    miniBossTitle: 'MİNİ BOSS • 4. DALGA',
+    mainBossName: 'FABRİKA AMİRALİ PROMETHEUS',
+    mainBossTitle: 'SEKTÖR PATRONU • 8. DALGA'
+  },
+  {
+    id: 4,
+    name: 'Sektör 4: Kriyojenik İstasyon',
+    subtitle: 'Mutlak Sıfır Karayolu',
+    description: 'Dondurucu buz kristalleriyle kaplı terk edilmiş araştırma üssü. Zırhlı kalkanlı elitler yaklaşıyor.',
+    themeColor: '#00d2ff',
+    gradient: ['#6be5ff', '#005588'],
+    difficultyMult: 1.8,
+    miniBossName: 'BUZUL TAŞIYICI KRUVAZÖR',
+    miniBossTitle: 'MİNİ BOSS • 4. DALGA',
+    mainBossName: 'MUTLAK SIFIR GOLİATH',
+    mainBossTitle: 'SEKTÖR PATRONU • 8. DALGA'
+  },
+  {
+    id: 5,
+    name: 'Sektör 5: İyon Fırtınası',
+    subtitle: 'Elektromanyetik Çöküş',
+    description: 'Yüksek voltajlı iyon yıldırımları uzay boşluğuna yayılıyor. Hızlı ve çevik avcı birlikleri.',
+    themeColor: '#a855f7',
+    gradient: ['#c084fc', '#6b21a8'],
+    difficultyMult: 2.15,
+    miniBossName: 'ELEKTRO-ŞOK FIRTINASI',
+    miniBossTitle: 'MİNİ BOSS • 4. DALGA',
+    mainBossName: 'TESLA DREADNOUGHT TİTAN',
+    mainBossTitle: 'SEKTÖR PATRONU • 8. DALGA'
+  },
+  {
+    id: 6,
+    name: 'Sektör 6: Hiçlik Yarığı',
+    subtitle: 'Karanlık Madde Çekimi',
+    description: 'Uzay-zaman dokusunun büküldüğü kara delik kenarı. Düşmanlar hiçlik kalkanlarıyla donatılmış.',
+    themeColor: '#818cf8',
+    gradient: ['#a5b4fc', '#4338ca'],
+    difficultyMult: 2.5,
+    miniBossName: 'HİÇLİK GÖZETLEYİCİSİ',
+    miniBossTitle: 'MİNİ BOSS • 4. DALGA',
+    mainBossName: 'KARA DELİK HÜKÜMDARI',
+    mainBossTitle: 'SEKTÖR PATRONU • 8. DALGA'
+  },
+  {
+    id: 7,
+    name: 'Sektör 7: Kuantum Çekirdeği',
+    subtitle: 'Enerji Reaktörü Savunması',
+    description: 'Galaktik enerji santralini savunun. Ağır zırhlı bombardıman filoları reaktöre hücum ediyor.',
+    themeColor: '#ff8800',
+    gradient: ['#ffaa44', '#b35500'],
+    difficultyMult: 2.9,
+    miniBossName: 'KUANTUM DARBE KRUVAZÖRÜ',
+    miniBossTitle: 'MİNİ BOSS • 4. DALGA',
+    mainBossName: 'AŞIRI YÜKLÜ REAKTÖR TİTANI',
+    mainBossTitle: 'SEKTÖR PATRONU • 8. DALGA'
+  },
+  {
+    id: 8,
+    name: 'Sektör 8: Omega İstasyonu',
+    subtitle: 'Nihai Karşılaşma',
+    description: 'Düşman ana komuta üssü. En güçlü titan boss ve ölümcül savaş kruvazörleri seni bekliyor!',
+    themeColor: '#00ff88',
+    gradient: ['#55ffaa', '#008844'],
+    difficultyMult: 3.4,
+    miniBossName: 'OMEGA MUHAFIZ KRUVAZÖRÜ',
+    miniBossTitle: 'MİNİ BOSS • 4. DALGA',
+    mainBossName: 'VOID GOLIATH PRIME (NİHAİ TİTAN)',
+    mainBossTitle: 'GALAKTİK PATRON • 8. DALGA'
+  }
+];
+
+export const TOTAL_LEVELS = LEVELS.length;
+
+export function getLevelConfig(levelId: number): LevelConfig {
+  return LEVELS.find(l => l.id === levelId) || LEVELS[0];
+}
