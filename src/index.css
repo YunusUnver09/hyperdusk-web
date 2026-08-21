@@ -703,17 +703,17 @@ body {
   z-index: 2;
 }
 
-/* Slowly Rotating Radiant Color-Matching Quantum Rim Ring */
+/* Slowly Rotating Radiant Color-Matching Quantum Rim Ring (Dual Symmetrical Arcs) */
 .core-rim-glow-ring {
   position: absolute;
   inset: -5px;
   border-radius: 50%;
   border: 2.6px solid transparent;
-  border-top-color: var(--core-bright, #ffffff);
-  border-right-color: var(--core-color, #00f3ff);
-  border-bottom-color: var(--core-bright, #ffffff);
+  border-top-color: var(--core-color, #00f3ff);
+  border-bottom-color: var(--core-color, #00f3ff);
   border-left-color: transparent;
-  box-shadow: 0 0 10px var(--core-color, rgba(0, 243, 255, 0.6)), inset 0 0 5px var(--core-color, rgba(0, 243, 255, 0.3));
+  border-right-color: transparent;
+  filter: drop-shadow(0 0 5px var(--core-color, rgba(0, 243, 255, 0.85)));
   animation: core-rim-spin 7s linear infinite;
   pointer-events: none;
   z-index: 6;
