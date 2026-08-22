@@ -376,20 +376,35 @@ export class BattlefieldEngine {
         });
       }
     } else if (ambientType === 'void_vortex') {
-      const count = 48;
+      const count = 56;
       const bhRadius = 52;
-      const maxDiskRad = Math.max(w * 0.46, bhRadius * 3.8);
+      const maxDiskRad = Math.max(w * 0.65, bhRadius * 5.2);
       for (let i = 0; i < count; i++) {
         const radX = bhRadius * 1.04 + Math.random() * (maxDiskRad - bhRadius * 1.04);
+        const distRatio = (radX - bhRadius) / (maxDiskRad - bhRadius);
+        // Exponential opacity decay into surrounding darkness
+        const baseAlpha = Math.pow(1 - distRatio, 1.6) * (Math.random() * 0.4 + 0.3);
+
+        let col = '#f59e0b';
+        if (distRatio < 0.18) {
+          col = Math.random() > 0.4 ? '#ffffff' : '#fef08a';
+        } else if (distRatio < 0.45) {
+          col = Math.random() > 0.5 ? '#fde047' : '#fb923c';
+        } else if (distRatio < 0.72) {
+          col = Math.random() > 0.5 ? '#f43f5e' : '#fb7185';
+        } else {
+          col = Math.random() > 0.5 ? '#818cf8' : '#6366f1';
+        }
+
         this.ambientBlackHoleFilaments.push({
           radiusX: radX,
-          radiusY: radX * 0.32,
+          radiusY: radX * 0.30,
           angle: Math.random() * Math.PI * 2,
-          angularSpeed: 0.65 + (bhRadius * 2.6) / radX * 0.85,
-          length: Math.random() * 0.50 + 0.25,
+          angularSpeed: 0.50 + (bhRadius * 2.8) / radX * 0.90,
+          length: Math.random() * 0.60 + 0.30,
           width: Math.random() * 2.2 + 1.0,
-          alpha: Math.random() * 0.45 + 0.35,
-          color: Math.random() > 0.4 ? '#ffffff' : (Math.random() > 0.5 ? '#fef08a' : '#f59e0b')
+          alpha: baseAlpha,
+          color: col
         });
       }
     } else if (ambientType === 'warp_tunnel') {
@@ -1548,12 +1563,43 @@ export class BattlefieldEngine {
       effectiveDt *= 0.75;
     }
 
-    // Background starfield scroll
+    // Background starfield scroll & gravitational orbital swirl in Sector 6
+    const lvlConfig = getLevelConfig(this.currentLevel);
+    const isVoidSector = lvlConfig.ambientType === 'void_vortex';
+    const bhX = this.width * 0.5;
+    const bhY = this.height * 0.30;
+    const bhRadius = 52;
+
     for (const star of this.stars) {
-      star.y += star.speed * (effectiveDt * 0.6 + dt * 0.4);
-      if (star.y > this.height) {
-        star.y = 0;
-        star.x = Math.random() * this.width;
+      if (isVoidSector) {
+        // Sector 6: Ambient cosmic dust and stars swirl & orbit the Black Hole!
+        let dx = star.x - bhX;
+        let dy = (star.y - bhY) / 0.36; // Project into tilted elliptical disk plane
+        let r = Math.hypot(dx, dy);
+        let theta = Math.atan2(dy, dx);
+
+        // Orbital angular velocity: faster near event horizon, gentle in deep space
+        const omega = (0.35 + (bhRadius * 2.2) / Math.max(r, 30)) * (effectiveDt * 0.75);
+        theta += omega;
+
+        // Inward gravitational spiral drift
+        r -= (10 + 20 / (1 + r * 0.008)) * effectiveDt;
+
+        // Re-inject stars that fall past the event horizon or drift out of bounds
+        if (r < bhRadius * 0.75 || r > Math.max(this.width, this.height) * 0.85) {
+          r = Math.random() * (Math.max(this.width, this.height) * 0.55) + bhRadius * 2.0;
+          theta = Math.random() * Math.PI * 2;
+        }
+
+        star.x = bhX + Math.cos(theta) * r;
+        star.y = bhY + Math.sin(theta) * (r * 0.36);
+      } else {
+        // Standard downward starfield scroll
+        star.y += star.speed * (effectiveDt * 0.6 + dt * 0.4);
+        if (star.y > this.height) {
+          star.y = 0;
+          star.x = Math.random() * this.width;
+        }
       }
     }
 
@@ -2277,11 +2323,26 @@ export class BattlefieldEngine {
       ctx.fillRect(0, 0, this.width, this.height);
     }
 
-    // Render Stars (Soft/subtle in Void Rift so Black Hole's own illumination is dominant)
+    // Render Stars (Soft swirling starlight in Void Rift, standard in other sectors)
+    const bhX = this.width * 0.5;
+    const bhY = this.height * 0.30;
+    const bhRadius = 52;
+
     for (const star of this.stars) {
-      ctx.fillStyle = '#ffffff';
-      ctx.globalAlpha = isVoid ? star.alpha * 0.45 : star.alpha;
-      ctx.fillRect(star.x, star.y, star.size, star.size);
+      if (isVoid) {
+        const dx = star.x - bhX;
+        const dy = star.y - bhY;
+        const dist = Math.hypot(dx, dy);
+        // Star fades gracefully as it approaches the pitch-black event horizon
+        const fade = Math.min(1, Math.max(0, (dist - bhRadius * 0.85) / (bhRadius * 1.4)));
+        ctx.fillStyle = dist < bhRadius * 3.0 ? '#fef08a' : '#ffffff';
+        ctx.globalAlpha = star.alpha * 0.75 * fade;
+        ctx.fillRect(star.x, star.y, star.size, star.size);
+      } else {
+        ctx.fillStyle = '#ffffff';
+        ctx.globalAlpha = star.alpha;
+        ctx.fillRect(star.x, star.y, star.size, star.size);
+      }
     }
     ctx.globalAlpha = 1;
 
@@ -2550,15 +2611,15 @@ export class BattlefieldEngine {
         const bhX = w * 0.5;
         const bhY = h * 0.30;
         const bhRadius = 52; // Event Horizon Radius
-        const diskMaxX = Math.max(w * 0.52, bhRadius * 4.2);
-        const diskMaxY = diskMaxX * 0.31;
+        const diskMaxX = Math.max(w * 0.65, bhRadius * 5.2);
+        const diskMaxY = diskMaxX * 0.30;
 
         // 1. Subtle Outer Cosmic Gravitational Haze (Soft violet/cyan depth at screen periphery)
-        const cornerHaze = ctx.createRadialGradient(bhX, bhY, bhRadius * 2.0, bhX, bhY, w * 0.85);
+        const cornerHaze = ctx.createRadialGradient(bhX, bhY, bhRadius * 2.0, bhX, bhY, w * 0.90);
         cornerHaze.addColorStop(0, 'rgba(0, 0, 0, 0)');
-        cornerHaze.addColorStop(0.5, 'rgba(49, 46, 129, 0.06)');
-        cornerHaze.addColorStop(0.85, 'rgba(15, 23, 42, 0.12)');
-        cornerHaze.addColorStop(1, 'rgba(2, 6, 23, 0.25)');
+        cornerHaze.addColorStop(0.5, 'rgba(49, 46, 129, 0.04)');
+        cornerHaze.addColorStop(0.85, 'rgba(15, 23, 42, 0.08)');
+        cornerHaze.addColorStop(1, 'rgba(2, 6, 23, 0.18)');
         ctx.fillStyle = cornerHaze;
         ctx.fillRect(0, 0, w, h);
 
@@ -2566,27 +2627,27 @@ export class BattlefieldEngine {
         ctx.translate(bhX, bhY);
         ctx.rotate(-0.06);
 
-        // 2. Soft Outer Ambient Radiance Halo (Smooth illumination bleeding into dark void)
-        const outerBloom = ctx.createRadialGradient(0, 0, bhRadius * 1.1, 0, 0, diskMaxX * 1.35);
-        outerBloom.addColorStop(0, 'rgba(254, 240, 138, 0.18)');
-        outerBloom.addColorStop(0.25, 'rgba(245, 158, 11, 0.11)');
-        outerBloom.addColorStop(0.55, 'rgba(225, 29, 72, 0.05)');
-        outerBloom.addColorStop(0.85, 'rgba(99, 102, 241, 0.015)');
+        // 2. Soft Outer Ambient Radiance Halo (Ultra-soft illumination bleeding infinitely into dark void)
+        const outerBloom = ctx.createRadialGradient(0, 0, bhRadius * 1.1, 0, 0, diskMaxX * 1.45);
+        outerBloom.addColorStop(0, 'rgba(254, 240, 138, 0.14)');
+        outerBloom.addColorStop(0.20, 'rgba(245, 158, 11, 0.08)');
+        outerBloom.addColorStop(0.48, 'rgba(225, 29, 72, 0.03)');
+        outerBloom.addColorStop(0.78, 'rgba(99, 102, 241, 0.008)');
         outerBloom.addColorStop(1, 'rgba(0, 0, 0, 0)');
         ctx.fillStyle = outerBloom;
         ctx.beginPath();
-        ctx.ellipse(0, 0, diskMaxX * 1.35, diskMaxY * 1.45, 0, 0, Math.PI * 2);
+        ctx.ellipse(0, 0, diskMaxX * 1.45, diskMaxY * 1.5, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // 3. Multi-Stop Feathered Accretion Disk Base (Ultra-Smooth Gradient Transition to Outer Void)
+        // 3. Multi-Stop Feathered Accretion Disk Base (Silky Smooth Exponential Dissolution into Void)
         const diskGrad = ctx.createRadialGradient(0, 0, bhRadius * 1.02, 0, 0, diskMaxX);
-        diskGrad.addColorStop(0, 'rgba(255, 255, 255, 0.88)'); // Hot white photon inner boundary
-        diskGrad.addColorStop(0.08, 'rgba(254, 240, 138, 0.75)'); // Luminous gold-yellow
-        diskGrad.addColorStop(0.24, 'rgba(251, 191, 36, 0.52)'); // Warm amber
-        diskGrad.addColorStop(0.46, 'rgba(249, 115, 22, 0.28)'); // Solar orange
-        diskGrad.addColorStop(0.68, 'rgba(225, 29, 72, 0.12)'); // Interstellar crimson transition
-        diskGrad.addColorStop(0.85, 'rgba(129, 140, 248, 0.04)'); // Cosmic indigo twilight
-        diskGrad.addColorStop(0.96, 'rgba(67, 56, 202, 0.01)'); // Deep twilight veil
+        diskGrad.addColorStop(0, 'rgba(255, 255, 255, 0.85)'); // Hot white photon inner boundary
+        diskGrad.addColorStop(0.05, 'rgba(254, 240, 138, 0.68)'); // Luminous gold-yellow
+        diskGrad.addColorStop(0.14, 'rgba(251, 191, 36, 0.42)'); // Warm amber
+        diskGrad.addColorStop(0.28, 'rgba(249, 115, 22, 0.20)'); // Solar orange
+        diskGrad.addColorStop(0.48, 'rgba(225, 29, 72, 0.07)'); // Interstellar crimson transition
+        diskGrad.addColorStop(0.70, 'rgba(99, 102, 241, 0.018)'); // Cosmic indigo twilight
+        diskGrad.addColorStop(0.88, 'rgba(30, 27, 75, 0.005)'); // Deep twilight veil
         diskGrad.addColorStop(1, 'rgba(0, 0, 0, 0)'); // Seamless dissolution into space
 
         ctx.fillStyle = diskGrad;
