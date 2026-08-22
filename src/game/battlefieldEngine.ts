@@ -407,6 +407,32 @@ export class BattlefieldEngine {
           color: col
         });
       }
+
+      // Seed 90 cosmic stars/particles sweeping across BOTH the disk AND the bottom dark area
+      this.stars = [];
+      const bhX = w * 0.5;
+      const bhY = h * 0.30;
+      const maxR = Math.hypot(w, h) * 0.95;
+      const tiltAngle = -0.06;
+      const cosT = Math.cos(tiltAngle);
+      const sinT = Math.sin(tiltAngle);
+
+      for (let i = 0; i < 90; i++) {
+        const rNorm = Math.sqrt(Math.random());
+        const r = bhRadius * 1.05 + rNorm * (maxR - bhRadius * 1.05);
+        const theta = Math.random() * Math.PI * 2;
+        const aspectY = 0.32 + Math.min(0.42, (r / (w * 1.1)) * 0.38);
+        const unrotatedX = Math.cos(theta) * r;
+        const unrotatedY = Math.sin(theta) * (r * aspectY);
+
+        this.stars.push({
+          x: bhX + unrotatedX * cosT - unrotatedY * sinT,
+          y: bhY + unrotatedX * sinT + unrotatedY * cosT,
+          size: Math.random() * 1.8 + 0.6,
+          speed: Math.random() * 35 + 15,
+          alpha: Math.random() * 0.65 + 0.35
+        });
+      }
     } else if (ambientType === 'warp_tunnel') {
       const count = 45;
       for (let i = 0; i < count; i++) {
@@ -1569,30 +1595,46 @@ export class BattlefieldEngine {
     const bhX = this.width * 0.5;
     const bhY = this.height * 0.30;
     const bhRadius = 52;
+    const maxR = Math.hypot(this.width, this.height) * 0.95;
+    const tiltAngle = -0.06;
+    const cosT = Math.cos(tiltAngle);
+    const sinT = Math.sin(tiltAngle);
 
     for (const star of this.stars) {
       if (isVoidSector) {
-        // Sector 6: Ambient cosmic dust and stars swirl & orbit the Black Hole!
-        let dx = star.x - bhX;
-        let dy = (star.y - bhY) / 0.36; // Project into tilted elliptical disk plane
-        let r = Math.hypot(dx, dy);
-        let theta = Math.atan2(dy, dx);
+        // Sector 6: Ambient cosmic dust and stars swirl & orbit the Black Hole across the FULL screen (disk + bottom dark void)!
+        const dx = star.x - bhX;
+        const dy = star.y - bhY;
+        // Un-tilt to black hole accretion coordinate frame
+        const localX = dx * cosT + dy * sinT;
+        const localY = -dx * sinT + dy * cosT;
 
-        // Orbital angular velocity: faster near event horizon, gentle in deep space
-        const omega = (0.35 + (bhRadius * 2.2) / Math.max(r, 30)) * (effectiveDt * 0.75);
-        theta += omega;
+        // Estimate current radius
+        let r = Math.hypot(localX, localY / 0.45);
+        let aspectY = 0.32 + Math.min(0.42, (r / (this.width * 1.1)) * 0.38);
+        let currentTheta = Math.atan2(localY / aspectY, localX);
+
+        // Orbital angular velocity: faster near event horizon, gentle in deep bottom space
+        const omega = (0.16 + (bhRadius * 2.5) / Math.max(r, 36)) * (effectiveDt * 0.75);
+        currentTheta += omega;
 
         // Inward gravitational spiral drift
-        r -= (10 + 20 / (1 + r * 0.008)) * effectiveDt;
+        r -= (5 + 15 / (1 + r * 0.006)) * effectiveDt;
 
-        // Re-inject stars that fall past the event horizon or drift out of bounds
-        if (r < bhRadius * 0.75 || r > Math.max(this.width, this.height) * 0.85) {
-          r = Math.random() * (Math.max(this.width, this.height) * 0.55) + bhRadius * 2.0;
-          theta = Math.random() * Math.PI * 2;
+        // Re-inject stars that get swallowed past the event horizon or drift too far
+        if (r < bhRadius * 0.75 || r > maxR) {
+          const rNorm = Math.sqrt(Math.random());
+          r = bhRadius * 1.5 + rNorm * (maxR - bhRadius * 1.5);
+          currentTheta = Math.random() * Math.PI * 2;
         }
 
-        star.x = bhX + Math.cos(theta) * r;
-        star.y = bhY + Math.sin(theta) * (r * 0.36);
+        aspectY = 0.32 + Math.min(0.42, (r / (this.width * 1.1)) * 0.38);
+        const newLocalX = Math.cos(currentTheta) * r;
+        const newLocalY = Math.sin(currentTheta) * (r * aspectY);
+
+        // Re-apply tilt angle (-0.06)
+        star.x = bhX + newLocalX * cosT - newLocalY * sinT;
+        star.y = bhY + newLocalX * sinT + newLocalY * cosT;
       } else {
         // Standard downward starfield scroll
         star.y += star.speed * (effectiveDt * 0.6 + dt * 0.4);
@@ -2323,7 +2365,7 @@ export class BattlefieldEngine {
       ctx.fillRect(0, 0, this.width, this.height);
     }
 
-    // Render Stars (Soft swirling starlight in Void Rift, standard in other sectors)
+    // Render Stars (Soft swirling starlight in Void Rift across the full screen, standard in other sectors)
     const bhX = this.width * 0.5;
     const bhY = this.height * 0.30;
     const bhRadius = 52;
@@ -2335,8 +2377,17 @@ export class BattlefieldEngine {
         const dist = Math.hypot(dx, dy);
         // Star fades gracefully as it approaches the pitch-black event horizon
         const fade = Math.min(1, Math.max(0, (dist - bhRadius * 0.85) / (bhRadius * 1.4)));
-        ctx.fillStyle = dist < bhRadius * 3.0 ? '#fef08a' : '#ffffff';
-        ctx.globalAlpha = star.alpha * 0.75 * fade;
+        
+        // Stars close to disk are warm solar gold/amber, stars in bottom black region are crystal white / soft cyan
+        if (dist < bhRadius * 2.8) {
+          ctx.fillStyle = '#fef08a';
+        } else if (star.y > bhY + bhRadius * 1.6) {
+          ctx.fillStyle = star.size > 1.4 ? '#67e8f9' : '#ffffff';
+        } else {
+          ctx.fillStyle = '#ffffff';
+        }
+
+        ctx.globalAlpha = star.alpha * 0.85 * fade;
         ctx.fillRect(star.x, star.y, star.size, star.size);
       } else {
         ctx.fillStyle = '#ffffff';
