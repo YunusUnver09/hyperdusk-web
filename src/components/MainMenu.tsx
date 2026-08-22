@@ -26,6 +26,22 @@ const MainMenuComponent: React.FC<MainMenuProps> = ({ onStartGame, onDevMode, hi
   const [showCredits, setShowCredits] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
 
+  // Play Menu Theme upon user interaction if not playing yet
+  useEffect(() => {
+    soundManager.playMenuTheme();
+    const handleFirstInteraction = () => {
+      soundManager.playMenuTheme();
+      window.removeEventListener('pointerdown', handleFirstInteraction);
+      window.removeEventListener('keydown', handleFirstInteraction);
+    };
+    window.addEventListener('pointerdown', handleFirstInteraction);
+    window.addEventListener('keydown', handleFirstInteraction);
+    return () => {
+      window.removeEventListener('pointerdown', handleFirstInteraction);
+      window.removeEventListener('keydown', handleFirstInteraction);
+    };
+  }, []);
+
   // 60 FPS Lightweight Particle Vortex Canvas
   useEffect(() => {
     const canvas = canvasRef.current;

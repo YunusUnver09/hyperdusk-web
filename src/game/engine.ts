@@ -110,7 +110,8 @@ export class GameEngine {
   public openMap() {
     this.gameState = 'map';
     this.isPaused = false;
-    soundManager.setMuffled(true);
+    soundManager.setMuffled(false);
+    soundManager.playMapTheme();
     this.syncUIState();
   }
 
@@ -118,6 +119,7 @@ export class GameEngine {
     this.gameState = 'menu';
     this.isPaused = false;
     soundManager.setMuffled(false);
+    soundManager.playMenuTheme();
     this.syncUIState();
   }
 
@@ -129,8 +131,9 @@ export class GameEngine {
     coreManager.unlockAllCores();
     this.gameState = 'map';
     this.isPaused = false;
-    soundManager.setMuffled(true);
+    soundManager.setMuffled(false);
     soundManager.playVictory();
+    soundManager.playMapTheme();
     this.syncUIState(true);
   }
 
@@ -143,7 +146,7 @@ export class GameEngine {
     this.gameState = 'playing';
     this.isPaused = false;
     this.isRunning = true;
-    soundManager.startMusic();
+    soundManager.playLevelTheme(this.currentLevel);
     soundManager.setMuffled(false);
     this.battlefield.startWave(1);
     this.startLoop();

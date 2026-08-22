@@ -69,6 +69,11 @@ const LevelMapComponent: React.FC<LevelMapProps> = ({
 
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
+  // Play Map Theme ("Fractured Space-Time")
+  useEffect(() => {
+    soundManager.playMapTheme();
+  }, []);
+
   // Auto-scroll down to the player's current unlocked level initially
   useEffect(() => {
     if (scrollContainerRef.current) {

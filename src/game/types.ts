@@ -414,6 +414,7 @@ export interface LevelConfig {
   enemyWeights: Partial<Record<EnemyType, number>>;
   spawnIntervalBase: number;
   spawnCountBase: number;
+  musicTrack: string;
   starsRequired?: number;
   rewardFragments?: number;
 }

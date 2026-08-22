@@ -1,4 +1,4 @@
-import { BGM_DATA_URI } from '../assets/bgmAsset';
+import { MENU_THEME_TRACK, getLevelConfig } from './levelData';
 
 class SoundManager {
   private ctx: AudioContext | null = null;
@@ -7,8 +7,9 @@ class SoundManager {
   public musicVolume: number = 0.75;
   public sfxVolume: number = 0.85;
 
-  // Music nodes
-  private musicBuffer: AudioBuffer | null = null;
+  // Multi-Track Music Management
+  private musicBuffers: Map<string, AudioBuffer> = new Map();
+  private currentTrackName: string | null = null;
   private musicSource: AudioBufferSourceNode | null = null;
   private musicGain: GainNode | null = null;
   private musicFilter: BiquadFilterNode | null = null;
@@ -56,26 +57,28 @@ class SoundManager {
   }
 
   /**
-   * Loads and decodes BGM audio into sample-accurate AudioBuffer
+   * Loads and decodes high-quality audio file with in-memory caching
    */
-  private async loadMusicBuffer(): Promise<AudioBuffer | null> {
-    if (this.musicBuffer) return this.musicBuffer;
+  private async loadMusicBuffer(trackFileName: string): Promise<AudioBuffer | null> {
+    if (this.musicBuffers.has(trackFileName)) {
+      return this.musicBuffers.get(trackFileName)!;
+    }
     const ctx = this.initContext();
     if (!ctx) return null;
 
     try {
-      // Decode base64 Data URI
-      const base64Data = BGM_DATA_URI.split(',')[1];
-      const binaryString = window.atob(base64Data);
-      const len = binaryString.length;
-      const bytes = new Uint8Array(len);
-      for (let i = 0; i < len; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
+      // Support relative path for both local Vite and GitHub Pages deployment
+      const audioUrl = `audio/${trackFileName}`;
+      const resp = await fetch(audioUrl);
+      if (!resp.ok) {
+        throw new Error(`HTTP ${resp.status} fetching ${audioUrl}`);
       }
-      this.musicBuffer = await ctx.decodeAudioData(bytes.buffer);
-      return this.musicBuffer;
+      const arrayBuffer = await resp.arrayBuffer();
+      const decoded = await ctx.decodeAudioData(arrayBuffer);
+      this.musicBuffers.set(trackFileName, decoded);
+      return decoded;
     } catch (err) {
-      console.warn('Failed to decode BGM audio buffer:', err);
+      console.warn(`Failed to decode audio track '${trackFileName}':`, err);
       return null;
     }
   }
@@ -91,28 +94,25 @@ class SoundManager {
   }
 
   /**
-   * Starts background music:
-   * 1. Plays from 0:00 to end (Intro plays ONLY once on first start)
-   * 2. When it finishes, seamlessly loops from 28.0s to end continuously!
+   * Plays a specific sector or menu theme with seamless full-looping (0:00 -> duration)
    */
-  public async startMusic() {
+  public async playMusicTrack(trackFileName: string) {
     const ctx = this.initContext();
     if (!ctx) return;
 
-    if (this.isMusicPlaying && this.musicSource) {
-      // Already playing, ensure volume is active
+    // If same track is already active, just un-muffle
+    if (this.isMusicPlaying && this.currentTrackName === trackFileName && this.musicSource) {
       this.setMuffled(false);
       return;
     }
 
     try {
-      const buffer = await this.loadMusicBuffer();
+      const buffer = await this.loadMusicBuffer(trackFileName);
       if (!buffer) return;
 
       this.stopMusicNodes();
 
       const duration = buffer.duration;
-      const loopStart = Math.min(Math.max(0, duration - 1), 28.0);
 
       // Lowpass Filter for Upgrade Muffling Effect
       const filter = ctx.createBiquadFilter();
@@ -120,33 +120,62 @@ class SoundManager {
       filter.frequency.setValueAtTime(this.isMuffled ? 650 : 20000, ctx.currentTime);
       filter.Q.setValueAtTime(1.5, ctx.currentTime);
 
-      // Music Master Gain
+      // Music Master Gain with smooth fade-in
       const gain = ctx.createGain();
       const initialVol = this.isMusicMuted ? 0 : (this.isMuffled ? this.musicVolume * 0.35 : this.musicVolume);
       gain.gain.setValueAtTime(0, ctx.currentTime);
       gain.gain.linearRampToValueAtTime(initialVol, ctx.currentTime + 0.35);
 
-      // Connect filter -> gain -> destination
       filter.connect(gain);
       gain.connect(ctx.destination);
 
       this.musicFilter = filter;
       this.musicGain = gain;
 
-      // Standard W3C AudioBufferSourceNode Loop:
-      // Starts from offset 0:00 on first play, then wraps to loopStart (28.0s) on every loop iteration!
+      // Seamless 100% loop: when end is reached, loop directly back to 0:00!
       const source = ctx.createBufferSource();
       source.buffer = buffer;
       source.loop = true;
-      source.loopStart = loopStart;
+      source.loopStart = 0;
       source.loopEnd = duration;
       source.connect(filter);
       source.start(0, 0);
-      this.musicSource = source;
 
+      this.musicSource = source;
+      this.currentTrackName = trackFileName;
       this.isMusicPlaying = true;
     } catch (err) {
-      console.warn('Error starting music:', err);
+      console.warn('Error starting music track:', err);
+    }
+  }
+
+  /**
+   * Main Menu & Galaxy Map Theme ("Fractured Space-Time" exclusively)
+   */
+  public playMenuTheme() {
+    this.playMusicTrack(MENU_THEME_TRACK);
+  }
+
+  public playMapTheme() {
+    this.playMusicTrack(MENU_THEME_TRACK);
+  }
+
+  /**
+   * Sector Battle Theme (Sectors 1..8)
+   */
+  public playLevelTheme(levelNumber: number) {
+    const config = getLevelConfig(levelNumber);
+    this.playMusicTrack(config.musicTrack);
+  }
+
+  /**
+   * General startMusic fallback
+   */
+  public startMusic(trackName?: string) {
+    if (trackName) {
+      this.playMusicTrack(trackName);
+    } else {
+      this.playMenuTheme();
     }
   }
 
@@ -160,10 +189,12 @@ class SoundManager {
       setTimeout(() => {
         this.stopMusicNodes();
         this.isMusicPlaying = false;
+        this.currentTrackName = null;
       }, 320);
     } catch {
       this.stopMusicNodes();
       this.isMusicPlaying = false;
+      this.currentTrackName = null;
     }
   }
 

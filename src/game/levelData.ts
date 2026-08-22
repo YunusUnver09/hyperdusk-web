@@ -1,5 +1,7 @@
 import type { LevelConfig } from './types';
 
+export const MENU_THEME_TRACK = 'theme_fractured_time.ogg';
+
 export const LEVELS: LevelConfig[] = [
   {
     id: 1,
@@ -16,7 +18,8 @@ export const LEVELS: LevelConfig[] = [
     ambientType: 'asteroids',
     enemyWeights: { drone: 55, scout: 35, speeder: 10 },
     spawnIntervalBase: 1.40,
-    spawnCountBase: 7
+    spawnCountBase: 7,
+    musicTrack: 'theme_sector1_mining.ogg'
   },
   {
     id: 2,
@@ -33,7 +36,8 @@ export const LEVELS: LevelConfig[] = [
     ambientType: 'plasma',
     enemyWeights: { speeder: 35, drone: 30, scout: 25, siege: 10 },
     spawnIntervalBase: 1.25,
-    spawnCountBase: 9
+    spawnCountBase: 9,
+    musicTrack: 'theme_sector2_alien_skies.ogg'
   },
   {
     id: 3,
@@ -50,7 +54,8 @@ export const LEVELS: LevelConfig[] = [
     ambientType: 'cyber_grid',
     enemyWeights: { siege: 40, shielded: 30, drone: 20, speeder: 10 },
     spawnIntervalBase: 1.30,
-    spawnCountBase: 10
+    spawnCountBase: 10,
+    musicTrack: 'theme_sector3_station.ogg'
   },
   {
     id: 4,
@@ -67,7 +72,8 @@ export const LEVELS: LevelConfig[] = [
     ambientType: 'cryo_snow',
     enemyWeights: { shielded: 45, siege: 25, drone: 20, bomber: 10 },
     spawnIntervalBase: 1.35,
-    spawnCountBase: 11
+    spawnCountBase: 11,
+    musicTrack: 'theme_sector4_lost_signal.ogg'
   },
   {
     id: 5,
@@ -84,7 +90,8 @@ export const LEVELS: LevelConfig[] = [
     ambientType: 'ion_lightning',
     enemyWeights: { speeder: 45, scout: 35, shielded: 15, bomber: 5 },
     spawnIntervalBase: 1.05,
-    spawnCountBase: 13
+    spawnCountBase: 13,
+    musicTrack: 'theme_sector5_beyond_stargate.ogg'
   },
   {
     id: 6,
@@ -101,7 +108,8 @@ export const LEVELS: LevelConfig[] = [
     ambientType: 'void_vortex',
     enemyWeights: { shielded: 35, bomber: 30, speeder: 20, siege: 15 },
     spawnIntervalBase: 1.35,
-    spawnCountBase: 12
+    spawnCountBase: 12,
+    musicTrack: 'theme_sector6_singularity.ogg'
   },
   {
     id: 7,
@@ -118,7 +126,8 @@ export const LEVELS: LevelConfig[] = [
     ambientType: 'quantum_pulse',
     enemyWeights: { bomber: 40, siege: 30, shielded: 20, speeder: 10 },
     spawnIntervalBase: 1.15,
-    spawnCountBase: 14
+    spawnCountBase: 14,
+    musicTrack: 'theme_sector7_core_collapse.ogg'
   },
   {
     id: 8,
@@ -135,7 +144,8 @@ export const LEVELS: LevelConfig[] = [
     ambientType: 'warp_tunnel',
     enemyWeights: { bomber: 25, speeder: 25, shielded: 25, siege: 25 },
     spawnIntervalBase: 0.95,
-    spawnCountBase: 16
+    spawnCountBase: 16,
+    musicTrack: 'theme_sector8_edge_galaxy.ogg'
   }
 ];
 
