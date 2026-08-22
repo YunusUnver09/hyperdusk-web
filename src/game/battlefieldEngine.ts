@@ -2546,40 +2546,64 @@ export class BattlefieldEngine {
       }
 
       case 'void_vortex': {
-        // Broad, Rotating Accretion Disk with pure White Photon Ring around Pitch-Black Event Horizon
+        // Deep-Space Soft-Blurred Realistic Black Hole with Ultra-Smooth Outer Transition & Depth of Field
         const bhX = w * 0.5;
         const bhY = h * 0.30;
-        const bhRadius = 52; // Clean Event Horizon Radius
-        const diskMaxX = Math.max(w * 0.46, bhRadius * 3.8);
-        const diskMaxY = diskMaxX * 0.32;
+        const bhRadius = 52; // Event Horizon Radius
+        const diskMaxX = Math.max(w * 0.52, bhRadius * 4.2);
+        const diskMaxY = diskMaxX * 0.31;
+
+        // 1. Subtle Outer Cosmic Gravitational Haze (Soft violet/cyan depth at screen periphery)
+        const cornerHaze = ctx.createRadialGradient(bhX, bhY, bhRadius * 2.0, bhX, bhY, w * 0.85);
+        cornerHaze.addColorStop(0, 'rgba(0, 0, 0, 0)');
+        cornerHaze.addColorStop(0.5, 'rgba(49, 46, 129, 0.06)');
+        cornerHaze.addColorStop(0.85, 'rgba(15, 23, 42, 0.12)');
+        cornerHaze.addColorStop(1, 'rgba(2, 6, 23, 0.25)');
+        ctx.fillStyle = cornerHaze;
+        ctx.fillRect(0, 0, w, h);
 
         ctx.save();
         ctx.translate(bhX, bhY);
         ctx.rotate(-0.06);
 
-        // 1. Broad Rotating Fiery Accretion Disk Base (Stretches widely to the edges)
+        // 2. Soft Outer Ambient Radiance Halo (Smooth illumination bleeding into dark void)
+        const outerBloom = ctx.createRadialGradient(0, 0, bhRadius * 1.1, 0, 0, diskMaxX * 1.35);
+        outerBloom.addColorStop(0, 'rgba(254, 240, 138, 0.18)');
+        outerBloom.addColorStop(0.25, 'rgba(245, 158, 11, 0.11)');
+        outerBloom.addColorStop(0.55, 'rgba(225, 29, 72, 0.05)');
+        outerBloom.addColorStop(0.85, 'rgba(99, 102, 241, 0.015)');
+        outerBloom.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = outerBloom;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, diskMaxX * 1.35, diskMaxY * 1.45, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 3. Multi-Stop Feathered Accretion Disk Base (Ultra-Smooth Gradient Transition to Outer Void)
         const diskGrad = ctx.createRadialGradient(0, 0, bhRadius * 1.02, 0, 0, diskMaxX);
-        diskGrad.addColorStop(0, 'rgba(255, 255, 255, 0.90)'); // White-hot inner rim
-        diskGrad.addColorStop(0.12, 'rgba(254, 240, 138, 0.75)'); // Brilliant golden yellow
-        diskGrad.addColorStop(0.38, 'rgba(245, 158, 11, 0.45)'); // Warm glowing amber
-        diskGrad.addColorStop(0.68, 'rgba(234, 88, 12, 0.20)'); // Fiery orange
-        diskGrad.addColorStop(0.92, 'rgba(154, 52, 18, 0.05)'); // Deep red edge
-        diskGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        diskGrad.addColorStop(0, 'rgba(255, 255, 255, 0.88)'); // Hot white photon inner boundary
+        diskGrad.addColorStop(0.08, 'rgba(254, 240, 138, 0.75)'); // Luminous gold-yellow
+        diskGrad.addColorStop(0.24, 'rgba(251, 191, 36, 0.52)'); // Warm amber
+        diskGrad.addColorStop(0.46, 'rgba(249, 115, 22, 0.28)'); // Solar orange
+        diskGrad.addColorStop(0.68, 'rgba(225, 29, 72, 0.12)'); // Interstellar crimson transition
+        diskGrad.addColorStop(0.85, 'rgba(129, 140, 248, 0.04)'); // Cosmic indigo twilight
+        diskGrad.addColorStop(0.96, 'rgba(67, 56, 202, 0.01)'); // Deep twilight veil
+        diskGrad.addColorStop(1, 'rgba(0, 0, 0, 0)'); // Seamless dissolution into space
 
         ctx.fillStyle = diskGrad;
         ctx.beginPath();
         ctx.ellipse(0, 0, diskMaxX, diskMaxY, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // 2. Rotating Glowing Golden & White Streak Lines (Back Half of the Disk: angles PI to 2*PI)
+        // 4. Rotating Soft-Blurred Accretion Filaments (Back Half: angles PI to 2*PI)
+        ctx.lineCap = 'round';
         for (const f of this.ambientBlackHoleFilaments) {
           if (f.angle > Math.PI && f.angle < Math.PI * 2) {
             ctx.save();
             ctx.strokeStyle = f.color;
             ctx.lineWidth = f.width;
-            ctx.shadowBlur = 8;
+            ctx.shadowBlur = 14;
             ctx.shadowColor = f.color;
-            ctx.globalAlpha = f.alpha * 0.75;
+            ctx.globalAlpha = f.alpha * 0.70;
 
             ctx.beginPath();
             ctx.ellipse(0, 0, f.radiusX, f.radiusY, 0, f.angle, f.angle + f.length);
@@ -2590,37 +2614,38 @@ export class BattlefieldEngine {
 
         ctx.restore(); // Restore disk rotation tilt
 
-        // 3. The Event Horizon (Pure Pitch Black Core) & Clean Luminous Pure White Photon Ring
+        // 5. The Event Horizon & Soft Luminous Pure White Photon Ring
         ctx.save();
         ctx.translate(bhX, bhY);
 
-        // Crisp, pure white glowing photon ring encircling the event horizon
+        // Soft, diffused pure white glowing photon ring
         ctx.save();
-        ctx.shadowBlur = 12;
+        ctx.shadowBlur = 16;
         ctx.shadowColor = '#ffffff';
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 2.0;
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
+        ctx.lineWidth = 2.2;
         ctx.beginPath();
         ctx.arc(0, 0, bhRadius, 0, Math.PI * 2);
         ctx.stroke();
         ctx.restore();
 
-        // Pure pitch-black core (True absolute black singularity)
+        // Pure pitch-black core (True Singularity)
         ctx.fillStyle = '#000000';
         ctx.beginPath();
         ctx.arc(0, 0, bhRadius - 0.5, 0, Math.PI * 2);
         ctx.fill();
 
-        // 4. Rotating Glowing Golden & White Streak Lines (Front Half of the Disk: angles 0 to PI)
+        // 6. Rotating Soft-Blurred Accretion Filaments (Front Half: angles 0 to PI)
         ctx.save();
         ctx.rotate(-0.06);
+        ctx.lineCap = 'round';
 
         for (const f of this.ambientBlackHoleFilaments) {
           if (f.angle >= 0 && f.angle <= Math.PI) {
             ctx.save();
             ctx.strokeStyle = f.color;
             ctx.lineWidth = f.width;
-            ctx.shadowBlur = 10;
+            ctx.shadowBlur = 18;
             ctx.shadowColor = f.color;
             ctx.globalAlpha = f.alpha;
 
