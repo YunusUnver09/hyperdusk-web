@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Play, Settings, Info, Trophy, HelpCircle, X, Unlock } from 'lucide-react';
+import { Play, Settings, Info, Trophy, HelpCircle, X, Unlock, Maximize2, Minimize2 } from 'lucide-react';
 import { soundManager } from '../game/soundManager';
 import { SettingsModal } from './SettingsModal';
 
@@ -25,6 +25,40 @@ const MainMenuComponent: React.FC<MainMenuProps> = ({ onStartGame, onDevMode, hi
   const [showSettings, setShowSettings] = useState(false);
   const [showCredits, setShowCredits] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(() => {
+    return typeof document !== 'undefined' ? !!document.fullscreenElement : false;
+  });
+
+  // Track Fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+    };
+  }, []);
+
+  const toggleFullscreen = () => {
+    soundManager.playGemSwap();
+    try {
+      if (!document.fullscreenElement) {
+        const docEl = document.documentElement as any;
+        if (docEl.requestFullscreen) {
+          docEl.requestFullscreen().catch(() => {});
+        } else if (docEl.webkitRequestFullscreen) {
+          docEl.webkitRequestFullscreen();
+        }
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen().catch(() => {});
+        }
+      }
+    } catch {}
+  };
 
   // Play Menu Theme upon user interaction if not playing yet
   useEffect(() => {
@@ -178,13 +212,32 @@ const MainMenuComponent: React.FC<MainMenuProps> = ({ onStartGame, onDevMode, hi
 
       {/* 2. Main Menu Foreground UI */}
       <div className="main-menu-content">
-        {/* Top Header & High Score Badge */}
+        {/* Top Header & High Score Badge + Fullscreen Button */}
         <div className="menu-header">
           <div className="menu-highscore-pill">
             <Trophy size={14} color="#ffd000" />
             <span>EN YÜKSEK SKOR:</span>
             <strong>{highScore.toLocaleString()}</strong>
           </div>
+
+          <button
+            className="menu-fullscreen-btn"
+            onClick={toggleFullscreen}
+            title={isFullscreen ? "Tam Ekrandan Çık" : "Tam Ekran Yap (Büyüt)"}
+            aria-label="Tam Ekran"
+          >
+            {isFullscreen ? (
+              <>
+                <Minimize2 size={15} color="#00f3ff" />
+                <span>KÜÇÜLT</span>
+              </>
+            ) : (
+              <>
+                <Maximize2 size={15} color="#00f3ff" />
+                <span>TAM EKRAN</span>
+              </>
+            )}
+          </button>
         </div>
 
         {/* Hero Title & Emblem */}
