@@ -35,6 +35,9 @@ class SoundManager {
     if (this.ctx && this.ctx.state === 'suspended') {
       this.ctx.resume().catch(() => {});
     }
+    if (this.ctx && !this.orbitalStrikeBuffer && !this.isDecodingOrbitalSfx) {
+      this.preDecodeOrbitalSfx();
+    }
     return this.ctx;
   }
 
@@ -517,16 +520,13 @@ class SoundManager {
     } catch {}
   }
 
-  private async getOrbitalStrikeBuffer(): Promise<AudioBuffer | null> {
-    if (this.orbitalStrikeBuffer) return this.orbitalStrikeBuffer;
+  private preDecodeOrbitalSfx() {
+    if (this.orbitalStrikeBuffer || this.isDecodingOrbitalSfx) return;
     const ctx = this.initContext();
-    if (!ctx) return null;
+    if (!ctx) return;
 
-    if (this.isDecodingOrbitalSfx) return null;
     this.isDecodingOrbitalSfx = true;
-
     try {
-      // Decode from base64 data URI (embedded for 0-latency and standalone bundling)
       const base64Data = ORBITAL_STRIKE_SFX_DATA_URI.split(',')[1];
       const binaryString = window.atob(base64Data);
       const len = binaryString.length;
@@ -534,40 +534,67 @@ class SoundManager {
       for (let i = 0; i < len; i++) {
         bytes[i] = binaryString.charCodeAt(i);
       }
-      const decoded = await ctx.decodeAudioData(bytes.buffer);
-      this.orbitalStrikeBuffer = decoded;
+      ctx.decodeAudioData(bytes.buffer).then((decoded) => {
+        // Trim leading silence from MP3 padding if any
+        try {
+          const channels = decoded.numberOfChannels;
+          const length = decoded.length;
+          let firstNonSilent = 0;
+          const threshold = 0.003;
+          for (let i = 0; i < Math.min(length, 48000); i++) {
+            for (let c = 0; c < channels; c++) {
+              if (Math.abs(decoded.getChannelData(c)[i]) > threshold) {
+                firstNonSilent = i;
+                break;
+              }
+            }
+            if (firstNonSilent > 0) break;
+          }
+
+          if (firstNonSilent > 0) {
+            const newLen = length - firstNonSilent;
+            const trimmed = ctx.createBuffer(channels, newLen, decoded.sampleRate);
+            for (let c = 0; c < channels; c++) {
+              trimmed.getChannelData(c).set(decoded.getChannelData(c).subarray(firstNonSilent));
+            }
+            this.orbitalStrikeBuffer = trimmed;
+          } else {
+            this.orbitalStrikeBuffer = decoded;
+          }
+        } catch {
+          this.orbitalStrikeBuffer = decoded;
+        }
+        this.isDecodingOrbitalSfx = false;
+      }).catch(() => {
+        this.isDecodingOrbitalSfx = false;
+      });
+    } catch {
       this.isDecodingOrbitalSfx = false;
-      return decoded;
-    } catch (err) {
-      console.warn('Failed to decode orbital strike asset:', err);
-      this.isDecodingOrbitalSfx = false;
-      return null;
     }
   }
 
-  public async playOrbitalStrike() {
+  public playOrbitalStrike() {
     if (this.isMuted || this.sfxVolume <= 0) return;
     const ctx = this.initContext();
     if (!ctx) return;
 
     try {
       const now = ctx.currentTime;
-      const buffer = await this.getOrbitalStrikeBuffer();
 
       // Master Orbital Output Gain
       const masterGain = ctx.createGain();
-      masterGain.gain.setValueAtTime(0.95 * this.sfxVolume, now);
+      masterGain.gain.setValueAtTime(1.0 * this.sfxVolume, now);
 
       // 1. Spatial Sci-Fi Stereo Echo & Reverb Delay Loop
       const delayNode = ctx.createDelay();
-      delayNode.delayTime.setValueAtTime(0.16, now); // 160ms cosmic space echo
+      delayNode.delayTime.setValueAtTime(0.15, now); // 150ms cosmic space echo
 
       const feedbackGain = ctx.createGain();
-      feedbackGain.gain.setValueAtTime(0.36, now); // 36% feedback reflection
+      feedbackGain.gain.setValueAtTime(0.35, now); // 35% feedback reflection
 
       const delayFilter = ctx.createBiquadFilter();
       delayFilter.type = 'lowpass';
-      delayFilter.frequency.setValueAtTime(3600, now); // Warm cosmic echo dampening
+      delayFilter.frequency.setValueAtTime(3800, now); // Warm cosmic echo dampening
 
       // Delay loop routing
       delayNode.connect(delayFilter);
@@ -578,10 +605,24 @@ class SoundManager {
       // Output master to destination
       masterGain.connect(ctx.destination);
 
-      if (buffer) {
-        // High-Fidelity Custom MP3 Audio Playback
+      // 2. Instant Laser Attack Transient Snap (Zero-Latency Tactile Punch)
+      const snapOsc = ctx.createOscillator();
+      const snapGain = ctx.createGain();
+      snapOsc.type = 'sawtooth';
+      snapOsc.frequency.setValueAtTime(2400, now);
+      snapOsc.frequency.exponentialRampToValueAtTime(180, now + 0.12);
+      snapGain.gain.setValueAtTime(0.55 * this.sfxVolume, now);
+      snapGain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+      snapOsc.connect(snapGain);
+      snapGain.connect(masterGain);
+      snapGain.connect(delayNode);
+      snapOsc.start(now);
+      snapOsc.stop(now + 0.12);
+
+      // 3. Play Preloaded High-Fidelity Custom MP3 Audio
+      if (this.orbitalStrikeBuffer) {
         const src = ctx.createBufferSource();
-        src.buffer = buffer;
+        src.buffer = this.orbitalStrikeBuffer;
 
         // Route dry to masterGain & wet to delayNode
         src.connect(masterGain);
@@ -589,12 +630,14 @@ class SoundManager {
 
         src.start(now);
       } else {
-        // Procedural Orbital Laser Fallback
+        // If not yet decoded, trigger background decode and play procedural beam
+        this.preDecodeOrbitalSfx();
+
         const osc = ctx.createOscillator();
         const oscGain = ctx.createGain();
         osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(180, now);
-        osc.frequency.linearRampToValueAtTime(1350, now + 0.28);
+        osc.frequency.setValueAtTime(220, now);
+        osc.frequency.linearRampToValueAtTime(1400, now + 0.25);
         osc.frequency.exponentialRampToValueAtTime(110, now + 0.70);
 
         oscGain.gain.setValueAtTime(0.45 * this.sfxVolume, now);
@@ -608,24 +651,24 @@ class SoundManager {
         osc.stop(now + 0.75);
       }
 
-      // 2. Sub-Harmonic Heavy Planetary Bass Shockwave (40Hz deep planetary rumble)
+      // 4. Sub-Harmonic Heavy Planetary Bass Shockwave (40Hz deep planetary rumble)
       const subOsc = ctx.createOscillator();
       const subGain = ctx.createGain();
       subOsc.type = 'sine';
-      subOsc.frequency.setValueAtTime(115, now);
-      subOsc.frequency.exponentialRampToValueAtTime(32, now + 0.68);
+      subOsc.frequency.setValueAtTime(120, now);
+      subOsc.frequency.exponentialRampToValueAtTime(32, now + 0.65);
 
-      subGain.gain.setValueAtTime(0.42 * this.sfxVolume, now);
-      subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.72);
+      subGain.gain.setValueAtTime(0.45 * this.sfxVolume, now);
+      subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.70);
 
       subOsc.connect(subGain);
       subGain.connect(masterGain);
 
       subOsc.start(now);
-      subOsc.stop(now + 0.72);
+      subOsc.stop(now + 0.70);
 
       // Heavy aftermath detonation
-      setTimeout(() => this.playExplosion(true), 280);
+      setTimeout(() => this.playExplosion(true), 250);
     } catch {}
   }
 
