@@ -30,13 +30,11 @@ class SoundManager {
       const AudioCtxClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       if (AudioCtxClass) {
         this.ctx = new AudioCtxClass();
+        this.preDecodeOrbitalSfx(this.ctx);
       }
     }
     if (this.ctx && this.ctx.state === 'suspended') {
       this.ctx.resume().catch(() => {});
-    }
-    if (this.ctx && !this.orbitalStrikeBuffer && !this.isDecodingOrbitalSfx) {
-      this.preDecodeOrbitalSfx();
     }
     return this.ctx;
   }
@@ -520,10 +518,10 @@ class SoundManager {
     } catch {}
   }
 
-  private preDecodeOrbitalSfx() {
+  private preDecodeOrbitalSfx(ctx?: AudioContext) {
     if (this.orbitalStrikeBuffer || this.isDecodingOrbitalSfx) return;
-    const ctx = this.initContext();
-    if (!ctx) return;
+    const targetCtx = ctx || this.ctx;
+    if (!targetCtx) return;
 
     this.isDecodingOrbitalSfx = true;
     try {
@@ -534,7 +532,7 @@ class SoundManager {
       for (let i = 0; i < len; i++) {
         bytes[i] = binaryString.charCodeAt(i);
       }
-      ctx.decodeAudioData(bytes.buffer).then((decoded) => {
+      targetCtx.decodeAudioData(bytes.buffer).then((decoded) => {
         // Trim leading silence from MP3 padding if any
         try {
           const channels = decoded.numberOfChannels;
@@ -553,7 +551,7 @@ class SoundManager {
 
           if (firstNonSilent > 0) {
             const newLen = length - firstNonSilent;
-            const trimmed = ctx.createBuffer(channels, newLen, decoded.sampleRate);
+            const trimmed = targetCtx.createBuffer(channels, newLen, decoded.sampleRate);
             for (let c = 0; c < channels; c++) {
               trimmed.getChannelData(c).set(decoded.getChannelData(c).subarray(firstNonSilent));
             }
@@ -631,7 +629,7 @@ class SoundManager {
         src.start(now);
       } else {
         // If not yet decoded, trigger background decode and play procedural beam
-        this.preDecodeOrbitalSfx();
+        this.preDecodeOrbitalSfx(ctx);
 
         const osc = ctx.createOscillator();
         const oscGain = ctx.createGain();
