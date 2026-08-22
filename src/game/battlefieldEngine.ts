@@ -197,6 +197,28 @@ export class BattlefieldEngine {
     alpha: number;
     color: string;
   }> = [];
+  public ambientCustomParticles: Array<{
+    x: number;
+    y: number;
+    vx: number;
+    vy: number;
+    size: number;
+    alpha: number;
+    maxAlpha: number;
+    color: string;
+    rotation: number;
+    vRot: number;
+    custom1: number;
+    custom2: number;
+    customStr?: string;
+  }> = [];
+  public ambientCustomNodes: Array<{
+    x: number;
+    y: number;
+    connections: number[];
+    pulse: number;
+    color: string;
+  }> = [];
 
   // Upgrades & Stats
   public upgrades: PlayerUpgrades = {
@@ -465,36 +487,303 @@ export class BattlefieldEngine {
           width: Math.random() * 1.5 + 0.8
         });
       }
-    } else if (ambientType === 'bio_spores') {
-      const count = 38;
-      const colors = ['#10b981', '#34d399', '#a855f7', '#6ee7b7', '#84cc16'];
-      this.ambientBioSpores = [];
-      for (let i = 0; i < count; i++) {
-        this.ambientBioSpores.push({
+    } else if (ambientType === 'bio_signals') {
+      this.ambientCustomParticles = [];
+      for (let i = 0; i < 22; i++) {
+        this.ambientCustomParticles.push({
           x: Math.random() * w,
           y: Math.random() * h,
-          size: Math.random() * 4.5 + 2.0,
-          speed: Math.random() * 20 + 10,
-          drift: (Math.random() - 0.5) * 12,
-          alpha: Math.random() * 0.65 + 0.3,
-          pulseAngle: Math.random() * Math.PI * 2,
-          color: colors[Math.floor(Math.random() * colors.length)]
+          vx: (Math.random() - 0.5) * 8,
+          vy: (Math.random() - 0.5) * 8,
+          size: Math.random() * 24 + 12,
+          alpha: Math.random() * 0.7 + 0.2,
+          maxAlpha: 0.8,
+          color: Math.random() > 0.4 ? '#10b981' : '#34d399',
+          rotation: Math.random() * Math.PI * 2,
+          vRot: Math.random() * 0.8 + 0.2,
+          custom1: Math.random() * 60 + 20, // radar ring radius
+          custom2: Math.random() * Math.PI * 2 // radar angle
         });
       }
-    } else if (ambientType === 'tachyon_rift') {
-      const count = 42;
-      const colors = ['#38bdf8', '#818cf8', '#c084fc', '#f59e0b', '#ec4899'];
-      this.ambientTachyonShards = [];
-      for (let i = 0; i < count; i++) {
-        this.ambientTachyonShards.push({
+    } else if (ambientType === 'hive_eggs') {
+      this.ambientCustomParticles = [];
+      for (let i = 0; i < 26; i++) {
+        this.ambientCustomParticles.push({
           x: Math.random() * w,
           y: Math.random() * h,
-          size: Math.random() * 5.5 + 2.5,
-          speed: Math.random() * 32 + 16,
-          angle: Math.random() * Math.PI * 2,
-          vAngle: (Math.random() - 0.5) * 2.5,
+          vx: (Math.random() - 0.5) * 6,
+          vy: - (Math.random() * 14 + 6), // buoyant rise
+          size: Math.random() * 14 + 10, // egg pod radius
+          alpha: Math.random() * 0.6 + 0.3,
+          maxAlpha: 0.75,
+          color: '#10b981',
+          rotation: Math.random() * Math.PI * 2,
+          vRot: (Math.random() - 0.5) * 0.6,
+          custom1: Math.random() * Math.PI * 2, // embryo pulse angle
+          custom2: Math.random() * 5 + 3 // nucleus size
+        });
+      }
+    } else if (ambientType === 'chitin_swarms') {
+      this.ambientCustomParticles = [];
+      for (let i = 0; i < 50; i++) {
+        this.ambientCustomParticles.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          vx: (Math.random() - 0.5) * 45,
+          vy: (Math.random() - 0.5) * 35,
+          size: Math.random() * 4.5 + 2.0,
+          alpha: Math.random() * 0.75 + 0.25,
+          maxAlpha: 0.85,
+          color: Math.random() > 0.5 ? '#84cc16' : '#a3e635',
+          rotation: Math.random() * Math.PI * 2,
+          vRot: Math.random() * 6 + 4,
+          custom1: Math.random() * Math.PI * 2,
+          custom2: Math.random() * 1.5 + 0.5
+        });
+      }
+    } else if (ambientType === 'queen_chamber') {
+      this.ambientCustomParticles = [];
+      for (let i = 0; i < 34; i++) {
+        this.ambientCustomParticles.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          vx: (Math.random() - 0.5) * 14,
+          vy: - (Math.random() * 22 + 10),
+          size: Math.random() * 18 + 8,
+          alpha: Math.random() * 0.65 + 0.25,
+          maxAlpha: 0.75,
+          color: Math.random() > 0.4 ? '#a855f7' : '#d946ef',
+          rotation: Math.random() * Math.PI * 2,
+          vRot: (Math.random() - 0.5) * 0.8,
+          custom1: Math.random() * Math.PI * 2,
+          custom2: Math.random() * 20 + 10
+        });
+      }
+    } else if (ambientType === 'neural_web') {
+      this.ambientCustomNodes = [];
+      this.ambientCustomParticles = [];
+      const nodeCount = 18;
+      for (let i = 0; i < nodeCount; i++) {
+        this.ambientCustomNodes.push({
+          x: (0.1 + Math.random() * 0.8) * w,
+          y: (0.1 + Math.random() * 0.7) * h,
+          connections: [],
+          pulse: Math.random() * Math.PI * 2,
+          color: Math.random() > 0.4 ? '#10b981' : '#06b6d4'
+        });
+      }
+      // Link adjacent neural nodes
+      for (let i = 0; i < nodeCount; i++) {
+        for (let j = i + 1; j < nodeCount; j++) {
+          const dist = Math.hypot(this.ambientCustomNodes[i].x - this.ambientCustomNodes[j].x, this.ambientCustomNodes[i].y - this.ambientCustomNodes[j].y);
+          if (dist < w * 0.35 && this.ambientCustomNodes[i].connections.length < 3) {
+            this.ambientCustomNodes[i].connections.push(j);
+          }
+        }
+      }
+    } else if (ambientType === 'acid_pools') {
+      this.ambientCustomParticles = [];
+      for (let i = 0; i < 35; i++) {
+        this.ambientCustomParticles.push({
+          x: Math.random() * w,
+          y: h * 0.5 + Math.random() * (h * 0.5),
+          vx: (Math.random() - 0.5) * 16,
+          vy: - (Math.random() * 40 + 20),
+          size: Math.random() * 6 + 2,
+          alpha: Math.random() * 0.8 + 0.2,
+          maxAlpha: 0.9,
+          color: Math.random() > 0.5 ? '#84cc16' : '#bef264',
+          rotation: 0,
+          vRot: (Math.random() - 0.5) * 2,
+          custom1: Math.random() * Math.PI * 2, // bubble wobble
+          custom2: Math.random() * 12 + 4 // max bubble expansion
+        });
+      }
+    } else if (ambientType === 'hive_core') {
+      this.ambientCustomParticles = [];
+      for (let i = 0; i < 28; i++) {
+        this.ambientCustomParticles.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          vx: (Math.random() - 0.5) * 10,
+          vy: (Math.random() - 0.5) * 10,
+          size: Math.random() * 12 + 6,
+          alpha: Math.random() * 0.6 + 0.3,
+          maxAlpha: 0.8,
+          color: Math.random() > 0.4 ? '#10b981' : '#ec4899',
+          rotation: Math.random() * Math.PI * 2,
+          vRot: (Math.random() - 0.5) * 1.2,
+          custom1: Math.random() * Math.PI * 2,
+          custom2: Math.random() * 30 + 15
+        });
+      }
+    } else if (ambientType === 'proto_leviathan') {
+      this.ambientCustomParticles = [];
+      for (let i = 0; i < 40; i++) {
+        this.ambientCustomParticles.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          vx: (Math.random() - 0.5) * 22,
+          vy: (Math.random() - 0.5) * 18,
+          size: Math.random() * 16 + 6,
+          alpha: Math.random() * 0.7 + 0.2,
+          maxAlpha: 0.85,
+          color: Math.random() > 0.5 ? '#059669' : '#34d399',
+          rotation: Math.random() * Math.PI * 2,
+          vRot: (Math.random() - 0.5) * 0.9,
+          custom1: Math.random() * Math.PI * 2,
+          custom2: Math.random() * 40 + 20
+        });
+      }
+    } else if (ambientType === 'dimension_rift') {
+      this.ambientCustomParticles = [];
+      for (let i = 0; i < 32; i++) {
+        this.ambientCustomParticles.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          vx: (Math.random() - 0.5) * 20,
+          vy: (Math.random() - 0.5) * 20,
+          size: Math.random() * 14 + 6,
           alpha: Math.random() * 0.7 + 0.25,
-          color: colors[Math.floor(Math.random() * colors.length)]
+          maxAlpha: 0.85,
+          color: Math.random() > 0.5 ? '#38bdf8' : '#c084fc',
+          rotation: Math.random() * Math.PI * 2,
+          vRot: (Math.random() - 0.5) * 2.2,
+          custom1: Math.random() * Math.PI * 2,
+          custom2: Math.random() * 18 + 8
+        });
+      }
+    } else if (ambientType === 'tachyon_stream') {
+      this.ambientCustomParticles = [];
+      for (let i = 0; i < 48; i++) {
+        this.ambientCustomParticles.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          vx: (Math.random() - 0.5) * 12,
+          vy: - (Math.random() * 180 + 120), // hyper speed reverse time flow
+          size: Math.random() * 28 + 12, // streak length
+          alpha: Math.random() * 0.75 + 0.25,
+          maxAlpha: 0.9,
+          color: Math.random() > 0.4 ? '#6366f1' : '#818cf8',
+          rotation: 0,
+          vRot: 0,
+          custom1: Math.random() * 2 + 1, // line width
+          custom2: Math.random() * Math.PI * 2
+        });
+      }
+    } else if (ambientType === 'parallel_mirrors') {
+      this.ambientCustomParticles = [];
+      for (let i = 0; i < 20; i++) {
+        this.ambientCustomParticles.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          vx: (Math.random() > 0.5 ? 1 : -1) * (Math.random() * 25 + 15),
+          vy: (Math.random() - 0.5) * 8,
+          size: Math.random() * 20 + 12,
+          alpha: Math.random() * 0.65 + 0.2,
+          maxAlpha: 0.75,
+          color: Math.random() > 0.5 ? '#a855f7' : '#c084fc',
+          rotation: 0,
+          vRot: 0,
+          custom1: Math.random() * Math.PI * 2,
+          custom2: Math.random() * 22 + 10
+        });
+      }
+    } else if (ambientType === 'chrono_tower') {
+      this.ambientCustomParticles = [];
+      // 4 Astrological Gear Systems
+      const gears = [
+        { x: w * 0.25, y: h * 0.25, r: 48, speed: 0.4, teeth: 12, color: '#f59e0b' },
+        { x: w * 0.75, y: h * 0.30, r: 62, speed: -0.3, teeth: 16, color: '#fbbf24' },
+        { x: w * 0.50, y: h * 0.42, r: 36, speed: 0.6, teeth: 10, color: '#38bdf8' },
+        { x: w * 0.50, y: h * 0.15, r: 24, speed: -0.8, teeth: 8, color: '#ffffff' }
+      ];
+      for (const g of gears) {
+        this.ambientCustomParticles.push({
+          x: g.x,
+          y: g.y,
+          vx: 0,
+          vy: 0,
+          size: g.r,
+          alpha: 0.45,
+          maxAlpha: 0.55,
+          color: g.color,
+          rotation: 0,
+          vRot: g.speed,
+          custom1: g.teeth,
+          custom2: g.r * 0.75
+        });
+      }
+    } else if (ambientType === 'entropy_collapse') {
+      this.ambientCustomParticles = [];
+      for (let i = 0; i < 40; i++) {
+        this.ambientCustomParticles.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          vx: (w * 0.5 - Math.random() * w) * 0.15,
+          vy: (Math.random() * 35 + 15),
+          size: Math.random() * 10 + 4,
+          alpha: Math.random() * 0.75 + 0.25,
+          maxAlpha: 0.85,
+          color: Math.random() > 0.5 ? '#ef4444' : '#f87171',
+          rotation: Math.random() * Math.PI * 2,
+          vRot: (Math.random() - 0.5) * 3,
+          custom1: Math.random() * Math.PI * 2,
+          custom2: Math.random() * 14 + 6
+        });
+      }
+    } else if (ambientType === 'void_limbo') {
+      this.ambientCustomParticles = [];
+      for (let i = 0; i < 35; i++) {
+        this.ambientCustomParticles.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          vx: (Math.random() - 0.5) * 14,
+          vy: (Math.random() - 0.5) * 14,
+          size: Math.random() * 8 + 3,
+          alpha: Math.random() * 0.7 + 0.2,
+          maxAlpha: 0.8,
+          color: Math.random() > 0.4 ? '#8b5cf6' : '#a78bfa',
+          rotation: Math.random() * Math.PI * 2,
+          vRot: (Math.random() - 0.5) * 1.5,
+          custom1: Math.random() * Math.PI * 2,
+          custom2: Math.random() * 20 + 10
+        });
+      }
+    } else if (ambientType === 'reality_edge') {
+      this.ambientCustomParticles = [];
+      for (let i = 0; i < 45; i++) {
+        this.ambientCustomParticles.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          vx: Math.sin(i) * 10,
+          vy: Math.random() * 30 + 15,
+          size: Math.random() * 5 + 2,
+          alpha: Math.random() * 0.8 + 0.2,
+          maxAlpha: 0.9,
+          color: Math.random() > 0.5 ? '#ec4899' : '#f472b6',
+          rotation: Math.random() * Math.PI * 2,
+          vRot: (Math.random() - 0.5) * 2,
+          custom1: Math.random() * Math.PI * 2,
+          custom2: Math.random() * 25 + 10
+        });
+      }
+    } else if (ambientType === 'eternity_prime') {
+      this.ambientCustomParticles = [];
+      for (let i = 0; i < 55; i++) {
+        this.ambientCustomParticles.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          vx: (Math.random() - 0.5) * 30,
+          vy: (Math.random() - 0.5) * 30,
+          size: Math.random() * 12 + 4,
+          alpha: Math.random() * 0.8 + 0.25,
+          maxAlpha: 0.9,
+          color: Math.random() > 0.5 ? '#ffd000' : '#ff0055',
+          rotation: Math.random() * Math.PI * 2,
+          vRot: (Math.random() - 0.5) * 2.5,
+          custom1: Math.random() * Math.PI * 2,
+          custom2: Math.random() * 50 + 20
         });
       }
     }
@@ -1621,25 +1910,27 @@ export class BattlefieldEngine {
           st.x = Math.random() * w;
         }
       }
-    } else if (ambientType === 'bio_spores') {
-      for (const sp of this.ambientBioSpores) {
-        sp.y -= sp.speed * effectiveDt;
-        sp.x += Math.sin(this.ambientTimer * 2 + sp.drift) * 14 * effectiveDt;
-        sp.pulseAngle += effectiveDt * 3;
-        if (sp.y < -30) {
-          sp.y = h + 30;
-          sp.x = Math.random() * w;
-        }
+    } else {
+      // Universal continuous motion for custom sector particles (Sectors 2 & 3)
+      for (const p of this.ambientCustomParticles) {
+        p.x += p.vx * effectiveDt;
+        p.y += p.vy * effectiveDt;
+        p.rotation += p.vRot * effectiveDt;
+
+        // Custom phase/pulse evolution
+        p.custom1 += effectiveDt * 2.0;
+
+        // Screen wrap
+        if (p.x < -40) p.x = w + 40;
+        else if (p.x > w + 40) p.x = -40;
+
+        if (p.y < -40) p.y = h + 40;
+        else if (p.y > h + 40) p.y = -40;
       }
-    } else if (ambientType === 'tachyon_rift') {
-      for (const sh of this.ambientTachyonShards) {
-        sh.y -= sh.speed * effectiveDt;
-        sh.x += Math.cos(this.ambientTimer * 1.5 + sh.angle) * 18 * effectiveDt;
-        sh.angle += sh.vAngle * effectiveDt;
-        if (sh.y < -30) {
-          sh.y = h + 30;
-          sh.x = Math.random() * w;
-        }
+
+      // Update neural nodes if active
+      for (const node of this.ambientCustomNodes) {
+        node.pulse += effectiveDt * 3.0;
       }
     }
   }
@@ -2911,45 +3202,67 @@ export class BattlefieldEngine {
         break;
       }
 
-      case 'bio_spores': {
-        // Organic Biomechanical Hive Atmosphere
+      // ═══════════════════════════════════════════════════════════════
+      // SEKTÖR 2: BİYOMEKANİK KOVAN & ASİT SİSİ (Bölüm 9 - 16)
+      // ═══════════════════════════════════════════════════════════════
+
+      case 'bio_signals': {
+        // Bölüm 9: Dönen Biyo-Radar Taraması & Sinyal Halkaları
         ctx.save();
-        const pulse = Math.sin(this.ambientTimer * 1.8);
-        const bioGrad = ctx.createRadialGradient(
-          w * 0.5,
-          h * 0.35,
-          15,
-          w * 0.5,
-          h * 0.35,
-          w * (0.65 + pulse * 0.08)
-        );
-        bioGrad.addColorStop(0, 'rgba(16, 185, 129, 0.24)');
-        bioGrad.addColorStop(0.45, 'rgba(168, 85, 247, 0.14)');
-        bioGrad.addColorStop(0.85, 'rgba(6, 78, 59, 0.06)');
-        bioGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-        ctx.fillStyle = bioGrad;
+        const radarX = w * 0.5;
+        const radarY = h * 0.28;
+        const sweepAng = this.ambientTimer * 1.8;
+
+        // Radar background glow
+        const rGrad = ctx.createRadialGradient(radarX, radarY, 5, radarX, radarY, w * 0.65);
+        rGrad.addColorStop(0, 'rgba(16, 185, 129, 0.20)');
+        rGrad.addColorStop(0.5, 'rgba(6, 78, 59, 0.10)');
+        rGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = rGrad;
         ctx.fillRect(0, 0, w, h);
 
-        // Floating Bioluminescent Spores
-        for (const sp of this.ambientBioSpores) {
-          const spPulse = Math.sin(sp.pulseAngle) * 0.3 + 0.7;
-          const curSize = sp.size * spPulse;
+        // Concentric Radar Rings
+        ctx.lineWidth = 1.2;
+        for (let r = 35; r <= 140; r += 35) {
+          const ringPulse = Math.sin(this.ambientTimer * 2 + r * 0.1) * 0.15 + 0.85;
+          ctx.strokeStyle = `rgba(16, 185, 129, ${0.22 * ringPulse})`;
+          ctx.beginPath();
+          ctx.arc(radarX, radarY, r, 0, Math.PI * 2);
+          ctx.stroke();
+        }
 
-          // Soft outer halo
+        // Sweeping Radar Cone
+        ctx.save();
+        ctx.translate(radarX, radarY);
+        ctx.rotate(sweepAng);
+        const coneGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, 150);
+        coneGrad.addColorStop(0, 'rgba(52, 211, 153, 0.35)');
+        coneGrad.addColorStop(1, 'rgba(16, 185, 129, 0)');
+        ctx.fillStyle = coneGrad;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.arc(0, 0, 150, 0, Math.PI * 0.4);
+        ctx.closePath();
+        ctx.fill();
+
+        // Radar line
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.65)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(150, 0);
+        ctx.stroke();
+        ctx.restore();
+
+        // Signal Blips
+        for (const p of this.ambientCustomParticles) {
           ctx.save();
-          ctx.shadowBlur = 12;
-          ctx.shadowColor = sp.color;
-          ctx.fillStyle = sp.color;
-          ctx.globalAlpha = sp.alpha * 0.85;
+          ctx.fillStyle = p.color;
+          ctx.shadowColor = p.color;
+          ctx.shadowBlur = 8;
+          ctx.globalAlpha = p.alpha;
           ctx.beginPath();
-          ctx.arc(sp.x, sp.y, curSize, 0, Math.PI * 2);
-          ctx.fill();
-
-          // Bright inner core
-          ctx.fillStyle = '#ffffff';
-          ctx.globalAlpha = sp.alpha * 0.95;
-          ctx.beginPath();
-          ctx.arc(sp.x, sp.y, curSize * 0.45, 0, Math.PI * 2);
+          ctx.arc(p.x, p.y, p.size * 0.2, 0, Math.PI * 2);
           ctx.fill();
           ctx.restore();
         }
@@ -2957,81 +3270,602 @@ export class BattlefieldEngine {
         break;
       }
 
-      case 'tachyon_rift': {
-        // Dimensional Time Rift & Chrono Singularity
+      case 'hive_eggs': {
+        // Bölüm 10: Canlı Kuluçka Keseleri & Yüzen Embriyo Hücreleri
         ctx.save();
-        const riftX = w * 0.5;
-        const riftY = h * 0.30;
-        const rot = this.ambientTimer * 0.4;
-
-        // 1. Chromatic Reality Warp Core
-        const riftGrad = ctx.createRadialGradient(riftX, riftY, 10, riftX, riftY, w * 0.7);
-        riftGrad.addColorStop(0, 'rgba(56, 189, 248, 0.28)');
-        riftGrad.addColorStop(0.35, 'rgba(168, 85, 247, 0.16)');
-        riftGrad.addColorStop(0.70, 'rgba(245, 158, 11, 0.08)');
-        riftGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-        ctx.fillStyle = riftGrad;
+        const eggGrad = ctx.createRadialGradient(w * 0.5, h * 0.35, 20, w * 0.5, h * 0.35, w * 0.7);
+        eggGrad.addColorStop(0, 'rgba(52, 211, 153, 0.22)');
+        eggGrad.addColorStop(0.5, 'rgba(4, 120, 87, 0.12)');
+        eggGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = eggGrad;
         ctx.fillRect(0, 0, w, h);
 
-        // 2. Rotating Holographic Chrono Dials
-        ctx.save();
-        ctx.translate(riftX, riftY);
-        ctx.rotate(rot);
+        for (const p of this.ambientCustomParticles) {
+          const pulse = Math.sin(p.custom1) * 0.18 + 0.82;
+          const curR = p.size * pulse;
 
-        // Outer Clock Ring
-        ctx.strokeStyle = 'rgba(56, 189, 248, 0.30)';
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.arc(0, 0, 58, 0, Math.PI * 2);
-        ctx.stroke();
-
-        // 12 Chrono Tick Marks
-        for (let i = 0; i < 12; i++) {
-          const ang = (i * Math.PI * 2) / 12;
-          const x1 = Math.cos(ang) * 52;
-          const y1 = Math.sin(ang) * 52;
-          const x2 = Math.cos(ang) * 58;
-          const y2 = Math.sin(ang) * 58;
-          ctx.beginPath();
-          ctx.moveTo(x1, y1);
-          ctx.lineTo(x2, y2);
-          ctx.stroke();
-        }
-
-        // Inner Counter-Rotating Ring
-        ctx.rotate(-rot * 2.2);
-        ctx.strokeStyle = 'rgba(245, 158, 11, 0.35)';
-        ctx.lineWidth = 1.2;
-        ctx.beginPath();
-        ctx.arc(0, 0, 36, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.restore();
-
-        // 3. Floating Crystalline Tachyon Shards
-        for (const sh of this.ambientTachyonShards) {
           ctx.save();
-          ctx.translate(sh.x, sh.y);
-          ctx.rotate(sh.angle);
-          ctx.fillStyle = sh.color;
-          ctx.globalAlpha = sh.alpha;
-          ctx.shadowBlur = 10;
-          ctx.shadowColor = sh.color;
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rotation);
 
-          // Diamond / Crystal Shard geometry
+          // Translucent Bio-Membrane
+          ctx.fillStyle = 'rgba(16, 185, 129, 0.18)';
+          ctx.strokeStyle = 'rgba(52, 211, 153, 0.55)';
+          ctx.lineWidth = 1.4;
           ctx.beginPath();
-          ctx.moveTo(0, -sh.size);
-          ctx.lineTo(sh.size * 0.6, 0);
-          ctx.lineTo(0, sh.size);
-          ctx.lineTo(-sh.size * 0.6, 0);
+          ctx.ellipse(0, 0, curR, curR * 1.25, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+
+          // Internal Embryo Nucleus
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+          ctx.shadowBlur = 10;
+          ctx.shadowColor = '#34d399';
+          ctx.beginPath();
+          ctx.arc(0, Math.sin(p.custom1 * 1.5) * 3, p.custom2, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+        ctx.restore();
+        break;
+      }
+
+      case 'chitin_swarms': {
+        // Bölüm 11: Kitin Sürüleri & Titreşen Parazit Kanatları
+        ctx.save();
+        for (const p of this.ambientCustomParticles) {
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rotation);
+          ctx.fillStyle = p.color;
+          ctx.globalAlpha = p.alpha;
+          ctx.shadowBlur = 6;
+          ctx.shadowColor = p.color;
+
+          // Insectoid diamond chitin shape
+          ctx.beginPath();
+          ctx.moveTo(0, -p.size * 1.3);
+          ctx.lineTo(p.size * 0.7, 0);
+          ctx.lineTo(0, p.size * 1.3);
+          ctx.lineTo(-p.size * 0.7, 0);
           ctx.closePath();
           ctx.fill();
 
-          ctx.strokeStyle = '#ffffff';
+          // Wing flutter lines
+          const wingSpread = Math.sin(this.ambientTimer * 20 + p.x) * p.size * 1.2;
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
           ctx.lineWidth = 0.8;
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.lineTo(wingSpread, -p.size * 0.5);
+          ctx.moveTo(0, 0);
+          ctx.lineTo(-wingSpread, -p.size * 0.5);
           ctx.stroke();
           ctx.restore();
         }
+        ctx.restore();
+        break;
+      }
 
+      case 'queen_chamber': {
+        // Bölüm 12: Kraliçe Odası • Zehirli Mor Feromon Sisi & Yumurta Salkımları
+        ctx.save();
+        const qGrad = ctx.createRadialGradient(w * 0.5, h * 0.3, 10, w * 0.5, h * 0.3, w * 0.75);
+        qGrad.addColorStop(0, 'rgba(168, 85, 247, 0.28)');
+        qGrad.addColorStop(0.45, 'rgba(217, 70, 239, 0.15)');
+        qGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = qGrad;
+        ctx.fillRect(0, 0, w, h);
+
+        // Pheromone Smoke Plumes
+        for (const p of this.ambientCustomParticles) {
+          ctx.save();
+          ctx.fillStyle = p.color;
+          ctx.globalAlpha = p.alpha * 0.5;
+          ctx.shadowBlur = 16;
+          ctx.shadowColor = p.color;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+        ctx.restore();
+        break;
+      }
+
+      case 'neural_web': {
+        // Bölüm 13: Biyo-Beyin Sinir Ağı & Çakan Sinaptik Akson Kıvılcımları
+        ctx.save();
+        const bgN = ctx.createRadialGradient(w * 0.5, h * 0.3, 10, w * 0.5, h * 0.3, w * 0.7);
+        bgN.addColorStop(0, 'rgba(16, 185, 129, 0.20)');
+        bgN.addColorStop(0.6, 'rgba(6, 182, 212, 0.10)');
+        bgN.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = bgN;
+        ctx.fillRect(0, 0, w, h);
+
+        // Draw Axon Synapse Connection Lines
+        ctx.lineWidth = 1.4;
+        for (let i = 0; i < this.ambientCustomNodes.length; i++) {
+          const n1 = this.ambientCustomNodes[i];
+          for (const targetIdx of n1.connections) {
+            const n2 = this.ambientCustomNodes[targetIdx];
+            if (!n2) continue;
+
+            const pulseBright = Math.sin(this.ambientTimer * 3 + i * 0.8) * 0.25 + 0.45;
+            ctx.strokeStyle = `rgba(52, 211, 153, ${pulseBright})`;
+            ctx.beginPath();
+            ctx.moveTo(n1.x, n1.y);
+            ctx.lineTo(n2.x, n2.y);
+            ctx.stroke();
+
+            // Travelling Electrical Spark
+            const sparkT = (this.ambientTimer * 1.5 + i * 0.3) % 1.0;
+            const sx = n1.x + (n2.x - n1.x) * sparkT;
+            const sy = n1.y + (n2.y - n1.y) * sparkT;
+            ctx.save();
+            ctx.fillStyle = '#ffffff';
+            ctx.shadowBlur = 8;
+            ctx.shadowColor = '#06b6d4';
+            ctx.beginPath();
+            ctx.arc(sx, sy, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+          }
+        }
+
+        // Neural Node Soma Centers
+        for (const n of this.ambientCustomNodes) {
+          const np = Math.sin(n.pulse) * 2 + 4.5;
+          ctx.save();
+          ctx.fillStyle = n.color;
+          ctx.shadowBlur = 12;
+          ctx.shadowColor = n.color;
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, np, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+        ctx.restore();
+        break;
+      }
+
+      case 'acid_pools': {
+        // Bölüm 14: Korozif Asit Gölleri, Fışkıran Gayzerler & Asit Kabarcıkları
+        ctx.save();
+        // Boiling Acid Wave at Bottom
+        const waveY = h * 0.82;
+        ctx.fillStyle = 'rgba(132, 204, 22, 0.16)';
+        ctx.beginPath();
+        ctx.moveTo(0, h);
+        ctx.lineTo(0, waveY);
+        for (let x = 0; x <= w; x += 20) {
+          const wy = waveY + Math.sin(this.ambientTimer * 4 + x * 0.04) * 6;
+          ctx.lineTo(x, wy);
+        }
+        ctx.lineTo(w, h);
+        ctx.closePath();
+        ctx.fill();
+
+        // Bursting Acid Bubbles & Corrosive Geysers
+        for (const p of this.ambientCustomParticles) {
+          ctx.save();
+          ctx.fillStyle = p.color;
+          ctx.globalAlpha = p.alpha;
+          ctx.shadowBlur = 10;
+          ctx.shadowColor = p.color;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+        ctx.restore();
+        break;
+      }
+
+      case 'hive_core': {
+        // Bölüm 15: Atan Devasa Organik Kovan Kalbi & Koroner Damarlar
+        ctx.save();
+        const heartX = w * 0.5;
+        const heartY = h * 0.32;
+        // Cardiac double-beat systolic pulse
+        const beatT = (this.ambientTimer * 2.2) % (Math.PI * 2);
+        const heartScale = 1.0 + Math.pow(Math.sin(beatT), 6) * 0.28 + Math.pow(Math.sin(beatT + 0.4), 8) * 0.18;
+
+        // Radiating Arterial Bloodlines
+        ctx.save();
+        ctx.translate(heartX, heartY);
+        ctx.scale(heartScale, heartScale);
+
+        // Core Heart Silhouette & Ambient Flesh Glow
+        const hGrad = ctx.createRadialGradient(0, 0, 10, 0, 0, 95);
+        hGrad.addColorStop(0, 'rgba(236, 72, 153, 0.35)');
+        hGrad.addColorStop(0.5, 'rgba(16, 185, 129, 0.20)');
+        hGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = hGrad;
+        ctx.beginPath();
+        ctx.arc(0, 0, 95, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Pulsing Ventricles
+        ctx.fillStyle = 'rgba(236, 72, 153, 0.45)';
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = '#ec4899';
+        ctx.beginPath();
+        ctx.arc(-18, -10, 28, 0, Math.PI * 2);
+        ctx.arc(18, -10, 28, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        // Floating Bloodline Spores
+        for (const p of this.ambientCustomParticles) {
+          ctx.save();
+          ctx.fillStyle = p.color;
+          ctx.globalAlpha = p.alpha * 0.8;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size * 0.4, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+        ctx.restore();
+        break;
+      }
+
+      case 'proto_leviathan': {
+        // Bölüm 16: Kovan Leviathanı • Devasa Dokunaçlar & Zehirli Girdap
+        ctx.save();
+        const levX = w * 0.5;
+        const levY = h * 0.28;
+
+        // Toxic Vortex Fog
+        const levGrad = ctx.createRadialGradient(levX, levY, 15, levX, levY, w * 0.7);
+        levGrad.addColorStop(0, 'rgba(5, 150, 105, 0.32)');
+        levGrad.addColorStop(0.4, 'rgba(52, 211, 153, 0.18)');
+        levGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = levGrad;
+        ctx.fillRect(0, 0, w, h);
+
+        // Undulating Giant Bio-Tendrils
+        ctx.lineWidth = 3.5;
+        ctx.strokeStyle = 'rgba(52, 211, 153, 0.35)';
+        for (let i = 0; i < 6; i++) {
+          const baseAng = (i * Math.PI * 2) / 6;
+          ctx.beginPath();
+          ctx.moveTo(levX, levY);
+          for (let seg = 1; seg <= 5; seg++) {
+            const dist = seg * 24;
+            const waveOffset = Math.sin(this.ambientTimer * 2.5 + seg * 0.8 + i) * 14;
+            const tx = levX + Math.cos(baseAng) * dist + waveOffset;
+            const ty = levY + Math.sin(baseAng) * dist + waveOffset;
+            ctx.lineTo(tx, ty);
+          }
+          ctx.stroke();
+        }
+        ctx.restore();
+        break;
+      }
+
+      // ═══════════════════════════════════════════════════════════════
+      // SEKTÖR 3: TAKYON TEKİLLİĞİ & ZAMAN BÜKÜLMESİ (Bölüm 17 - 24)
+      // ═══════════════════════════════════════════════════════════════
+
+      case 'dimension_rift': {
+        // Bölüm 17: Boyut Yırtığı • Kırılan Cam & Prizmatik Renk Sapmaları
+        ctx.save();
+        const rX = w * 0.5;
+        const rY = h * 0.3;
+
+        // Jagged Reality Fracture Seam
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.7)';
+        ctx.lineWidth = 2.2;
+        ctx.shadowBlur = 14;
+        ctx.shadowColor = '#38bdf8';
+        ctx.beginPath();
+        ctx.moveTo(rX - 80, rY - 70);
+        ctx.lineTo(rX - 20, rY - 10);
+        ctx.lineTo(rX + 40, rY - 45);
+        ctx.lineTo(rX + 15, rY + 30);
+        ctx.lineTo(rX + 75, rY + 65);
+        ctx.stroke();
+
+        // Floating Mirror Glass Shards
+        for (const p of this.ambientCustomParticles) {
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rotation);
+          ctx.fillStyle = p.color;
+          ctx.globalAlpha = p.alpha * 0.75;
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 0.8;
+
+          ctx.beginPath();
+          ctx.moveTo(0, -p.size);
+          ctx.lineTo(p.size * 0.7, p.size * 0.3);
+          ctx.lineTo(-p.size * 0.5, p.size * 0.8);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+          ctx.restore();
+        }
+        ctx.restore();
+        break;
+      }
+
+      case 'tachyon_stream': {
+        // Bölüm 18: Takyon Akıntısı • Ters Akan Yüksek Hızlı Işık Çizgileri
+        ctx.save();
+        const tGrad = ctx.createLinearGradient(0, h, 0, 0);
+        tGrad.addColorStop(0, 'rgba(99, 102, 241, 0.22)');
+        tGrad.addColorStop(0.7, 'rgba(129, 140, 248, 0.12)');
+        tGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = tGrad;
+        ctx.fillRect(0, 0, w, h);
+
+        // Anti-Gravity Upward Tachyon Beams
+        for (const p of this.ambientCustomParticles) {
+          ctx.save();
+          ctx.strokeStyle = p.color;
+          ctx.lineWidth = p.custom1;
+          ctx.globalAlpha = p.alpha;
+          ctx.shadowBlur = 8;
+          ctx.shadowColor = p.color;
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(p.x, p.y - p.size);
+          ctx.stroke();
+          ctx.restore();
+        }
+        ctx.restore();
+        break;
+      }
+
+      case 'parallel_mirrors': {
+        // Bölüm 19: Paralel Evren Filosu • Kuantum Ayna Ufku & Hayalet Gemiler
+        ctx.save();
+        const mirrorY = h * 0.35;
+
+        // Glowing Mirror Horizon Line
+        ctx.strokeStyle = 'rgba(168, 85, 247, 0.55)';
+        ctx.lineWidth = 1.8;
+        ctx.shadowBlur = 12;
+        ctx.shadowColor = '#c084fc';
+        ctx.beginPath();
+        ctx.moveTo(0, mirrorY);
+        ctx.lineTo(w, mirrorY);
+        ctx.stroke();
+
+        // Spectral Ghost Ships (Parallel Reflections)
+        for (const p of this.ambientCustomParticles) {
+          ctx.save();
+          ctx.fillStyle = p.color;
+          ctx.globalAlpha = p.alpha * 0.6;
+          ctx.shadowBlur = 10;
+          ctx.shadowColor = p.color;
+
+          // Ghost delta ship
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(p.x - 12, p.y + 8);
+          ctx.lineTo(p.x, p.y + 4);
+          ctx.lineTo(p.x + 12, p.y + 8);
+          ctx.closePath();
+          ctx.fill();
+
+          // Symmetrical Mirror Ghost
+          const mirrorGhostY = mirrorY - (p.y - mirrorY);
+          ctx.globalAlpha = p.alpha * 0.35;
+          ctx.beginPath();
+          ctx.moveTo(p.x, mirrorGhostY);
+          ctx.lineTo(p.x - 12, mirrorGhostY - 8);
+          ctx.lineTo(p.x, mirrorGhostY - 4);
+          ctx.lineTo(p.x + 12, mirrorGhostY - 8);
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
+        }
+        ctx.restore();
+        break;
+      }
+
+      case 'chrono_tower': {
+        // Bölüm 20: Zaman Kulesi • Dönen Astrolab Dişlileri & Saat Çarkları
+        ctx.save();
+        for (const g of this.ambientCustomParticles) {
+          ctx.save();
+          ctx.translate(g.x, g.y);
+          ctx.rotate(this.ambientTimer * g.vRot);
+          ctx.strokeStyle = g.color;
+          ctx.lineWidth = 1.5;
+          ctx.shadowBlur = 8;
+          ctx.shadowColor = g.color;
+
+          // Main Gear Wheel
+          ctx.beginPath();
+          ctx.arc(0, 0, g.size, 0, Math.PI * 2);
+          ctx.stroke();
+
+          // Inner Ring
+          ctx.beginPath();
+          ctx.arc(0, 0, g.custom2, 0, Math.PI * 2);
+          ctx.stroke();
+
+          // Gear Teeth
+          const teeth = g.custom1 || 12;
+          for (let t = 0; t < teeth; t++) {
+            const ta = (t * Math.PI * 2) / teeth;
+            const x1 = Math.cos(ta) * (g.size - 4);
+            const y1 = Math.sin(ta) * (g.size - 4);
+            const x2 = Math.cos(ta) * (g.size + 5);
+            const y2 = Math.sin(ta) * (g.size + 5);
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+          }
+          ctx.restore();
+        }
+        ctx.restore();
+        break;
+      }
+
+      case 'entropy_collapse': {
+        // Bölüm 21: Entropi Çöküşü • Kırmızı Kuantum Parçalanma Blokları
+        ctx.save();
+        const entX = w * 0.5;
+        const entY = h * 0.32;
+
+        // Dark Crimson Gravitational Void
+        const entGrad = ctx.createRadialGradient(entX, entY, 10, entX, entY, w * 0.65);
+        entGrad.addColorStop(0, 'rgba(239, 68, 68, 0.32)');
+        entGrad.addColorStop(0.5, 'rgba(153, 27, 27, 0.15)');
+        entGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = entGrad;
+        ctx.fillRect(0, 0, w, h);
+
+        // Disintegrating Entropy Voxels
+        for (const p of this.ambientCustomParticles) {
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rotation);
+          ctx.fillStyle = p.color;
+          ctx.globalAlpha = p.alpha;
+          ctx.shadowBlur = 10;
+          ctx.shadowColor = p.color;
+          ctx.fillRect(-p.size * 0.5, -p.size * 0.5, p.size, p.size);
+          ctx.restore();
+        }
+        ctx.restore();
+        break;
+      }
+
+      case 'void_limbo': {
+        // Bölüm 22: Boyutlararası Araf • 4D Dönen Hiperküp (Tesseract)
+        ctx.save();
+        const tX = w * 0.5;
+        const tY = h * 0.3;
+        const tRot = this.ambientTimer * 0.5;
+
+        ctx.save();
+        ctx.translate(tX, tY);
+        ctx.rotate(tRot);
+        ctx.strokeStyle = 'rgba(139, 92, 246, 0.55)';
+        ctx.lineWidth = 1.4;
+        ctx.shadowBlur = 12;
+        ctx.shadowColor = '#8b5cf6';
+
+        // Outer Cube
+        ctx.strokeRect(-38, -38, 76, 76);
+        // Inner Cube (4D perspective)
+        ctx.strokeRect(-18, -18, 36, 36);
+        // Corner connection rays
+        ctx.beginPath();
+        ctx.moveTo(-38, -38); ctx.lineTo(-18, -18);
+        ctx.moveTo(38, -38);  ctx.lineTo(18, -18);
+        ctx.moveTo(38, 38);   ctx.lineTo(18, 18);
+        ctx.moveTo(-38, 38);  ctx.lineTo(-18, 18);
+        ctx.stroke();
+        ctx.restore();
+
+        // Flickering Limbo Phase Particles
+        for (const p of this.ambientCustomParticles) {
+          ctx.save();
+          ctx.fillStyle = p.color;
+          ctx.globalAlpha = p.alpha * (Math.sin(this.ambientTimer * 4 + p.x) * 0.35 + 0.65);
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size * 0.4, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+        ctx.restore();
+        break;
+      }
+
+      case 'reality_edge': {
+        // Bölüm 23: Gerçekliğin Kenarı • Kozmik Sicim Dalgası & Yıldız Şelalesi
+        ctx.save();
+        for (let wave = 0; wave < 4; wave++) {
+          const waveY = h * 0.22 + wave * 22;
+          ctx.strokeStyle = wave % 2 === 0 ? 'rgba(236, 72, 153, 0.35)' : 'rgba(56, 189, 248, 0.35)';
+          ctx.lineWidth = 1.6;
+          ctx.beginPath();
+          for (let x = 0; x <= w; x += 15) {
+            const wy = waveY + Math.sin(this.ambientTimer * 2 + x * 0.03 + wave * 1.2) * 12;
+            if (x === 0) ctx.moveTo(x, wy);
+            else ctx.lineTo(x, wy);
+          }
+          ctx.stroke();
+        }
+
+        // Falling Stardust
+        for (const p of this.ambientCustomParticles) {
+          ctx.save();
+          ctx.fillStyle = p.color;
+          ctx.globalAlpha = p.alpha;
+          ctx.shadowBlur = 6;
+          ctx.shadowColor = p.color;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size * 0.3, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+        ctx.restore();
+        break;
+      }
+
+      case 'eternity_prime': {
+        // Bölüm 24: Sonsuzluk Titani • Geçmiş & Gelecek Çift Tekillik Girdabı
+        ctx.save();
+        const eX = w * 0.5;
+        const eY = h * 0.30;
+        const eRot = this.ambientTimer * 0.6;
+
+        // Past Singularity (Left Blue Vortex)
+        const pastGrad = ctx.createRadialGradient(eX - 35, eY, 5, eX - 35, eY, 70);
+        pastGrad.addColorStop(0, 'rgba(56, 189, 248, 0.35)');
+        pastGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = pastGrad;
+        ctx.beginPath();
+        ctx.arc(eX - 35, eY, 70, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Future Singularity (Right Gold/Red Vortex)
+        const futGrad = ctx.createRadialGradient(eX + 35, eY, 5, eX + 35, eY, 70);
+        futGrad.addColorStop(0, 'rgba(255, 208, 0, 0.38)');
+        futGrad.addColorStop(0.6, 'rgba(255, 0, 85, 0.20)');
+        futGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = futGrad;
+        ctx.beginPath();
+        ctx.arc(eX + 35, eY, 70, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Dual Rotating Planetary Rings
+        ctx.save();
+        ctx.translate(eX, eY);
+        ctx.rotate(eRot);
+        ctx.strokeStyle = 'rgba(255, 208, 0, 0.45)';
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 68, 22, 0, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.rotate(-eRot * 2.0);
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.45)';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 48, 16, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+
+        // Orbiting Chrono Singularity Flares
+        for (const p of this.ambientCustomParticles) {
+          ctx.save();
+          ctx.fillStyle = p.color;
+          ctx.globalAlpha = p.alpha;
+          ctx.shadowBlur = 12;
+          ctx.shadowColor = p.color;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size * 0.35, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
         ctx.restore();
         break;
       }

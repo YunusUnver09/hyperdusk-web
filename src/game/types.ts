@@ -389,6 +389,7 @@ export interface GameStats {
 export type GameState = 'menu' | 'map' | 'playing' | 'paused' | 'wave_cleared' | 'level_victory' | 'game_over' | 'victory';
 
 export type AmbientType =
+  // Sektör 1 (Asteroid Kuşağı & Savunma)
   | 'asteroids'
   | 'plasma'
   | 'cyber_grid'
@@ -397,8 +398,24 @@ export type AmbientType =
   | 'void_vortex'
   | 'quantum_pulse'
   | 'warp_tunnel'
-  | 'bio_spores'
-  | 'tachyon_rift';
+  // Sektör 2 (Biyomekanik Kovan & Asit)
+  | 'bio_signals'
+  | 'hive_eggs'
+  | 'chitin_swarms'
+  | 'queen_chamber'
+  | 'neural_web'
+  | 'acid_pools'
+  | 'hive_core'
+  | 'proto_leviathan'
+  // Sektör 3 (Takyon Tekilliği & Zaman)
+  | 'dimension_rift'
+  | 'tachyon_stream'
+  | 'parallel_mirrors'
+  | 'chrono_tower'
+  | 'entropy_collapse'
+  | 'void_limbo'
+  | 'reality_edge'
+  | 'eternity_prime';
 
 export interface SectorConfig {
   id: number;
