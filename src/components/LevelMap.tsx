@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { LEVELS } from '../game/levelData';
-import type { LevelConfig } from '../game/types';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { SECTORS, LEVELS, getSectorLevels, getSectorConfig } from '../game/levelData';
+import type { LevelConfig, SectorConfig } from '../game/types';
 import { soundManager } from '../game/soundManager';
 import { coreManager } from '../game/coreManager';
 import { CoreForgeModal } from './CoreForgeModal';
@@ -17,7 +17,11 @@ import {
   ChevronRight,
   Award,
   Sparkles,
-  Cpu
+  Cpu,
+  Biohazard,
+  Clock,
+  Crown,
+  SkipForward
 } from 'lucide-react';
 
 interface LevelMapProps {
@@ -27,27 +31,38 @@ interface LevelMapProps {
   coreFragments?: number;
   onSelectLevel: (levelId: number) => void;
   onBackToMenu: () => void;
+  onDevSkipSector?: () => void;
 }
 
-// Visual Node Coordinates (percentage coordinates for responsive vertical winding path)
-// Levels start from 1 (bottom) to 8 (top)
-const NODE_COORDINATES = [
-  { levelId: 1, x: 50, y: 88 },
-  { levelId: 2, x: 26, y: 76 },
-  { levelId: 3, x: 74, y: 64 },
-  { levelId: 4, x: 30, y: 52 }, // Mini Boss Sector
-  { levelId: 5, x: 70, y: 40 },
-  { levelId: 6, x: 25, y: 28 },
-  { levelId: 7, x: 68, y: 16 },
-  { levelId: 8, x: 50, y: 5 }   // Final Boss Sector
+// Visual Node Coordinates (percentage coordinates for responsive vertical winding path within a sector)
+// Levels start from node index 0 (bottom: y: 88) to 7 (top: y: 6)
+const SECTOR_NODE_COORDINATES = [
+  { stepIndex: 0, x: 50, y: 88 },
+  { stepIndex: 1, x: 26, y: 76 },
+  { stepIndex: 2, x: 74, y: 64 },
+  { stepIndex: 3, x: 30, y: 52 }, // Mini Boss Node (Wave 4)
+  { stepIndex: 4, x: 70, y: 40 },
+  { stepIndex: 5, x: 25, y: 28 },
+  { stepIndex: 6, x: 68, y: 16 },
+  { stepIndex: 7, x: 50, y: 6 }   // Sector Boss Node (Wave 8)
 ];
 
 const LevelMapComponent: React.FC<LevelMapProps> = ({
   unlockedLevel,
   coreFragments,
   onSelectLevel,
-  onBackToMenu
+  onBackToMenu,
+  onDevSkipSector
 }) => {
+  // Determine initial sector from player's unlocked level
+  const initialSectorId = useMemo(() => {
+    if (unlockedLevel > 16) return 3;
+    if (unlockedLevel > 8) return 2;
+    return 1;
+  }, [unlockedLevel]);
+
+  const [activeSectorId, setActiveSectorId] = useState<number>(initialSectorId);
+  const [devToast, setDevToast] = useState<string | null>(null);
   const [selectedLevelId, setSelectedLevelId] = useState<number>(() =>
     Math.min(unlockedLevel, LEVELS.length)
   );
@@ -58,29 +73,86 @@ const LevelMapComponent: React.FC<LevelMapProps> = ({
   const [showForgeModal, setShowForgeModal] = useState<boolean>(false);
   const [showEngineModal, setShowEngineModal] = useState<boolean>(false);
 
+  const activeSector = useMemo<SectorConfig>(() => {
+    return getSectorConfig(activeSectorId);
+  }, [activeSectorId]);
+
+  const currentSectorLevels = useMemo<LevelConfig[]>(() => {
+    return getSectorLevels(activeSectorId);
+  }, [activeSectorId]);
+
   // Spaceship Animation & Launch Transition State
   const [shipPos, setShipPos] = useState<{ x: number; y: number }>(() => {
-    const initialCoords = NODE_COORDINATES.find(n => n.levelId === Math.min(unlockedLevel, LEVELS.length)) || NODE_COORDINATES[0];
-    return { x: initialCoords.x, y: initialCoords.y };
+    const currentLvlConfig = LEVELS.find(l => l.id === Math.min(unlockedLevel, LEVELS.length));
+    if (currentLvlConfig && currentLvlConfig.sectorId === initialSectorId) {
+      const stepIdx = (currentLvlConfig.id - 1) % 8;
+      const coord = SECTOR_NODE_COORDINATES[stepIdx] || SECTOR_NODE_COORDINATES[0];
+      return { x: coord.x, y: coord.y };
+    }
+    return { x: SECTOR_NODE_COORDINATES[0].x, y: SECTOR_NODE_COORDINATES[0].y };
   });
+
   const [isTraveling, setIsTraveling] = useState(false);
   const [isLaunching, setIsLaunching] = useState(false);
-  const [shipAngle, setShipAngle] = useState(-90); // Angle facing upwards initially
+  const [shipAngle, setShipAngle] = useState(-90);
 
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
-  // Play Map Theme ("Fractured Space-Time")
+  // Play Map Theme
   useEffect(() => {
     soundManager.playMapTheme();
   }, []);
 
-  // Auto-scroll down to the player's current unlocked level initially
+  // Update ship position when sector changes
+  useEffect(() => {
+    const relevantLevel = selectedLevelId >= activeSector.levelStart && selectedLevelId <= activeSector.levelEnd
+      ? selectedLevelId
+      : Math.min(unlockedLevel, activeSector.levelEnd);
+
+    const stepIdx = Math.max(0, Math.min(7, (relevantLevel - 1) % 8));
+    const coord = SECTOR_NODE_COORDINATES[stepIdx] || SECTOR_NODE_COORDINATES[0];
+    setShipPos({ x: coord.x, y: coord.y });
+  }, [activeSectorId, selectedLevelId, unlockedLevel, activeSector]);
+
+  // Auto-scroll down towards the player's active level in this sector
   useEffect(() => {
     if (scrollContainerRef.current) {
       const container = scrollContainerRef.current;
-      container.scrollTop = container.scrollHeight * 0.55;
+      container.scrollTop = container.scrollHeight * 0.52;
     }
-  }, []);
+  }, [activeSectorId]);
+
+  const handleSectorTabClick = (sector: SectorConfig) => {
+    if (isTraveling || isLaunching) return;
+
+    if (unlockedLevel < sector.requiredLevel) {
+      soundManager.playShieldHit();
+      return;
+    }
+
+    soundManager.playGemSwap();
+    setActiveSectorId(sector.id);
+  };
+
+  const handleDevSkipSector = () => {
+    if (isTraveling || isLaunching) return;
+    soundManager.playGemSwap();
+    soundManager.playVictory();
+
+    let targetSector = 2;
+    if (activeSectorId === 1) targetSector = 2;
+    else if (activeSectorId === 2) targetSector = 3;
+    else targetSector = 1;
+
+    if (onDevSkipSector) {
+      onDevSkipSector();
+    }
+
+    setActiveSectorId(targetSector);
+    const targetSectorConfig = getSectorConfig(targetSector);
+    setDevToast(`⚡ GELİŞTİRİCİ: ${targetSectorConfig.name.toUpperCase()} AÇILDI!`);
+    setTimeout(() => setDevToast(null), 2500);
+  };
 
   const handleNodeClick = (level: LevelConfig) => {
     if (isTraveling || isLaunching) return;
@@ -102,9 +174,11 @@ const LevelMapComponent: React.FC<LevelMapProps> = ({
     setIsLaunching(true);
     soundManager.playLaser();
 
-    // Source position
-    const sourceNode = NODE_COORDINATES.find(n => n.levelId === (selectedLevelId || unlockedLevel)) || NODE_COORDINATES[0];
-    const targetNode = NODE_COORDINATES.find(n => n.levelId === targetLevelId) || NODE_COORDINATES[0];
+    const targetStepIdx = (targetLevelId - 1) % 8;
+    const sourceStepIdx = ((selectedLevelId || unlockedLevel) - 1) % 8;
+
+    const sourceNode = SECTOR_NODE_COORDINATES[sourceStepIdx] || SECTOR_NODE_COORDINATES[0];
+    const targetNode = SECTOR_NODE_COORDINATES[targetStepIdx] || SECTOR_NODE_COORDINATES[0];
 
     const dx = targetNode.x - sourceNode.x;
     const dy = targetNode.y - sourceNode.y;
@@ -147,13 +221,13 @@ const LevelMapComponent: React.FC<LevelMapProps> = ({
     }
   };
 
-  // Generate SVG Bezier Path connecting nodes sequentially (1 -> 2 -> 3 -> ... -> 8)
+  // Generate SVG Bezier Path connecting nodes sequentially
   const generatePathD = () => {
-    if (NODE_COORDINATES.length === 0) return '';
-    let d = `M ${NODE_COORDINATES[0].x} ${NODE_COORDINATES[0].y}`;
-    for (let i = 1; i < NODE_COORDINATES.length; i++) {
-      const prev = NODE_COORDINATES[i - 1];
-      const cur = NODE_COORDINATES[i];
+    if (SECTOR_NODE_COORDINATES.length === 0) return '';
+    let d = `M ${SECTOR_NODE_COORDINATES[0].x} ${SECTOR_NODE_COORDINATES[0].y}`;
+    for (let i = 1; i < SECTOR_NODE_COORDINATES.length; i++) {
+      const prev = SECTOR_NODE_COORDINATES[i - 1];
+      const cur = SECTOR_NODE_COORDINATES[i];
       const cx1 = prev.x;
       const cy1 = (prev.y + cur.y) / 2;
       const cx2 = cur.x;
@@ -180,8 +254,8 @@ const LevelMapComponent: React.FC<LevelMapProps> = ({
         </button>
 
         <div className="map-title-box">
-          <span className="map-title-main">SEKTÖR HARİTASI</span>
-          <span className="map-title-sub">UZAY SAVUNMA HATTI</span>
+          <span className="map-title-main">{activeSector.name.toUpperCase()}</span>
+          <span className="map-title-sub">{activeSector.subtitle}</span>
         </div>
 
         <div className="map-stat-badge">
@@ -190,11 +264,77 @@ const LevelMapComponent: React.FC<LevelMapProps> = ({
         </div>
       </div>
 
-      {/* 2. Scrollable Galaxy Path Map */}
+      {/* 2. Interactive Sector Selector Tabs */}
+      <div className="map-sector-tabs-container">
+        {SECTORS.map((sec) => {
+          const isUnlocked = unlockedLevel >= sec.requiredLevel;
+          const isActive = sec.id === activeSectorId;
+          const isCompleted = unlockedLevel > sec.levelEnd;
+
+          return (
+            <button
+              key={sec.id}
+              className={`map-sector-tab-btn ${isActive ? 'active' : ''} ${isUnlocked ? 'unlocked' : 'locked'} ${isCompleted ? 'completed' : ''}`}
+              onClick={() => handleSectorTabClick(sec)}
+              style={{
+                borderColor: isActive ? sec.themeColor : undefined,
+                boxShadow: isActive ? `0 0 16px ${sec.themeColor}44` : undefined
+              }}
+            >
+              <div className="sector-tab-inner">
+                {sec.id === 1 ? (
+                  <Shield size={14} color={isUnlocked ? sec.themeColor : '#64748b'} />
+                ) : sec.id === 2 ? (
+                  <Biohazard size={14} color={isUnlocked ? sec.themeColor : '#64748b'} />
+                ) : (
+                  <Clock size={14} color={isUnlocked ? sec.themeColor : '#64748b'} />
+                )}
+
+                <span className="sector-tab-title">SEKTÖR {sec.id}</span>
+
+                {!isUnlocked && (
+                  <Lock size={12} className="sector-lock-icon" />
+                )}
+
+                {isCompleted && (
+                  <Check size={12} color="#00ff88" className="sector-check-icon" />
+                )}
+              </div>
+            </button>
+          );
+        })}
+
+        {/* ⚡ Geliştirici Modu: Sonraki Sektöre Anında Atla */}
+        <button
+          className="map-sector-tab-btn dev-skip-btn"
+          onClick={handleDevSkipSector}
+          title="Geliştirici Modu: Sonraki Sektöre Anında Atla (Bölüm Kilitlerini Açar)"
+        >
+          <div className="sector-tab-inner">
+            <SkipForward size={13} color="#fbbf24" />
+            <span className="sector-tab-title" style={{ color: '#fbbf24' }}>DEV ⏭️</span>
+          </div>
+        </button>
+      </div>
+
+      {/* Dev Mode Notification Toast */}
+      {devToast && (
+        <div className="map-dev-toast">
+          <Sparkles size={14} color="#ffd000" />
+          <span>{devToast}</span>
+        </div>
+      )}
+
+      {/* 3. Scrollable Galaxy Path Map */}
       <div className="map-scroll-area" ref={scrollContainerRef}>
         <div className="map-canvas-viewport">
           {/* Animated Background Cosmic Dust / Grid */}
-          <div className="map-nebula-bg" />
+          <div
+            className="map-nebula-bg"
+            style={{
+              background: `radial-gradient(ellipse at 50% 45%, ${activeSector.themeColor}18 0%, rgba(4, 7, 20, 0.98) 75%)`
+            }}
+          />
 
           {/* SVG Connection Energy Lines */}
           <svg
@@ -204,9 +344,9 @@ const LevelMapComponent: React.FC<LevelMapProps> = ({
           >
             <defs>
               <linearGradient id="unlockedPathGrad" x1="0%" y1="100%" x2="0%" y2="0%">
-                <stop offset="0%" stopColor="#00f3ff" stopOpacity="0.95" />
+                <stop offset="0%" stopColor={activeSector.gradient[0]} stopOpacity="0.95" />
                 <stop offset="50%" stopColor="#ffd000" stopOpacity="0.95" />
-                <stop offset="100%" stopColor="#ff0055" stopOpacity="0.95" />
+                <stop offset="100%" stopColor={activeSector.themeColor} stopOpacity="0.95" />
               </linearGradient>
             </defs>
 
@@ -214,21 +354,23 @@ const LevelMapComponent: React.FC<LevelMapProps> = ({
             <path
               d={generatePathD()}
               fill="none"
-              stroke="rgba(0, 243, 255, 0.12)"
+              stroke="rgba(255, 255, 255, 0.12)"
               strokeWidth="2.2"
               strokeDasharray="3, 3"
               strokeLinecap="round"
             />
 
-            {/* Glowing Active Conduits connecting unlocked nodes (Hardware accelerated layered stroke) */}
-            {NODE_COORDINATES.slice(0, Math.min(unlockedLevel, NODE_COORDINATES.length)).map((_, idx, arr) => {
+            {/* Glowing Active Conduits connecting unlocked nodes in this sector */}
+            {SECTOR_NODE_COORDINATES.map((_, idx, arr) => {
               if (idx === 0) return null;
+              const levelForCurNode = activeSector.levelStart + idx;
+              if (levelForCurNode > unlockedLevel) return null;
+
               const prev = arr[idx - 1];
               const cur = arr[idx];
               const pD = `M ${prev.x} ${prev.y} C ${prev.x} ${(prev.y + cur.y) / 2}, ${cur.x} ${(prev.y + cur.y) / 2}, ${cur.x} ${cur.y}`;
               return (
                 <g key={`active_path_group_${idx}`}>
-                  {/* Outer soft ambient glow line */}
                   <path
                     d={pD}
                     fill="none"
@@ -237,7 +379,6 @@ const LevelMapComponent: React.FC<LevelMapProps> = ({
                     strokeOpacity="0.35"
                     strokeLinecap="round"
                   />
-                  {/* Inner vibrant moving laser pulses */}
                   <path
                     d={pD}
                     fill="none"
@@ -251,15 +392,16 @@ const LevelMapComponent: React.FC<LevelMapProps> = ({
             })}
           </svg>
 
-          {/* 3. Level Circular Nodes */}
-          {LEVELS.map((level) => {
-            const coord = NODE_COORDINATES.find(n => n.levelId === level.id) || { x: 50, y: 50 };
+          {/* 4. Level Circular Nodes */}
+          {currentSectorLevels.map((level, stepIdx) => {
+            const coord = SECTOR_NODE_COORDINATES[stepIdx] || { x: 50, y: 50 };
             const isUnlocked = level.id <= unlockedLevel;
             const isCompleted = level.id < unlockedLevel;
             const isCurrent = level.id === unlockedLevel;
             const isSelected = level.id === selectedLevelId;
-            const isFinalBoss = level.id === 8;
-            const isMidBoss = level.id === 4;
+            const isFinalBoss = stepIdx === 7;
+            const isMidBoss = stepIdx === 3;
+            const isUltimateBoss = level.id === 24;
 
             return (
               <div
@@ -271,18 +413,19 @@ const LevelMapComponent: React.FC<LevelMapProps> = ({
                 }}
               >
                 {/* Node Outer Halo Glow */}
-                {isCurrent && <div className="map-node-pulse-ring" />}
+                {isCurrent && <div className="map-node-pulse-ring" style={{ borderColor: level.themeColor }} />}
 
                 {/* Circular Level Button */}
                 <button
                   className={`map-node-btn ${isUnlocked ? 'unlocked' : 'locked'} ${
                     isCompleted ? 'completed' : ''
                   } ${isCurrent ? 'current' : ''} ${isSelected ? 'selected' : ''} ${
-                    isFinalBoss ? 'final-boss' : isMidBoss ? 'mid-boss' : ''
+                    isUltimateBoss ? 'ultimate-boss' : isFinalBoss ? 'final-boss' : isMidBoss ? 'mid-boss' : ''
                   }`}
                   onClick={() => handleNodeClick(level)}
                   style={{
-                    borderColor: isUnlocked ? level.themeColor : 'rgba(100, 116, 139, 0.4)'
+                    borderColor: isUnlocked ? level.themeColor : 'rgba(100, 116, 139, 0.4)',
+                    boxShadow: isUnlocked && (isFinalBoss || isCurrent) ? `0 0 18px ${level.themeColor}66` : undefined
                   }}
                   title={level.name}
                 >
@@ -295,12 +438,14 @@ const LevelMapComponent: React.FC<LevelMapProps> = ({
                     ) : (
                       <div className="node-content active">
                         <span className="node-lvl-num">{level.id}</span>
-                        {isFinalBoss ? (
+                        {isUltimateBoss ? (
+                          <Crown size={15} color="#ffd000" />
+                        ) : isFinalBoss ? (
                           <Skull size={14} color="#ff0055" />
                         ) : isMidBoss ? (
                           <Zap size={14} color="#ffd000" />
                         ) : (
-                          <Star size={12} color="#00f3ff" />
+                          <Star size={12} color={level.themeColor} />
                         )}
                       </div>
                     )
@@ -315,7 +460,11 @@ const LevelMapComponent: React.FC<LevelMapProps> = ({
                 {/* Level Node Label */}
                 <div className={`map-node-label ${isUnlocked ? 'active' : 'locked'}`}>
                   <span className="node-label-title">BÖLÜM {level.id}</span>
-                  {isFinalBoss ? (
+                  {isUltimateBoss ? (
+                    <span className="node-boss-tag ultimate" style={{ background: 'linear-gradient(90deg, #ffd000, #ff0055)' }}>
+                      👑 NİHAİ PATRON
+                    </span>
+                  ) : isFinalBoss ? (
                     <span className="node-boss-tag final">SEKTÖR PATRONU</span>
                   ) : isMidBoss ? (
                     <span className="node-boss-tag mini">MİNİ BOSS</span>
@@ -325,7 +474,7 @@ const LevelMapComponent: React.FC<LevelMapProps> = ({
             );
           })}
 
-          {/* 4. Animated Spaceship Sprite on the Path */}
+          {/* 5. Animated Spaceship Sprite on the Path */}
           <div
             className={`map-spaceship-avatar ${isTraveling ? 'traveling' : 'hovering'}`}
             style={{
@@ -345,20 +494,17 @@ const LevelMapComponent: React.FC<LevelMapProps> = ({
               viewBox="0 0 36 36"
               className="ship-svg-body"
             >
-              {/* Wings & Hull */}
               <path
                 d="M 18 2 L 32 30 L 25 26 L 18 34 L 11 26 L 4 30 Z"
                 fill="#0f172a"
-                stroke="#00f3ff"
+                stroke={activeSector.themeColor}
                 strokeWidth="1.8"
               />
-              {/* Cockpit Canopy */}
               <polygon
                 points="18,8 22,20 18,24 14,20"
-                fill="#00f3ff"
+                fill={activeSector.themeColor}
                 opacity="0.9"
               />
-              {/* Neon Accent Lines */}
               <line x1="18" y1="2" x2="18" y2="24" stroke="#ffffff" strokeWidth="1" />
               <line x1="8" y1="28" x2="14" y2="26" stroke="#ff0055" strokeWidth="1.5" />
               <line x1="28" y1="28" x2="22" y2="26" stroke="#ff0055" strokeWidth="1.5" />
@@ -367,7 +513,7 @@ const LevelMapComponent: React.FC<LevelMapProps> = ({
         </div>
       </div>
 
-      {/* 5. Level Details Mission Launch Modal / Bottom Card */}
+      {/* 6. Level Details Mission Launch Modal / Bottom Card */}
       {showLevelCard && activeLevelForCard && (
         <div
           className="map-mission-drawer-overlay"
@@ -385,7 +531,7 @@ const LevelMapComponent: React.FC<LevelMapProps> = ({
             <div className="drawer-header-row">
               <div>
                 <span className="drawer-level-tag" style={{ color: activeLevelForCard.themeColor }}>
-                  BÖLÜM {activeLevelForCard.id}
+                  {activeLevelForCard.sectorName.toUpperCase()} • BÖLÜM {activeLevelForCard.id}
                 </span>
                 <h3 className="drawer-level-title">{activeLevelForCard.name}</h3>
                 <span className="drawer-level-sub">{activeLevelForCard.subtitle}</span>
@@ -443,7 +589,7 @@ const LevelMapComponent: React.FC<LevelMapProps> = ({
         </div>
       )}
 
-      {/* 6. Sol Kenar En Üst: ÇEKİRDEK OCAĞI Yan Butonu */}
+      {/* 7. Sol Kenar En Üst: ÇEKİRDEK OCAĞI Yan Butonu */}
       <button
         className="map-dock-side-btn left"
         onClick={() => {
@@ -462,7 +608,7 @@ const LevelMapComponent: React.FC<LevelMapProps> = ({
         </div>
       </button>
 
-      {/* 7. Sağ Kenar En Üst: ÇEKİRDEK MOTORU Yan Butonu */}
+      {/* 8. Sağ Kenar En Üst: ÇEKİRDEK MOTORU Yan Butonu */}
       <button
         className="map-dock-side-btn right"
         onClick={() => {
@@ -481,14 +627,14 @@ const LevelMapComponent: React.FC<LevelMapProps> = ({
         </div>
       </button>
 
-      {/* 8. Çekirdek Ocağı Modal */}
+      {/* 9. Çekirdek Ocağı Modal */}
       <CoreForgeModal
         isOpen={showForgeModal}
         onClose={() => setShowForgeModal(false)}
         coreFragments={coreFragments ?? coreManager.getFragments()}
       />
 
-      {/* 9. Çekirdek Motoru Modal */}
+      {/* 10. Çekirdek Motoru Modal */}
       <CoreEngineModal
         isOpen={showEngineModal}
         onClose={() => setShowEngineModal(false)}
@@ -501,4 +647,3 @@ const LevelMapComponent: React.FC<LevelMapProps> = ({
 };
 
 export const LevelMap = React.memo(LevelMapComponent);
-

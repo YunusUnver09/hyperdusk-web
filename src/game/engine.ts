@@ -137,6 +137,30 @@ export class GameEngine {
     this.syncUIState(true);
   }
 
+  public skipToNextSectorDevMode(): number {
+    let nextSectorStart = 1;
+    if (this.unlockedLevel < 9) {
+      nextSectorStart = 9; // Sektör 2 (Bölüm 9)
+    } else if (this.unlockedLevel < 17) {
+      nextSectorStart = 17; // Sektör 3 (Bölüm 17)
+    } else if (this.unlockedLevel < 24) {
+      nextSectorStart = 24; // Sektör 3 Galaktik Nihai Patron (Bölüm 24)
+    } else {
+      nextSectorStart = 1; // Sektör 1 (Başa döner)
+    }
+
+    this.unlockedLevel = Math.max(this.unlockedLevel, nextSectorStart);
+    this.currentLevel = nextSectorStart;
+    try {
+      localStorage.setItem('crush_space_unlocked_level', this.unlockedLevel.toString());
+    } catch {}
+
+    coreManager.addFragments(50);
+    soundManager.playVictory();
+    this.syncUIState(true);
+    return nextSectorStart;
+  }
+
   public startLevel(levelNumber: number = 1) {
     this.currentLevel = Math.max(1, Math.min(TOTAL_LEVELS, levelNumber));
     this.battlefield.resetGame(this.currentLevel);

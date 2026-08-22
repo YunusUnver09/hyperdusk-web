@@ -2044,6 +2044,125 @@ body {
   font-weight: 800;
 }
 
+/* Sector Selector Tabs Bar */
+.map-sector-tabs-container {
+  display: flex;
+  gap: 6px;
+  padding: 8px 12px;
+  background: rgba(6, 9, 22, 0.95);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  z-index: 18;
+}
+
+.map-sector-tab-btn {
+  flex: 1;
+  padding: 7px 6px;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  cursor: pointer;
+  outline: none;
+  transition: all 0.22s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.map-sector-tab-btn:hover:not(.locked) {
+  background: rgba(30, 41, 59, 0.8);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.map-sector-tab-btn.active {
+  background: rgba(15, 23, 42, 0.95);
+  border-width: 1.5px;
+}
+
+.map-sector-tab-btn.locked {
+  opacity: 0.45;
+  cursor: not-allowed;
+  border-color: rgba(100, 116, 139, 0.25);
+  background: rgba(10, 14, 28, 0.5);
+}
+
+.map-sector-tab-btn.completed {
+  border-color: rgba(0, 255, 136, 0.35);
+}
+
+.map-sector-tab-btn.dev-skip-btn {
+  background: rgba(251, 191, 36, 0.12);
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  max-width: 80px;
+}
+
+.map-sector-tab-btn.dev-skip-btn:hover {
+  background: rgba(251, 191, 36, 0.25);
+  border-color: #ffd000;
+  box-shadow: 0 0 12px rgba(251, 191, 36, 0.4);
+}
+
+.map-sector-tab-btn.dev-skip-btn:active {
+  transform: scale(0.94);
+}
+
+.map-dev-toast {
+  position: absolute;
+  top: 96px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(15, 23, 42, 0.94);
+  border: 1px solid #ffd000;
+  box-shadow: 0 0 20px rgba(255, 208, 0, 0.4);
+  padding: 6px 14px;
+  border-radius: 20px;
+  color: #ffd000;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  z-index: 30;
+  animation: fadeInDown 0.25s ease-out;
+  pointer-events: none;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.sector-tab-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.sector-tab-title {
+  font-family: var(--font-display);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  color: #ffffff;
+}
+
+.sector-lock-icon {
+  color: #64748b;
+}
+
+.sector-check-icon {
+  color: #00ff88;
+}
+
 /* Scroll Area */
 .map-scroll-area {
   flex: 1;
@@ -2222,6 +2341,27 @@ body {
   background: radial-gradient(circle at 35% 35%, #420f1e 0%, #170409 100%);
 }
 
+.map-node-btn.ultimate-boss {
+  width: 68px;
+  height: 68px;
+  border-width: 4px;
+  border-color: #ffd000 !important;
+  box-shadow: 0 0 32px rgba(255, 208, 0, 0.9), 0 0 14px #ff0055 !important;
+  background: radial-gradient(circle at 35% 35%, #4a2800 0%, #150a00 100%);
+  animation: ultimatePulse 2s infinite ease-in-out;
+}
+
+@keyframes ultimatePulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 28px rgba(255, 208, 0, 0.8), 0 0 10px #ff0055;
+  }
+  50% {
+    transform: scale(1.08);
+    box-shadow: 0 0 40px rgba(255, 208, 0, 1), 0 0 20px #ff0055;
+  }
+}
+
 /* Content inside node */
 .node-content {
   display: flex;
@@ -2292,6 +2432,13 @@ body {
   background: rgba(255, 0, 85, 0.25);
   color: #ff0055;
   border: 1px solid #ff0055;
+}
+
+.node-boss-tag.ultimate {
+  background: linear-gradient(90deg, rgba(255, 208, 0, 0.35), rgba(255, 0, 85, 0.35));
+  color: #ffd000;
+  border: 1px solid #ffd000;
+  box-shadow: 0 0 8px rgba(255, 208, 0, 0.5);
 }
 
 /* Spaceship Avatar on the Map */

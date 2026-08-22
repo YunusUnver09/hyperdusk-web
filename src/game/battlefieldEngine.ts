@@ -177,6 +177,26 @@ export class BattlefieldEngine {
     alpha: number;
     width: number;
   }> = [];
+  public ambientBioSpores: Array<{
+    x: number;
+    y: number;
+    size: number;
+    speed: number;
+    drift: number;
+    alpha: number;
+    pulseAngle: number;
+    color: string;
+  }> = [];
+  public ambientTachyonShards: Array<{
+    x: number;
+    y: number;
+    size: number;
+    speed: number;
+    angle: number;
+    vAngle: number;
+    alpha: number;
+    color: string;
+  }> = [];
 
   // Upgrades & Stats
   public upgrades: PlayerUpgrades = {
@@ -443,6 +463,38 @@ export class BattlefieldEngine {
           speed: Math.random() * 260 + 180,
           alpha: Math.random() * 0.7 + 0.3,
           width: Math.random() * 1.5 + 0.8
+        });
+      }
+    } else if (ambientType === 'bio_spores') {
+      const count = 38;
+      const colors = ['#10b981', '#34d399', '#a855f7', '#6ee7b7', '#84cc16'];
+      this.ambientBioSpores = [];
+      for (let i = 0; i < count; i++) {
+        this.ambientBioSpores.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          size: Math.random() * 4.5 + 2.0,
+          speed: Math.random() * 20 + 10,
+          drift: (Math.random() - 0.5) * 12,
+          alpha: Math.random() * 0.65 + 0.3,
+          pulseAngle: Math.random() * Math.PI * 2,
+          color: colors[Math.floor(Math.random() * colors.length)]
+        });
+      }
+    } else if (ambientType === 'tachyon_rift') {
+      const count = 42;
+      const colors = ['#38bdf8', '#818cf8', '#c084fc', '#f59e0b', '#ec4899'];
+      this.ambientTachyonShards = [];
+      for (let i = 0; i < count; i++) {
+        this.ambientTachyonShards.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          size: Math.random() * 5.5 + 2.5,
+          speed: Math.random() * 32 + 16,
+          angle: Math.random() * Math.PI * 2,
+          vAngle: (Math.random() - 0.5) * 2.5,
+          alpha: Math.random() * 0.7 + 0.25,
+          color: colors[Math.floor(Math.random() * colors.length)]
         });
       }
     }
@@ -1567,6 +1619,26 @@ export class BattlefieldEngine {
         if (st.y > h + st.length) {
           st.y = -st.length;
           st.x = Math.random() * w;
+        }
+      }
+    } else if (ambientType === 'bio_spores') {
+      for (const sp of this.ambientBioSpores) {
+        sp.y -= sp.speed * effectiveDt;
+        sp.x += Math.sin(this.ambientTimer * 2 + sp.drift) * 14 * effectiveDt;
+        sp.pulseAngle += effectiveDt * 3;
+        if (sp.y < -30) {
+          sp.y = h + 30;
+          sp.x = Math.random() * w;
+        }
+      }
+    } else if (ambientType === 'tachyon_rift') {
+      for (const sh of this.ambientTachyonShards) {
+        sh.y -= sh.speed * effectiveDt;
+        sh.x += Math.cos(this.ambientTimer * 1.5 + sh.angle) * 18 * effectiveDt;
+        sh.angle += sh.vAngle * effectiveDt;
+        if (sh.y < -30) {
+          sh.y = h + 30;
+          sh.x = Math.random() * w;
         }
       }
     }
@@ -2834,6 +2906,131 @@ export class BattlefieldEngine {
         wGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
         ctx.fillStyle = wGrad;
         ctx.fillRect(0, 0, w, h);
+
+        ctx.restore();
+        break;
+      }
+
+      case 'bio_spores': {
+        // Organic Biomechanical Hive Atmosphere
+        ctx.save();
+        const pulse = Math.sin(this.ambientTimer * 1.8);
+        const bioGrad = ctx.createRadialGradient(
+          w * 0.5,
+          h * 0.35,
+          15,
+          w * 0.5,
+          h * 0.35,
+          w * (0.65 + pulse * 0.08)
+        );
+        bioGrad.addColorStop(0, 'rgba(16, 185, 129, 0.24)');
+        bioGrad.addColorStop(0.45, 'rgba(168, 85, 247, 0.14)');
+        bioGrad.addColorStop(0.85, 'rgba(6, 78, 59, 0.06)');
+        bioGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = bioGrad;
+        ctx.fillRect(0, 0, w, h);
+
+        // Floating Bioluminescent Spores
+        for (const sp of this.ambientBioSpores) {
+          const spPulse = Math.sin(sp.pulseAngle) * 0.3 + 0.7;
+          const curSize = sp.size * spPulse;
+
+          // Soft outer halo
+          ctx.save();
+          ctx.shadowBlur = 12;
+          ctx.shadowColor = sp.color;
+          ctx.fillStyle = sp.color;
+          ctx.globalAlpha = sp.alpha * 0.85;
+          ctx.beginPath();
+          ctx.arc(sp.x, sp.y, curSize, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Bright inner core
+          ctx.fillStyle = '#ffffff';
+          ctx.globalAlpha = sp.alpha * 0.95;
+          ctx.beginPath();
+          ctx.arc(sp.x, sp.y, curSize * 0.45, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+        ctx.restore();
+        break;
+      }
+
+      case 'tachyon_rift': {
+        // Dimensional Time Rift & Chrono Singularity
+        ctx.save();
+        const riftX = w * 0.5;
+        const riftY = h * 0.30;
+        const rot = this.ambientTimer * 0.4;
+
+        // 1. Chromatic Reality Warp Core
+        const riftGrad = ctx.createRadialGradient(riftX, riftY, 10, riftX, riftY, w * 0.7);
+        riftGrad.addColorStop(0, 'rgba(56, 189, 248, 0.28)');
+        riftGrad.addColorStop(0.35, 'rgba(168, 85, 247, 0.16)');
+        riftGrad.addColorStop(0.70, 'rgba(245, 158, 11, 0.08)');
+        riftGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = riftGrad;
+        ctx.fillRect(0, 0, w, h);
+
+        // 2. Rotating Holographic Chrono Dials
+        ctx.save();
+        ctx.translate(riftX, riftY);
+        ctx.rotate(rot);
+
+        // Outer Clock Ring
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.30)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(0, 0, 58, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // 12 Chrono Tick Marks
+        for (let i = 0; i < 12; i++) {
+          const ang = (i * Math.PI * 2) / 12;
+          const x1 = Math.cos(ang) * 52;
+          const y1 = Math.sin(ang) * 52;
+          const x2 = Math.cos(ang) * 58;
+          const y2 = Math.sin(ang) * 58;
+          ctx.beginPath();
+          ctx.moveTo(x1, y1);
+          ctx.lineTo(x2, y2);
+          ctx.stroke();
+        }
+
+        // Inner Counter-Rotating Ring
+        ctx.rotate(-rot * 2.2);
+        ctx.strokeStyle = 'rgba(245, 158, 11, 0.35)';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.arc(0, 0, 36, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+
+        // 3. Floating Crystalline Tachyon Shards
+        for (const sh of this.ambientTachyonShards) {
+          ctx.save();
+          ctx.translate(sh.x, sh.y);
+          ctx.rotate(sh.angle);
+          ctx.fillStyle = sh.color;
+          ctx.globalAlpha = sh.alpha;
+          ctx.shadowBlur = 10;
+          ctx.shadowColor = sh.color;
+
+          // Diamond / Crystal Shard geometry
+          ctx.beginPath();
+          ctx.moveTo(0, -sh.size);
+          ctx.lineTo(sh.size * 0.6, 0);
+          ctx.lineTo(0, sh.size);
+          ctx.lineTo(-sh.size * 0.6, 0);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 0.8;
+          ctx.stroke();
+          ctx.restore();
+        }
 
         ctx.restore();
         break;

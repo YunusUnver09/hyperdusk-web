@@ -126,6 +126,7 @@ export const Modals: React.FC<ModalsProps> = ({ uiState, onStartGame, onResumeGa
         coreFragments={uiState.coreFragments}
         onSelectLevel={(levelId) => gameEngine.startLevel(levelId)}
         onBackToMenu={() => gameEngine.openMenu()}
+        onDevSkipSector={() => gameEngine.skipToNextSectorDevMode()}
       />
     );
   }
@@ -221,9 +222,11 @@ export const Modals: React.FC<ModalsProps> = ({ uiState, onStartGame, onResumeGa
 
           <div>
             <h2 className="modal-title" style={{ color: '#ffd000' }}>
-              SEKTÖR {uiState.currentLevel} TEMİZLENDİ!
+              {uiState.currentLevel % 8 === 0 
+                ? `👑 SEKTÖR ${Math.floor(uiState.currentLevel / 8)} TAMAMLANDI!` 
+                : `BÖLÜM ${uiState.currentLevel} TEMİZLENDİ!`}
             </h2>
-            <p className="modal-subtitle">{uiState.levelName} Kurtarıldı</p>
+            <p className="modal-subtitle">{uiState.levelName} Başarıyla Kurtarıldı</p>
           </div>
 
           <div style={{
@@ -247,7 +250,7 @@ export const Modals: React.FC<ModalsProps> = ({ uiState, onStartGame, onResumeGa
             </div>
             <div className="modal-stat-item">
               <span className="modal-stat-val">{stats.enemiesKilled}</span>
-              <span className="modal-stat-lbl">Düşman İmhয়া</span>
+              <span className="modal-stat-lbl">Düşman İmhası</span>
             </div>
             <div className="modal-stat-item">
               <span className="modal-stat-val">8 / 8</span>
@@ -258,7 +261,13 @@ export const Modals: React.FC<ModalsProps> = ({ uiState, onStartGame, onResumeGa
           {/* Next Level Unlock Notification */}
           <div className="level-unlock-alert">
             <Sparkles size={16} color="#00ff88" />
-            <span>YENİ SEKTÖR AÇILDI: <strong>{nextLevelConfig.name}</strong></span>
+            <span>
+              {nextLevelConfig.id % 8 === 1 && nextLevelConfig.id > 1 ? (
+                <>YENİ SEKTÖR AÇILDI: <strong>{nextLevelConfig.sectorName}</strong></>
+              ) : (
+                <>SONRAKİ GÖREV: <strong>{nextLevelConfig.name}</strong></>
+              )}
+            </span>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>

@@ -396,10 +396,29 @@ export type AmbientType =
   | 'ion_lightning'
   | 'void_vortex'
   | 'quantum_pulse'
-  | 'warp_tunnel';
+  | 'warp_tunnel'
+  | 'bio_spores'
+  | 'tachyon_rift';
+
+export interface SectorConfig {
+  id: number;
+  name: string;
+  subtitle: string;
+  description: string;
+  themeColor: string;
+  gradient: [string, string];
+  bgGlow: string;
+  requiredLevel: number;
+  levelStart: number;
+  levelEnd: number;
+  iconName: string;
+  ambientType: AmbientType;
+}
 
 export interface LevelConfig {
   id: number;
+  sectorId: number;
+  sectorName: string;
   name: string;
   subtitle: string;
   description: string;
