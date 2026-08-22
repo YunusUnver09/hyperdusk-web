@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Play, Settings, Info, Trophy, HelpCircle, X } from 'lucide-react';
+import { Play, Settings, Info, Trophy, HelpCircle, X, Unlock } from 'lucide-react';
 import { soundManager } from '../game/soundManager';
 import { SettingsModal } from './SettingsModal';
 
 interface MainMenuProps {
   onStartGame: () => void;
+  onDevMode?: () => void;
   highScore: number;
 }
 
@@ -19,7 +20,7 @@ interface VortexParticle {
   twinkleSpeed: number;
 }
 
-const MainMenuComponent: React.FC<MainMenuProps> = ({ onStartGame, highScore }) => {
+const MainMenuComponent: React.FC<MainMenuProps> = ({ onStartGame, onDevMode, highScore }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showCredits, setShowCredits] = useState(false);
@@ -225,6 +226,21 @@ const MainMenuComponent: React.FC<MainMenuProps> = ({ onStartGame, highScore }) 
             <div className="btn-inner">
               <Info size={18} color="#a855f7" />
               <span>CREDITS</span>
+            </div>
+          </button>
+
+          {/* Button 4: GELİŞTİRİCİ MODU (TÜM KİLİTLERİ AÇ) */}
+          <button
+            className="menu-btn dev-mode-btn"
+            onClick={() => handleButtonClick(() => {
+              if (onDevMode) {
+                onDevMode();
+              }
+            })}
+          >
+            <div className="btn-inner">
+              <Unlock size={18} color="#fbbf24" />
+              <span>GELİŞTİRİCİ MODU</span>
             </div>
           </button>
         </div>

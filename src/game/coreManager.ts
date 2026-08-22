@@ -113,6 +113,13 @@ class CoreManager {
     return false;
   }
 
+  public unlockAllCores() {
+    this.unlockedCores = new Set(ALL_CRUSH_CORES);
+    this.coreFragments = Math.max(this.coreFragments, 99999);
+    this.saveUnlocked();
+    this.saveFragments();
+  }
+
   public setActiveCores(newActive: GemType[]): boolean {
     // Must be exactly 6 unique unlocked cores
     const unique = Array.from(new Set(newActive));

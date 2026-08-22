@@ -1565,6 +1565,39 @@ body {
   letter-spacing: 1.5px;
 }
 
+/* Button 4: Developer Mode Button */
+.menu-btn.dev-mode-btn {
+  background: linear-gradient(135deg, rgba(234, 88, 12, 0.25) 0%, rgba(245, 158, 11, 0.16) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.65);
+  box-shadow: 0 0 18px rgba(245, 158, 11, 0.28), inset 0 0 10px rgba(254, 240, 138, 0.15);
+  backdrop-filter: blur(10px);
+  animation: dev-mode-glow-pulse 3s ease infinite alternate;
+}
+
+.menu-btn.dev-mode-btn:hover {
+  transform: scale(1.03);
+  border-color: #fde047;
+  background: linear-gradient(135deg, rgba(234, 88, 12, 0.40) 0%, rgba(245, 158, 11, 0.28) 100%);
+  box-shadow: 0 0 28px rgba(245, 158, 11, 0.55), inset 0 0 14px rgba(254, 240, 138, 0.35);
+}
+
+.dev-mode-btn .btn-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 800;
+  color: #fef08a;
+  letter-spacing: 1.2px;
+}
+
+@keyframes dev-mode-glow-pulse {
+  0% { border-color: rgba(245, 158, 11, 0.5); box-shadow: 0 0 14px rgba(245, 158, 11, 0.22); }
+  100% { border-color: rgba(254, 240, 138, 0.9); box-shadow: 0 0 24px rgba(245, 158, 11, 0.48); }
+}
+
 /* Footer Link */
 .menu-footer {
   display: flex;

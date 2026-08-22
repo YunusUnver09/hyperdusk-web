@@ -121,6 +121,19 @@ export class GameEngine {
     this.syncUIState();
   }
 
+  public unlockAllDevMode() {
+    this.unlockedLevel = TOTAL_LEVELS;
+    try {
+      localStorage.setItem('crush_space_unlocked_level', TOTAL_LEVELS.toString());
+    } catch {}
+    coreManager.unlockAllCores();
+    this.gameState = 'map';
+    this.isPaused = false;
+    soundManager.setMuffled(true);
+    soundManager.playVictory();
+    this.syncUIState(true);
+  }
+
   public startLevel(levelNumber: number = 1) {
     this.currentLevel = Math.max(1, Math.min(TOTAL_LEVELS, levelNumber));
     this.battlefield.resetGame(this.currentLevel);

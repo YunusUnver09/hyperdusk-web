@@ -110,6 +110,7 @@ export const Modals: React.FC<ModalsProps> = ({ uiState, onStartGame, onResumeGa
     return (
       <MainMenu
         onStartGame={onStartGame}
+        onDevMode={() => gameEngine.unlockAllDevMode()}
         highScore={gameEngine.battlefield.stats.highScore}
       />
     );
