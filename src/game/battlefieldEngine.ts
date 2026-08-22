@@ -1737,26 +1737,36 @@ export class BattlefieldEngine {
     }
   }
 
-  public applyDamageToEnemy(enemy: Enemy, damage: number, element: GemType, isCrit: boolean = false) {
-    enemy.hitFlashTimer = 0.12;
+  public applyDamageToEnemy(
+    enemy: Enemy,
+    damage: number,
+    element: GemType,
+    isCrit: boolean = false,
+    isDoT: boolean = false
+  ) {
+    // Sadece doğrudan lazer/mermi vuruşlarında beyaz flaş ve mikro hit-stop tetiklenir (DoT alev hasarında tetiklenmez)
+    if (!isDoT) {
+      enemy.hitFlashTimer = 0.08;
+      this.triggerHitStop(isCrit ? 0.055 : 0.030, isCrit ? 0.45 : 0.65);
+    }
+
     this.stats.damageDealt += damage;
 
-    // Trigger Hit-Stop / Time Dilation (visceral micro slow-motion so player feels the hit)
-    this.triggerHitStop(isCrit ? 0.095 : 0.065, isCrit ? 0.20 : 0.28);
-
-    // Apply status effects
-    if (element === 'cryo') {
-      enemy.frozenTimer = 3.0 * this.upgrades.cryoDurationMult;
-      this.particles.addLaserImpact(enemy.x, enemy.y, GEM_ELEMENTS.cryo.color, 6);
-    } else if (element === 'void') {
-      enemy.y = Math.max(-10, enemy.y - 30); // Knockback
-      this.particles.addLaserImpact(enemy.x, enemy.y, GEM_ELEMENTS.void.color, 8);
-    } else if (element === 'plasma') {
-      enemy.burnTimer = 2.0;
-      this.particles.addLaserImpact(enemy.x, enemy.y, GEM_ELEMENTS.plasma.color, 8);
-    } else if (element === 'electric') {
-      enemy.shockTimer = 1.5;
-      this.particles.addLaserImpact(enemy.x, enemy.y, GEM_ELEMENTS.electric.color, 8);
+    // Statü etkileri sadece doğrudan ilk vuruşta uygulanır
+    if (!isDoT) {
+      if (element === 'cryo') {
+        enemy.frozenTimer = 3.0 * this.upgrades.cryoDurationMult;
+        this.particles.addLaserImpact(enemy.x, enemy.y, GEM_ELEMENTS.cryo.color, 6);
+      } else if (element === 'void') {
+        enemy.y = Math.max(-10, enemy.y - 30); // Knockback
+        this.particles.addLaserImpact(enemy.x, enemy.y, GEM_ELEMENTS.void.color, 8);
+      } else if (element === 'plasma') {
+        enemy.burnTimer = 2.5;
+        this.particles.addLaserImpact(enemy.x, enemy.y, GEM_ELEMENTS.plasma.color, 8);
+      } else if (element === 'electric') {
+        enemy.shockTimer = 1.5;
+        this.particles.addLaserImpact(enemy.x, enemy.y, GEM_ELEMENTS.electric.color, 8);
+      }
     }
 
     // Shield absorption
@@ -1765,7 +1775,9 @@ export class BattlefieldEngine {
       if (enemy.shieldHp >= effectiveDmg) {
         enemy.shieldHp -= effectiveDmg;
         effectiveDmg = 0;
-        this.particles.addFloatingText(enemy.x, enemy.y - 12, `-${Math.round(damage)} SHLD`, '#a855f7');
+        if (!isDoT) {
+          this.particles.addFloatingText(enemy.x, enemy.y - 12, `-${Math.round(damage)} SHLD`, '#a855f7');
+        }
       } else {
         effectiveDmg -= enemy.shieldHp;
         enemy.shieldHp = 0;
@@ -1775,11 +1787,12 @@ export class BattlefieldEngine {
 
     if (effectiveDmg > 0) {
       enemy.hp -= effectiveDmg;
+      const textColor = isDoT ? '#f97316' : (isCrit ? '#ff0055' : '#ffffff');
       this.particles.addFloatingText(
         enemy.x,
         enemy.y - 8,
         Math.round(effectiveDmg).toString(),
-        isCrit ? '#ff0055' : '#ffffff',
+        textColor,
         isCrit
       );
     }
@@ -2053,7 +2066,7 @@ export class BattlefieldEngine {
               this.particles.addExplosion(enemy.x, enemy.y, '#a855f7', 10);
               this.particles.addFloatingText(enemy.x, enemy.y - 12, 'SHIELD BREAK!', '#e0e7ff', true);
             }
-            this.applyDamageToEnemy(enemy, wall.damage, 'prism', false);
+            this.applyDamageToEnemy(enemy, wall.damage, 'prism', false, true);
             this.particles.addLaserImpact(enemy.x, wall.y, '#e0e7ff', 4);
           }
         }
@@ -2337,11 +2350,16 @@ export class BattlefieldEngine {
         }
       }
 
-      // Burn tick
+      // Burn tick (Alev / Plazma Hasarı: her kare yerine periyodik 0.35s'de bir tetiklenir, oyunu dondurmaz ve düşmanı beyazlatmaz)
       if (enemy.burnTimer && enemy.burnTimer > 0) {
         enemy.burnTimer -= effectiveDt;
-        const burnDmg = (38 + this.currentLevel * 6) * effectiveDt;
-        this.applyDamageToEnemy(enemy, burnDmg, 'solaris', false);
+        enemy.burnTickTimer = (enemy.burnTickTimer || 0) + effectiveDt;
+        if (enemy.burnTickTimer >= 0.35) {
+          enemy.burnTickTimer = 0;
+          const burnDmg = 42 + this.currentLevel * 7;
+          this.applyDamageToEnemy(enemy, burnDmg, 'plasma', false, true);
+          this.particles.addLaserImpact(enemy.x, enemy.y, '#f97316', 3);
+        }
       }
 
       // Nanite infection tick
@@ -2351,7 +2369,7 @@ export class BattlefieldEngine {
         if (enemy.naniteTickTimer >= 0.4) {
           enemy.naniteTickTimer = 0;
           const naniteTickDamage = 28 + this.currentLevel * 4;
-          this.applyDamageToEnemy(enemy, naniteTickDamage, 'parasite', false);
+          this.applyDamageToEnemy(enemy, naniteTickDamage, 'parasite', false, true);
           this.particles.addLaserImpact(enemy.x, enemy.y, '#a855f7', 3);
         }
         if (enemy.naniteTimer <= 0) {
@@ -2458,9 +2476,13 @@ export class BattlefieldEngine {
               currentSpeed = 0;
 
               if (this.upgrades.anchorCrushTension) {
-                const crushDmg = (45 + this.currentLevel * 8) * effectiveDt;
-                this.applyDamageToEnemy(enemy, crushDmg, 'anchor', false);
-                this.particles.addLaserImpact(enemy.x, enemy.y, '#b45309', 1);
+                enemy.anchorCrushTickTimer = (enemy.anchorCrushTickTimer || 0) + effectiveDt;
+                if (enemy.anchorCrushTickTimer >= 0.35) {
+                  enemy.anchorCrushTickTimer = 0;
+                  const crushDmg = 45 + this.currentLevel * 8;
+                  this.applyDamageToEnemy(enemy, crushDmg, 'anchor', false, true);
+                  this.particles.addLaserImpact(enemy.x, enemy.y, '#b45309', 2);
+                }
               }
             }
           }
@@ -2651,11 +2673,12 @@ export class BattlefieldEngine {
             if (p.damage > 0) {
               const distTotal = Math.hypot(enemy.x - p.x, enemy.y - p.y);
               if (distTotal < p.radius * 1.7) {
-                const tickDamage = (p.damage * 0.45) * effectiveDt;
-                enemy.hp -= tickDamage;
-                enemy.hitFlashTimer = 0.06;
-                if (enemy.hp <= 0) {
-                  this.destroyEnemy(enemy);
+                enemy.vortexTickTimer = (enemy.vortexTickTimer || 0) + effectiveDt;
+                if (enemy.vortexTickTimer >= 0.30) {
+                  enemy.vortexTickTimer = 0;
+                  const tickDamage = p.damage * 0.45;
+                  this.applyDamageToEnemy(enemy, tickDamage, 'void', false, true);
+                  this.particles.addLaserImpact(enemy.x, enemy.y, '#a855f7', 2);
                 }
               }
             }
@@ -4797,6 +4820,17 @@ export class BattlefieldEngine {
         ctx.fillStyle = '#b45309';
         ctx.fillRect(-8, -enemy.height * 0.35, 16, 4);
         ctx.fillRect(-2, -enemy.height * 0.35, 4, 18);
+      }
+
+      // Plasma / Fire burn glowing aura & ember sparks
+      if (enemy.burnTimer && enemy.burnTimer > 0) {
+        ctx.strokeStyle = '#f97316';
+        ctx.lineWidth = 1.8;
+        ctx.globalAlpha = 0.55 + Math.sin(enemy.enginePulse * 3) * 0.25;
+        ctx.beginPath();
+        ctx.arc(0, 0, enemy.width * 0.65 + Math.sin(enemy.enginePulse * 4) * 2, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
       }
 
       // Nanite Swarm parasite creeping effect

@@ -87,6 +87,9 @@ export interface Enemy {
   frozenTimer: number; // Cryo freeze duration in sec
   shockTimer: number; // Electric stun
   burnTimer: number; // Plasma burn damage-over-time
+  burnTickTimer?: number; // Throttle DoT damage tick intervals
+  anchorCrushTickTimer?: number;
+  vortexTickTimer?: number;
   shieldHp?: number; // Armored / Shielded enemy extra shield
   maxShieldHp?: number;
 
