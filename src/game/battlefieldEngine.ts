@@ -1658,7 +1658,7 @@ export class BattlefieldEngine {
 
   public triggerOrbitalStrike() {
     soundManager.playOrbitalStrike();
-    this.particles.triggerScreenShake(14, 0.6);
+    this.particles.triggerScreenShake(14, 1.1);
 
     for (let l = 0; l < NUM_LANES; l++) {
       const laneX = this.getLaneX(l);
@@ -1674,11 +1674,11 @@ export class BattlefieldEngine {
         vy: -1200,
         damage: 650,
         color: '#00f3ff',
-        width: 24,
+        width: 26,
         height: this.height,
         radius: 20,
         life: 0,
-        maxLife: 0.35,
+        maxLife: 1.05, // 3 katına çıkarılan lazer süresi (0.35s -> 1.05s)
         pierce: true,
         element: 'plasma'
       });
