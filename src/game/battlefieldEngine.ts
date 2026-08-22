@@ -376,19 +376,20 @@ export class BattlefieldEngine {
         });
       }
     } else if (ambientType === 'void_vortex') {
-      const count = 38;
-      const bhRadius = 54;
+      const count = 48;
+      const bhRadius = 52;
+      const maxDiskRad = Math.max(w * 0.46, bhRadius * 3.8);
       for (let i = 0; i < count; i++) {
-        const radX = bhRadius * 1.06 + Math.random() * (bhRadius * 2.3);
+        const radX = bhRadius * 1.04 + Math.random() * (maxDiskRad - bhRadius * 1.04);
         this.ambientBlackHoleFilaments.push({
           radiusX: radX,
-          radiusY: radX * 0.35,
+          radiusY: radX * 0.32,
           angle: Math.random() * Math.PI * 2,
-          angularSpeed: 0.85 + (bhRadius * 2.0) / radX * 0.65,
-          length: Math.random() * 0.45 + 0.20,
-          width: Math.random() * 1.6 + 0.8,
-          alpha: Math.random() * 0.4 + 0.25,
-          color: Math.random() > 0.4 ? '#fef08a' : (Math.random() > 0.5 ? '#fde047' : '#fb923c')
+          angularSpeed: 0.65 + (bhRadius * 2.6) / radX * 0.85,
+          length: Math.random() * 0.50 + 0.25,
+          width: Math.random() * 2.2 + 1.0,
+          alpha: Math.random() * 0.45 + 0.35,
+          color: Math.random() > 0.4 ? '#ffffff' : (Math.random() > 0.5 ? '#fef08a' : '#f59e0b')
         });
       }
     } else if (ambientType === 'warp_tunnel') {
@@ -2545,83 +2546,40 @@ export class BattlefieldEngine {
       }
 
       case 'void_vortex': {
-        // Enormous, Softened Deep-Space Realistic Black Hole in Pitch-Black Void
+        // Broad, Rotating Accretion Disk with pure White Photon Ring around Pitch-Black Event Horizon
         const bhX = w * 0.5;
         const bhY = h * 0.30;
-        const bhRadius = 54; // Scaled up grand event horizon
+        const bhRadius = 52; // Clean Event Horizon Radius
+        const diskMaxX = Math.max(w * 0.46, bhRadius * 3.8);
+        const diskMaxY = diskMaxX * 0.32;
 
         ctx.save();
         ctx.translate(bhX, bhY);
+        ctx.rotate(-0.06);
 
-        // 1. Black Hole's Own Emitted Soft Illumination (Illuminating the pitch black void)
-        const holeIllum = ctx.createRadialGradient(0, 0, bhRadius * 0.7, 0, 0, bhRadius * 4.8);
-        holeIllum.addColorStop(0, 'rgba(254, 240, 138, 0.22)');
-        holeIllum.addColorStop(0.25, 'rgba(245, 158, 11, 0.16)');
-        holeIllum.addColorStop(0.55, 'rgba(234, 88, 12, 0.07)');
-        holeIllum.addColorStop(0.85, 'rgba(154, 52, 18, 0.02)');
-        holeIllum.addColorStop(1, 'rgba(0, 0, 0, 0)');
-        ctx.fillStyle = holeIllum;
-        ctx.beginPath();
-        ctx.arc(0, 0, bhRadius * 4.8, 0, Math.PI * 2);
-        ctx.fill();
-
-        // 2. Gravitational Lensing Halo Arches (Soft warped light bending over/under the event horizon)
-        // Top Lensing Arch (Softened celestial halo)
-        ctx.save();
-        const topArchGrad = ctx.createLinearGradient(0, -bhRadius * 2.4, 0, -bhRadius * 0.8);
-        topArchGrad.addColorStop(0, 'rgba(254, 240, 138, 0)');
-        topArchGrad.addColorStop(0.35, 'rgba(251, 191, 36, 0.22)');
-        topArchGrad.addColorStop(0.75, 'rgba(234, 88, 12, 0.40)');
-        topArchGrad.addColorStop(1, 'rgba(254, 240, 138, 0.65)');
-        ctx.fillStyle = topArchGrad;
-        ctx.beginPath();
-        ctx.ellipse(0, 0, bhRadius * 1.85, bhRadius * 2.2, 0, Math.PI, Math.PI * 2);
-        ctx.ellipse(0, 0, bhRadius * 1.2, bhRadius * 1.35, 0, Math.PI * 2, Math.PI, true);
-        ctx.closePath();
-        ctx.fill();
-        ctx.restore();
-
-        // Bottom Lensing Arch (Subtle lower warped light)
-        ctx.save();
-        const btmArchGrad = ctx.createLinearGradient(0, bhRadius * 0.8, 0, bhRadius * 2.1);
-        btmArchGrad.addColorStop(0, 'rgba(254, 240, 138, 0.55)');
-        btmArchGrad.addColorStop(0.4, 'rgba(234, 88, 12, 0.28)');
-        btmArchGrad.addColorStop(1, 'rgba(251, 191, 36, 0)');
-        ctx.fillStyle = btmArchGrad;
-        ctx.beginPath();
-        ctx.ellipse(0, 0, bhRadius * 1.75, bhRadius * 1.95, 0, 0, Math.PI);
-        ctx.ellipse(0, 0, bhRadius * 1.15, bhRadius * 1.25, 0, Math.PI, 0, true);
-        ctx.closePath();
-        ctx.fill();
-        ctx.restore();
-
-        // 3. Main Accretion Disk (Softened Tilted Glowing Elliptical Disk)
-        ctx.save();
-        ctx.rotate(-0.07);
-
-        // Softened fiery accretion gradient
-        const diskGrad = ctx.createRadialGradient(0, 0, bhRadius * 1.05, 0, 0, bhRadius * 3.4);
-        diskGrad.addColorStop(0, 'rgba(255, 255, 255, 0.80)');
-        diskGrad.addColorStop(0.1, 'rgba(254, 240, 138, 0.72)');
-        diskGrad.addColorStop(0.32, 'rgba(251, 191, 36, 0.55)');
-        diskGrad.addColorStop(0.62, 'rgba(249, 115, 22, 0.32)');
-        diskGrad.addColorStop(0.86, 'rgba(194, 65, 12, 0.12)');
-        diskGrad.addColorStop(1, 'rgba(154, 52, 18, 0)');
+        // 1. Broad Rotating Fiery Accretion Disk Base (Stretches widely to the edges)
+        const diskGrad = ctx.createRadialGradient(0, 0, bhRadius * 1.02, 0, 0, diskMaxX);
+        diskGrad.addColorStop(0, 'rgba(255, 255, 255, 0.90)'); // White-hot inner rim
+        diskGrad.addColorStop(0.12, 'rgba(254, 240, 138, 0.75)'); // Brilliant golden yellow
+        diskGrad.addColorStop(0.38, 'rgba(245, 158, 11, 0.45)'); // Warm glowing amber
+        diskGrad.addColorStop(0.68, 'rgba(234, 88, 12, 0.20)'); // Fiery orange
+        diskGrad.addColorStop(0.92, 'rgba(154, 52, 18, 0.05)'); // Deep red edge
+        diskGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
 
         ctx.fillStyle = diskGrad;
         ctx.beginPath();
-        ctx.ellipse(0, 0, bhRadius * 3.4, bhRadius * 1.2, 0, 0, Math.PI * 2);
+        ctx.ellipse(0, 0, diskMaxX, diskMaxY, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // 4. Rotating Glowing Golden Streak Lines & Filaments (Back Half: angles PI to 2*PI)
+        // 2. Rotating Glowing Golden & White Streak Lines (Back Half of the Disk: angles PI to 2*PI)
         for (const f of this.ambientBlackHoleFilaments) {
           if (f.angle > Math.PI && f.angle < Math.PI * 2) {
             ctx.save();
             ctx.strokeStyle = f.color;
             ctx.lineWidth = f.width;
-            ctx.shadowBlur = 6;
-            ctx.shadowColor = '#fde047';
-            ctx.globalAlpha = f.alpha * 0.6;
+            ctx.shadowBlur = 8;
+            ctx.shadowColor = f.color;
+            ctx.globalAlpha = f.alpha * 0.75;
 
             ctx.beginPath();
             ctx.ellipse(0, 0, f.radiusX, f.radiusY, 0, f.angle, f.angle + f.length);
@@ -2629,38 +2587,42 @@ export class BattlefieldEngine {
             ctx.restore();
           }
         }
-        ctx.restore();
 
-        // 5. The Event Horizon (Pitch Black Sphere in Center) & Soft Inner Photon Ring
-        // Soft glowing photon ring
+        ctx.restore(); // Restore disk rotation tilt
+
+        // 3. The Event Horizon (Pure Pitch Black Core) & Clean Luminous Pure White Photon Ring
         ctx.save();
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = '#fef08a';
-        ctx.strokeStyle = 'rgba(254, 240, 138, 0.85)';
-        ctx.lineWidth = 1.6;
+        ctx.translate(bhX, bhY);
+
+        // Crisp, pure white glowing photon ring encircling the event horizon
+        ctx.save();
+        ctx.shadowBlur = 12;
+        ctx.shadowColor = '#ffffff';
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2.0;
         ctx.beginPath();
         ctx.arc(0, 0, bhRadius, 0, Math.PI * 2);
         ctx.stroke();
         ctx.restore();
 
-        // Pure pitch-black core (True Singularity)
+        // Pure pitch-black core (True absolute black singularity)
         ctx.fillStyle = '#000000';
         ctx.beginPath();
         ctx.arc(0, 0, bhRadius - 0.5, 0, Math.PI * 2);
         ctx.fill();
 
-        // 6. Rotating Glowing Golden Streak Lines & Filaments (Front Half: angles 0 to PI)
+        // 4. Rotating Glowing Golden & White Streak Lines (Front Half of the Disk: angles 0 to PI)
         ctx.save();
-        ctx.rotate(-0.07);
+        ctx.rotate(-0.06);
 
         for (const f of this.ambientBlackHoleFilaments) {
           if (f.angle >= 0 && f.angle <= Math.PI) {
             ctx.save();
             ctx.strokeStyle = f.color;
             ctx.lineWidth = f.width;
-            ctx.shadowBlur = 8;
-            ctx.shadowColor = '#fef08a';
-            ctx.globalAlpha = f.alpha * 0.85;
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = f.color;
+            ctx.globalAlpha = f.alpha;
 
             ctx.beginPath();
             ctx.ellipse(0, 0, f.radiusX, f.radiusY, 0, f.angle, f.angle + f.length);
@@ -2668,25 +2630,6 @@ export class BattlefieldEngine {
             ctx.restore();
           }
         }
-
-        // Concentric subtle dynamic luminous rings rotating with ambientVortexAngle
-        ctx.save();
-        ctx.rotate(this.ambientVortexAngle * 0.5);
-        ctx.strokeStyle = 'rgba(254, 240, 138, 0.30)';
-        ctx.lineWidth = 1.2;
-        ctx.setLineDash([16, 22, 10, 18]);
-        ctx.beginPath();
-        ctx.ellipse(0, 0, bhRadius * 2.1, bhRadius * 0.74, 0, 0, Math.PI * 2);
-        ctx.stroke();
-
-        ctx.rotate(this.ambientVortexAngle * 0.35);
-        ctx.strokeStyle = 'rgba(251, 191, 36, 0.22)';
-        ctx.lineWidth = 1.0;
-        ctx.setLineDash([24, 30, 14, 20]);
-        ctx.beginPath();
-        ctx.ellipse(0, 0, bhRadius * 2.8, bhRadius * 0.98, 0, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.restore();
 
         ctx.restore(); // Restore disk rotation tilt
         ctx.restore(); // Restore translation
